@@ -1,0 +1,54 @@
+version: '3.9'
+
+networks:
+  hookio: {}
+
+volumes:
+  postgres_data: {}
+  redis_data: {}
+
+services:
+  postgres:
+    image: postgres:16.1
+    networks:
+      - hookio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env.postgres
+    ports:
+      - 5432
+  
+  redis:
+    image: redis:7.2.4
+    networks:
+      - hookio
+    volumes:
+      - redis_data:/data
+    # add custom redis.conf
+    ports:
+      - 6379
+    
+  client:
+    build: client
+    networks:
+      - hookio
+    depends_on:
+      - postgres
+      - redis
+      - server
+    ports:
+      - 80:80
+      - 443:443
+    
+  server:
+    build: server
+    networks:
+      - hookio
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - ASPNETCORE_URLS=http://+:7109
+    ports:
+      - 7109
