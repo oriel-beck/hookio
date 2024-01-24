@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {
   createBrowserRouter,
@@ -9,13 +8,12 @@ import Servers from './modules/servers.tsx';
 import Dashboard from './modules/dashboard.tsx';
 import './index.scss';
 import getUser from './loaders/get-user.ts';
-import getServers from './loaders/get-servers.ts';
 import Login from './modules/login.tsx';
+import Guard from './components/guard.tsx';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    loader: getUser,
     element: <App />,
     children: [
       {
@@ -24,21 +22,28 @@ const router = createBrowserRouter([
         element: <Login />
       },
       {
-        path: "servers",
-        loader: getServers,
-        element: <Servers />
+        path: "",
+        loader: getUser,
+        element: <Guard />,
+        children: [
+          {
+            path: "servers",
+            element: <Servers />
+          },
+          {
+            path: "servers/:serverId",
+            element: <Dashboard />
+          }
+        ]
       },
-      {
-        path: "servers/:serverId",
-        element: <Dashboard />
-      }
     ]
   }
 ])
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
+  // Due to discord only allowing code exchange once this causes issues
+  // <React.StrictMode>
+  <RouterProvider router={router} />
+  // </React.StrictMode>,
 )

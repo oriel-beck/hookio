@@ -1,31 +1,33 @@
-import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function Login() {
-    const [params] = useSearchParams()
-
+    const navigate = useNavigate();
+    const [params] = useSearchParams();
+    const [modifiedParams, setModifiedParams] = useState(params);
     useEffect(() => {
         async function validateUser() {
-            const validated = await fetch(`/api/users/authenticate/${params.get("code")}`, { method: "POST" });
-            console.log(validated);
+            const validated = await fetch(`/api/users/authenticate/${params.get("code")}`, { method: "POST" }).then((r) => r.json());
             if (validated) {
+                console.log("validated")
+                setModifiedParams(new URLSearchParams());
+                navigate("/servers", { replace: true });
                 // redirect to servers
             } else {
+                console.log("failed")
                 // redirect to login without code
             }
         }
-        if (params.get("code")) validateUser();
-    })
-
-    console.log(params)
+        if (modifiedParams.get("code")) validateUser();
+    }, [modifiedParams, navigate, params])
 
     return (
         <>
             {params.get("code")
                 ?
-                <>Code provided: {params.get("code")}</>
+                <>Validating code, please wait...</>
                 :
-                <>No code provided</>
+                <>Please log in</>
             }
         </>
     )
