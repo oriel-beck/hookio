@@ -3,6 +3,7 @@ using System;
 using Hookio.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hookio.Migrations
 {
     [DbContext(typeof(HookioContext))]
-    partial class HookioContextModelSnapshot : ModelSnapshot
+    [Migration("20240121141734_useSnakeCase")]
+    partial class useSnakeCase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,49 +29,60 @@ namespace Hookio.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AnnouncementType")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("announcement_type");
 
                     b.Property<string>("GuildId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("guild_id");
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("message");
 
                     b.Property<string>("Origin")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("origin");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_announcements");
 
-                    b.ToTable("Announcements");
+                    b.ToTable("announcements", (string)null);
                 });
 
             modelBuilder.Entity("Hookio.Database.Entities.User", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("id");
 
                     b.Property<string>("AccessToken")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("access_token");
 
-                    b.Property<DateTimeOffset>("ExpireAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("ExpireAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expire_at");
 
                     b.Property<string>("RefreshToken")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("refresh_token");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_users");
 
-                    b.ToTable("Users");
+                    b.ToTable("users", (string)null);
                 });
 #pragma warning restore 612, 618
         }

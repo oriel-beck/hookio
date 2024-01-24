@@ -1,10 +1,10 @@
 using System.Text;
 using Hookio;
 using Hookio.Database;
+using Hookio.Database.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var root = Directory.GetCurrentDirectory();
 var dotenv = Path.Combine(root, ".env");
@@ -14,33 +14,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql("Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=admin;"));
+builder.Services.AddSingleton<IDataManager, DataManager>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
-builder
-    .Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ClockSkew = TimeSpan.Zero,
-            ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(5), // Set a reasonable clock skew
+        ValidateLifetime = true,
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateIssuerSigningKey = false,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)
-            )
-        };
-    });
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)
+        )
+    };
+});
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -54,7 +54,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+//app.UseMiddleware<AuthorizationHeader>();
 
 app.MapControllers();
 

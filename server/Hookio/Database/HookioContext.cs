@@ -3,12 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hookio.Database
 {
-    public class HookioContext : DbContext
+    public class HookioContext(DbContextOptions<HookioContext> options) : DbContext(options)
     {
-        public DbSet<User> users {  get; set; }
-        public DbSet<Announcement> announcements { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseNpgsql("Host=http://localhost:5432;Database=hookio;Username=hookio;Password=admin");
+        public DbSet<User> Users {  get; set; }
+        public DbSet<Announcement> Announcements { get; set; }
     }
 }
