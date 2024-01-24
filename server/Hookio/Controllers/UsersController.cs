@@ -3,6 +3,7 @@ using Hookio.Database.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -45,14 +46,19 @@ namespace Hookio.Controllers
                 ));
                 var result = await discordResponse.Content.ReadFromJsonAsync<DiscordTokenResponse>();
 
-                _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {result?.AccessToken}");
-                var user = await _http.GetFromJsonAsync<DiscordCurrentUserResponse>("/api/v10/users/@me");
+                var httpMsg = new HttpRequestMessage(HttpMethod.Get, "/api/v10/users/@me")
+                {
+                    Headers = {
+                        Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken)
+                    }
+                };
+
+                var httpRequest = await _http.SendAsync(httpMsg);
+                var user = await httpRequest.Content.ReadFromJsonAsync<DiscordCurrentUserResponse>();
 
                 var claims = new Claim[]
                 {
-                    new("username", user!.UserName),
-                    new("id", user.Id),
-                    new("avatar", user.Avatar)
+                    new("id", user!.Id)
                 };
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -69,12 +75,12 @@ namespace Hookio.Controllers
                 // TODO: fix cookie auth
                 HttpContext.Response.Cookies.Append("Authorization", tokenString, new CookieOptions
                 {
-                    //HttpOnly = true,
+                    HttpOnly = true,
                     Expires = DateTime.UtcNow.AddHours(12),
                     SameSite = SameSiteMode.Strict
                 });
                 await dataManager.CreateUser(user, result);
-                return Ok(new { Token = tokenString });
+                return Ok(true);
             } catch (Exception ex)
             {
                 logger.LogError($"[DiscordCodeExchange] {ex.Message}");

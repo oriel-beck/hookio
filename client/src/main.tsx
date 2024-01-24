@@ -1,15 +1,15 @@
 import ReactDOM from 'react-dom/client';
 import {
   createBrowserRouter,
+  Outlet,
   RouterProvider,
 } from 'react-router-dom';
 import App from './App.tsx';
 import Servers from './modules/servers.tsx';
 import Dashboard from './modules/dashboard.tsx';
-import './index.scss';
 import getUser from './loaders/get-user.ts';
 import Login from './modules/login.tsx';
-import Guard from './components/guard.tsx';
+import './index.scss';
 
 const router = createBrowserRouter([
   {
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
       {
         path: "",
         loader: getUser,
-        element: <Guard />,
+        element: <Outlet />,
         children: [
           {
             path: "servers",

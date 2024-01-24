@@ -25,9 +25,8 @@ namespace Hookio.Database
 
         #region users
         // TODO: make a Server class for this
-        public async Task<List<DiscordGuildResponse>> GetUserServers(string userId)
+        public async Task<List<DiscordGuildResponse>> GetUserServers(string accessToken)
         {
-            var accessToken = await GetAccessToken(userId);
             var httpRequest = await _http.SendAsync(DiscordRequestMessage(accessToken!, "/api/v10/users/@me/guilds"));
             var servers = await httpRequest.Content.ReadFromJsonAsync<List<DiscordGuildResponse>>();
             servers ??= [];
@@ -36,10 +35,11 @@ namespace Hookio.Database
 
         public async Task<CurrentUserResponse?> GetUser(string userId) 
         {
+            // TODO: change this to use the database for getting the user data, save user data on login (avatar, id, etc)
             var accessToken = await GetAccessToken(userId);
             var httpResponse = await _http.SendAsync(DiscordRequestMessage(accessToken!, "/api/v10/users/@me"));
             var user = await httpResponse.Content.ReadFromJsonAsync<DiscordCurrentUserResponse?>();
-            return await ToContract(user);
+            return await ToContract(user, accessToken!);
         }
 
         public async Task<User?> CreateUser(DiscordCurrentUserResponse user, DiscordTokenResponse token)
@@ -98,7 +98,7 @@ namespace Hookio.Database
             }
         }
 
-        private async Task<CurrentUserResponse?> ToContract(DiscordCurrentUserResponse? user)
+        private async Task<CurrentUserResponse?> ToContract(DiscordCurrentUserResponse? user, string accessToken)
         {
             if (user == null) return null;
             int.TryParse(user.Discriminator, out int numberDiscriminator);
@@ -114,7 +114,7 @@ namespace Hookio.Database
                 Avatar = user.Discriminator == "0"
                             ? user.Avatar is null ? $"https://cdn.discordapp.com/embed/avatars/{(numberId >> 22) % 6}.png" : $"https://cdn.discordapp.com/avatars/{user.Id}/{user.Avatar}.{avatarSuffix}"
                             : user.Avatar is null ? $"https://cdn.discordapp.com/embed/avatars/{numberDiscriminator % 5}.png" : $"https://cdn.discordapp.com/avatars/{user.Id}/{user.Avatar}.{avatarSuffix}",
-                Guilds = (await GetUserServers(user.Id)).Where(guild =>
+                Guilds = (await GetUserServers(accessToken)).Where(guild =>
                 {
                     var _ = long.TryParse(guild.Permissions, out long permission);
                     return (uint)(permission & 0x0000000000000020) == 0x0000000000000020;
