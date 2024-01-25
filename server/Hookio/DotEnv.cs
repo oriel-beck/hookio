@@ -4,6 +4,7 @@
     {
         public static void Load(string filePath)
         {
+            // in production, use the docker-compose to load the env, this will skip
             if (!File.Exists(filePath))
                 return;
 
@@ -12,11 +13,9 @@
                 var parts = line.Split(
                     '=',
                     StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length != 2)
-                    continue;
-
-                Environment.SetEnvironmentVariable(parts[0], parts[1]);
+                var key = parts[0];
+                var rest = parts.Skip(1).ToArray();
+                Environment.SetEnvironmentVariable(key, string.Join("=", rest));
             }
         }
     }

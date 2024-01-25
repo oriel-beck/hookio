@@ -81,13 +81,13 @@ namespace Hookio.Database
                 new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "grant_type", "refresh_token" },
-                    { "client_id", Environment.GetEnvironmentVariable("CLIENT_ID")! },
-                    { "client_secret", Environment.GetEnvironmentVariable("CLIENT_SECRET")! },
+                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
+                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
                     { "refresh_token", currentUser.RefreshToken }
                 }
                 ));
                 var result = await discordResponse.Content.ReadFromJsonAsync<DiscordTokenResponse>();
-                currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result.ExpiresIn);
+                currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
                 currentUser.AccessToken = result.AccessToken;
                 currentUser.RefreshToken = result.RefreshToken;
                 await ctx.SaveChangesAsync();

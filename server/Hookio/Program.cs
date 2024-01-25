@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql("Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=admin;"));
+builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
 builder.Services.AddSingleton<IDataManager, DataManager>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -66,7 +66,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.UseMiddleware<AuthorizationHeader>();
+Console.WriteLine("Migrating database");
+using var context = app.Services.GetRequiredService<IDbContextFactory<HookioContext>>().CreateDbContext();
+context.Database.Migrate();
+context.SaveChanges();
 
 app.MapControllers();
 

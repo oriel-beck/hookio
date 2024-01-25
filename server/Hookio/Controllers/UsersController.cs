@@ -39,8 +39,8 @@ namespace Hookio.Controllers
                     { "code", code },
                     { "redirect_uri", "http://localhost:5173/login" },
                     { "grant_type", "authorization_code" },
-                    { "client_id", Environment.GetEnvironmentVariable("CLIENT_ID")! },
-                    { "client_secret", Environment.GetEnvironmentVariable("CLIENT_SECRET")! },
+                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
+                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
                     { "scopes", "identify guilds email" }
                 }
                 ));

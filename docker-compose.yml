@@ -8,6 +8,7 @@ volumes:
   redis_data: {}
 
 services:
+  # Main database
   postgres:
     image: postgres:16.1
     networks:
@@ -15,10 +16,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
-      - ./.env.postgres
+      - .env.postgres
     ports:
       - 5432
   
+  # Ratelimit and cache
   redis:
     image: redis:7.2.4
     networks:
@@ -28,7 +30,8 @@ services:
     # add custom redis.conf
     ports:
       - 6379
-    
+  
+  # Website (nginx)
   client:
     build: client
     networks:
@@ -40,7 +43,10 @@ services:
     ports:
       - 80:80
       - 443:443
-    
+    env_file:
+      - client/.env
+  
+  # Server (ASP.NET)
   server:
     build: server
     networks:
@@ -52,3 +58,5 @@ services:
       - ASPNETCORE_URLS=http://+:7109
     ports:
       - 7109
+    env_file:
+      - server/.env
