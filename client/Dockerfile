@@ -10,13 +10,11 @@ FROM node:18 as builder
 
 WORKDIR /app
 COPY . .
-COPY --from=installer . .
+COPY --from=installer /app/node_modules node_modules
 
 RUN npm run build
 
 FROM nginx as runner
 
-# TODO: move to the html dir of nginx
-COPY --from=builder dist dist
-# TODO: create nginx.conf
-COPY nginx.conf .
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf

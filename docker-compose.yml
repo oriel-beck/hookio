@@ -44,7 +44,7 @@ services:
       - 80:80
       - 443:443
     env_file:
-      - client/.env
+      - client/.env.production
   
   # Server (ASP.NET)
   server:
@@ -59,4 +59,4 @@ services:
     ports:
       - 7109
     env_file:
-      - server/.env
+      - server/Hookio/.env.production

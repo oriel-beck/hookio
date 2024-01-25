@@ -7,8 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var root = Directory.GetCurrentDirectory();
-var dotenv = Path.Combine(root, ".env");
-DotEnv.Load(dotenv);
+DotEnv.Load(Path.Combine(root, ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
