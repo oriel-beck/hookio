@@ -89,6 +89,7 @@ namespace Hookio.Database
                 var result = await discordResponse.Content.ReadFromJsonAsync<DiscordTokenResponse>();
                 currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result.ExpiresIn);
                 currentUser.AccessToken = result.AccessToken;
+                currentUser.RefreshToken = result.RefreshToken;
                 await ctx.SaveChangesAsync();
                 return result.AccessToken;
             }
@@ -120,8 +121,8 @@ namespace Hookio.Database
                     return (uint)(permission & 0x0000000000000020) == 0x0000000000000020;
                 }).Select(guild => new GuildResponse()
                 {
+                    Id = guild.Id,
                     Name = guild.Name,
-                    // TODO: fallback image if there is none
                     Icon = guild.Icon is not null ? guild.Icon.StartsWith("a_") ? $"https://cdn.discordapp.com/icons/{guild.Id}/{guild?.Icon}.gif" : $"https://cdn.discordapp.com/icons/{guild.Id}/{guild?.Icon}.png" : "fallback"
                 }).ToList()
             };

@@ -6,7 +6,7 @@ function App() {
   return (
     <>
       <Header />
-      <main>
+      <main className='bg-gray-600 p-10 h-full'>
         <Outlet/>
       </main>
     </>

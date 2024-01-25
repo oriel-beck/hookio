@@ -25,6 +25,7 @@ const router = createBrowserRouter([
         path: "",
         loader: getUser,
         element: <Outlet />,
+        id: "root",
         children: [
           {
             path: "servers",
