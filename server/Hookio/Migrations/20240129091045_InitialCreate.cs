@@ -13,7 +13,7 @@ namespace Hookio.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "announcements",
+                name: "Announcements",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -25,21 +25,23 @@ namespace Hookio.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_announcements", x => x.Id);
+                    table.PrimaryKey("PK_Announcements", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "users",
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     AccessToken = table.Column<string>(type: "text", nullable: false),
                     RefreshToken = table.Column<string>(type: "text", nullable: false),
-                    ExpireAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ExpireAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Premium = table.Column<int>(type: "integer", nullable: false),
+                    PremiumExpires = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_users", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
         }
 
@@ -47,10 +49,10 @@ namespace Hookio.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "announcements");
+                name: "Announcements");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "Users");
         }
     }
 }

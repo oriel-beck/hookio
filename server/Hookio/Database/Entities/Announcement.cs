@@ -1,13 +1,13 @@
 ﻿using Hookio.Enunms;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Database.Entities
 {
     [PrimaryKey("Id")]
     public class Announcement
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int Id { get; set; }
         public string GuildId { get; set; }
         public AnnouncementType AnnouncementType { get; set; }
