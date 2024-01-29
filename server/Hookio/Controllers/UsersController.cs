@@ -1,9 +1,9 @@
-﻿using Hookio.Contracts;
+﻿using Discord.Rest;
+using Hookio.Contracts;
 using Hookio.Database.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -25,7 +25,8 @@ namespace Hookio.Controllers
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser()
         {
             var idClaim = HttpContext.User.Claims.First(claim => claim.Type == "id");
-            return Ok(await dataManager.GetUser(idClaim.Value));
+            ulong.TryParse(idClaim.Value, out var userId);
+            return Ok(await dataManager.GetUser(userId));
         }
 
         [HttpPost("authenticate/{code}")]
@@ -44,21 +45,17 @@ namespace Hookio.Controllers
                     { "scopes", "identify guilds email" }
                 }
                 ));
-                var result = await discordResponse.Content.ReadFromJsonAsync<DiscordTokenResponse>();
+                var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
 
-                var httpMsg = new HttpRequestMessage(HttpMethod.Get, "/api/v10/users/@me")
-                {
-                    Headers = {
-                        Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken)
-                    }
-                };
+                var client = new DiscordRestClient();
+                await client.LoginAsync(Discord.TokenType.Bearer, result.AccessToken);
 
-                var httpRequest = await _http.SendAsync(httpMsg);
-                var user = await httpRequest.Content.ReadFromJsonAsync<DiscordCurrentUserResponse>();
+                var user = client.CurrentUser;
+                user ??= await client.GetCurrentUserAsync();
 
                 var claims = new Claim[]
                 {
-                    new("id", user!.Id)
+                    new("id", user.Id.ToString())
                 };
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -79,7 +76,7 @@ namespace Hookio.Controllers
                     Expires = DateTime.UtcNow.AddHours(12),
                     SameSite = SameSiteMode.Strict
                 });
-                await dataManager.CreateUser(user, result);
+                await dataManager.CreateUser(client, result);
                 return Ok(true);
             } catch (Exception ex)
             {

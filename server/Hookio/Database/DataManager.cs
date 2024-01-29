@@ -1,8 +1,9 @@
-﻿using Hookio.Contracts;
+﻿using Discord;
+using Discord.Rest;
+using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace Hookio.Database
 {
@@ -25,35 +26,32 @@ namespace Hookio.Database
         }
 
         #region users
-        public async Task<List<DiscordGuildResponse>> GetUserServers(string accessToken)
+        public async Task<IEnumerable<RestUserGuild>> GetUserServers(DiscordRestClient client)
         {
-            var httpRequest = await _http.SendAsync(DiscordRequestMessage(accessToken!, "/api/v10/users/@me/guilds"));
-            var servers = await httpRequest.Content.ReadFromJsonAsync<List<DiscordGuildResponse>>();
-            servers ??= [];
+            var servers = await client.GetGuildSummariesAsync().FlattenAsync();
             return servers;
         }
 
-        public async Task<CurrentUserResponse?> GetUser(string userId) 
+        public async Task<CurrentUserResponse?> GetUser(ulong userId) 
         {
             // TODO: change this to use the database for getting the user data, save user data on login (avatar, id, etc)
             var accessToken = await GetAccessToken(userId);
-            var httpResponse = await _http.SendAsync(DiscordRequestMessage(accessToken!, "/api/v10/users/@me"));
-            var user = await httpResponse.Content.ReadFromJsonAsync<DiscordCurrentUserResponse?>();
-            return await ToContract(user, accessToken!);
+            var client = new DiscordRestClient();
+            await client.LoginAsync(TokenType.Bearer, accessToken);
+            return await ToUserContract(client);
         }
 
-        public async Task<User?> CreateUser(DiscordCurrentUserResponse user, DiscordTokenResponse token)
+        public async Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token)
         {
             var ctx = contextFactory.CreateDbContext();
-
             var newUser = new User
             {
                 AccessToken = token.AccessToken,
                 ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
-                Id = user.Id,
+                Id = client.CurrentUser.Id,
                 RefreshToken = token.RefreshToken,
             };
-            var currentUser = ctx.Users.SingleOrDefault(u => u.Id == user.Id);
+            var currentUser = ctx.Users.SingleOrDefault(u => u.Id == client.CurrentUser.Id);
             if (currentUser == null)
             {
                 await ctx.Users.AddAsync(newUser);
@@ -69,7 +67,7 @@ namespace Hookio.Database
 
         }
 
-        public async Task<string?> GetAccessToken(string userId)
+        public async Task<string?> GetAccessToken(ulong userId)
         {
             var ctx = contextFactory.CreateDbContext();
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == userId);
@@ -86,7 +84,7 @@ namespace Hookio.Database
                     { "refresh_token", currentUser.RefreshToken }
                 }
                 ));
-                var result = await discordResponse.Content.ReadFromJsonAsync<DiscordTokenResponse>();
+                var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
                 currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
                 currentUser.AccessToken = result.AccessToken;
                 currentUser.RefreshToken = result.RefreshToken;
@@ -99,34 +97,32 @@ namespace Hookio.Database
             }
         }
 
-        private async Task<CurrentUserResponse?> ToContract(DiscordCurrentUserResponse? user, string accessToken)
+        private async Task<CurrentUserResponse?> ToUserContract(DiscordRestClient client)
         {
+            var user = client.CurrentUser;
+            user ??= await client.GetCurrentUserAsync();
             if (user == null) return null;
-            int.TryParse(user.Discriminator, out int numberDiscriminator);
-            long.TryParse(user.Id, out long numberId);
-            var avatarSuffix = user.Avatar?.StartsWith("a_") is true ? "gif" : "png";
             var currentUser = new CurrentUserResponse()
             {
                 Discriminator = user.Discriminator,
                 Id = user.Id,
-                UserName = user.GlobalName is null ? user.UserName : user.GlobalName,
+                Username = user.GlobalName is null ? user.Username : user.GlobalName,
                 // TODO: implement premium in the DB
                 Premium = 0,
-                Avatar = user.Discriminator == "0"
-                            ? user.Avatar is null ? $"https://cdn.discordapp.com/embed/avatars/{(numberId >> 22) % 6}.png" : $"https://cdn.discordapp.com/avatars/{user.Id}/{user.Avatar}.{avatarSuffix}"
-                            : user.Avatar is null ? $"https://cdn.discordapp.com/embed/avatars/{numberDiscriminator % 5}.png" : $"https://cdn.discordapp.com/avatars/{user.Id}/{user.Avatar}.{avatarSuffix}",
-                Guilds = (await GetUserServers(accessToken)).Where(guild =>
-                {
-                    var _ = long.TryParse(guild.Permissions, out long permission);
-                    return (uint)(permission & 0x0000000000000020) == 0x0000000000000020;
-                }).Select(guild => new GuildResponse()
+                Avatar = user.GetAvatarUrl(),
+                Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
                 {
                     Id = guild.Id,
                     Name = guild.Name,
-                    Icon = guild.Icon is not null ? guild.Icon.StartsWith("a_") ? $"https://cdn.discordapp.com/icons/{guild.Id}/{guild?.Icon}.gif" : $"https://cdn.discordapp.com/icons/{guild.Id}/{guild?.Icon}.png" : "fallback"
+                    Icon = guild.IconUrl is null ? "fallback" : guild.IconUrl,
                 }).ToList()
             };
             return currentUser;
+        }
+
+        public Task<bool> CanUserAccessGuild(ulong userId, string guildId)
+        {
+            throw new NotImplementedException();
         }
         #endregion
 

@@ -1,4 +1,5 @@
-﻿using Hookio.Contracts;
+﻿using Discord.Rest;
+using Hookio.Contracts;
 using Hookio.Database.Entities;
 
 namespace Hookio.Database.Interfaces
@@ -6,11 +7,11 @@ namespace Hookio.Database.Interfaces
     public interface IDataManager
     {
         #region users
-        public Task<List<DiscordGuildResponse>> GetUserServers(string userId);
-        public Task<CurrentUserResponse?> GetUser(string userId);
-        public Task<User?> CreateUser(DiscordCurrentUserResponse user, DiscordTokenResponse token);
-        public Task<string?> GetAccessToken(string userId);
-        public Task<bool> CanUserAccessGuild(string userId, string guildId);
+        public Task<IEnumerable<RestUserGuild>> GetUserServers(DiscordRestClient client);
+        public Task<CurrentUserResponse?> GetUser(ulong userId);
+        public Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token);
+        public Task<string?> GetAccessToken(ulong userId);
+        public Task<bool> CanUserAccessGuild(ulong userId, string guildId);
         #endregion
 
         #region announcements

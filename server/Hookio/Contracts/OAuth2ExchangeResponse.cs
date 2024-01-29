@@ -2,7 +2,7 @@
 
 namespace Hookio.Contracts
 {
-    public class DiscordTokenResponse
+    public class OAuth2ExchangeResponse
     {
         [JsonPropertyName("token_type")]
         public string TokenType { get; set; }

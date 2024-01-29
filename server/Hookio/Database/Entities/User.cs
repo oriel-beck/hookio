@@ -7,7 +7,7 @@ namespace Hookio.Database.Entities
     public class User
     {
         [Required]
-        public string Id { get; set; }
+        public ulong Id { get; set; }
         [Required]
         public string AccessToken { get; set; }
         [Required]

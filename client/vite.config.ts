@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.API_ADDRESS,
+          target: env.VITE_API_ADDRESS,
           changeOrigin: true,
           secure: false
         }

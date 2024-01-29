@@ -4,6 +4,6 @@
     {
         public string Name { get; set; }
         public string Icon { get; set; }
-        public string Id { get; set; }
+        public ulong Id { get; set; }
     }
 }
