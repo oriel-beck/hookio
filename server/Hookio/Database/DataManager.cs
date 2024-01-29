@@ -2,6 +2,7 @@
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Hookio.Database
 {
@@ -24,7 +25,6 @@ namespace Hookio.Database
         }
 
         #region users
-        // TODO: make a Server class for this
         public async Task<List<DiscordGuildResponse>> GetUserServers(string accessToken)
         {
             var httpRequest = await _http.SendAsync(DiscordRequestMessage(accessToken!, "/api/v10/users/@me/guilds"));
@@ -127,6 +127,48 @@ namespace Hookio.Database
                 }).ToList()
             };
             return currentUser;
+        }
+        #endregion
+
+        #region announcements
+        public async Task<AnnouncementResponse?> GetAnnouncementById(int id)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            IQueryable<Announcement> query = ctx.Announcements;
+            var announcement = await query.FirstOrDefaultAsync();
+            return announcement is null ? null : new AnnouncementResponse()
+            {
+                Id = announcement.Id,
+                AnnouncementType = announcement.AnnouncementType,
+                Origin = announcement.Origin,
+                Message = announcement.Message,
+                // embed todo
+            };
+        }
+
+        public async Task<AnnouncementResponse?> CreateAnnouncement(string guildId, AnnouncementRequest request)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            Announcement announcement = new()
+            {
+                GuildId = guildId,
+                WebhookUrl = request.WebhookUrl,
+                Origin = request.Origin,
+                Message = request.Message,
+                AnnouncementType = request.AnnouncementType,
+                // embed tdod
+            };
+            ctx.Announcements.Add(announcement);
+            await ctx.SaveChangesAsync();
+            return new AnnouncementResponse()
+            {
+                Id = announcement.Id,
+                AnnouncementType = announcement.AnnouncementType,
+                Origin = announcement.Origin,
+                Message = announcement.Message,
+                // embed todo
+            };
+
         }
         #endregion
     }
