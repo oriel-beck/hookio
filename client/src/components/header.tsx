@@ -1,9 +1,7 @@
-import { useLoaderData } from "react-router-dom"
 import { User } from "../types/types"
 import { useCallback, useEffect, useState } from "react";
 
-export default function Header() {
-    const user = useLoaderData() as User | null;
+export default function Header({ user, showLogin = true }: { user: User | null, showLogin?: boolean }) {
     const discordAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=1198355601990893688&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2F&scope=identify+guilds+email";
 
     const [open, setOpen] = useState(false);
@@ -60,7 +58,11 @@ export default function Header() {
                         }
                     </div>
                     :
-                    <a href={discordAuthUrl} className="bg-transparent hover:bg-indigo-900 font-semibold py-1.5 px-4 border border-white hover:border-transparent rounded">Log in</a>
+                    <>
+                        {showLogin &&
+                            <a href={discordAuthUrl} className="bg-transparent hover:bg-indigo-900 font-semibold py-1.5 px-4 border border-white hover:border-transparent rounded">Log in</a>
+                        }
+                    </>
                 }
             </div>
         </header >
