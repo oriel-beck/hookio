@@ -30,7 +30,7 @@ namespace Hookio.Controllers
         }
 
         [HttpPost("authenticate/{code}")]
-        public async Task<ActionResult<bool>> Authenticate(string code)
+        public async Task<ActionResult<CurrentUserResponse>> Authenticate(string code)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace Hookio.Controllers
                 new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "code", code },
-                    { "redirect_uri", "http://localhost:5173/login" },
+                    { "redirect_uri", "http://localhost:5173/" },
                     { "grant_type", "authorization_code" },
                     { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
                     { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
@@ -77,7 +77,8 @@ namespace Hookio.Controllers
                     SameSite = SameSiteMode.Strict
                 });
                 await dataManager.CreateUser(client, result);
-                return Ok(true);
+                var currentUser = await dataManager.GetUser(user.Id);
+                return Ok(currentUser);
             } catch (Exception ex)
             {
                 logger.LogError($"[DiscordCodeExchange] {ex.Message}");

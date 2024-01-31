@@ -120,7 +120,7 @@ namespace Hookio.Database
             return currentUser;
         }
 
-        public Task<bool> CanUserAccessGuild(ulong userId, string guildId)
+        public Task<bool> CanUserAccessGuild(ulong userId, ulong guildId)
         {
             throw new NotImplementedException();
         }
@@ -142,7 +142,7 @@ namespace Hookio.Database
             };
         }
 
-        public async Task<AnnouncementResponse?> CreateAnnouncement(string guildId, AnnouncementRequest request)
+        public async Task<AnnouncementResponse?> CreateAnnouncement(ulong guildId, AnnouncementRequest request)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
             Announcement announcement = new()

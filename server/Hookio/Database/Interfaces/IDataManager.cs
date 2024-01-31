@@ -11,12 +11,12 @@ namespace Hookio.Database.Interfaces
         public Task<CurrentUserResponse?> GetUser(ulong userId);
         public Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token);
         public Task<string?> GetAccessToken(ulong userId);
-        public Task<bool> CanUserAccessGuild(ulong userId, string guildId);
+        public Task<bool> CanUserAccessGuild(ulong userId, ulong guildId);
         #endregion
 
         #region announcements
         public Task<AnnouncementResponse?> GetAnnouncementById(int id);
-        public Task<AnnouncementResponse?> CreateAnnouncement(string guildId, AnnouncementRequest request);
+        public Task<AnnouncementResponse?> CreateAnnouncement(ulong guildId, AnnouncementRequest request);
         // TODO: make a system that makes sure the user interacting with the announcement has perms in the provided guild
         //public Task<AnnouncementResponse?> UpdateAnnouncement(AnnouncementResponse response);
         #endregion

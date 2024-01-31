@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hookio.Migrations
 {
     [DbContext(typeof(HookioContext))]
-    [Migration("20240129091045_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20240130091711_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,15 +36,18 @@ namespace Hookio.Migrations
                     b.Property<int>("AnnouncementType")
                         .HasColumnType("integer");
 
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("WebhookUrl")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -55,8 +58,9 @@ namespace Hookio.Migrations
 
             modelBuilder.Entity("Hookio.Database.Entities.User", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<decimal>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("AccessToken")
                         .IsRequired()

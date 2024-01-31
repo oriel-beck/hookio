@@ -1,9 +1,12 @@
-import { redirect } from "react-router-dom";
-
 export default async function getUser({ request }: { request: Request }) {
-    const currentUser = await fetch("/api/users/current");
-    console.log(currentUser.ok)
-    if (!request.url.endsWith("/login") && !currentUser.ok) return redirect("/login");
-    if (request.url.endsWith("/login") && currentUser.ok) return redirect("/servers")
-    return currentUser;
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    if (code) {
+        const validated = await fetch(`/api/users/authenticate/${code}`, { method: "POST" }).then((r) => r.json()).catch(() => null);
+        console.log(validated)
+        if (validated) {
+            return validated;
+        }
+    }
+    return await fetch("/api/users/current");
 }

@@ -1,42 +1,34 @@
 import ReactDOM from 'react-dom/client';
 import {
   createBrowserRouter,
-  Outlet,
   RouterProvider,
 } from 'react-router-dom';
 import App from './App.tsx';
-import Servers from './modules/servers.tsx';
+import Guilds from './modules/guilds.tsx';
 import Dashboard from './modules/dashboard.tsx';
 import getUser from './loaders/get-user.ts';
-import Login from './modules/login.tsx';
+import Home from './modules/home.tsx';
 import './index.scss';
 
 const router = createBrowserRouter([
   {
     path: "/",
+    loader: getUser,
+    id: "root",
     element: <App />,
     children: [
       {
-        path: "login",
-        loader: getUser,
-        element: <Login />
+        path: "",
+        element: <Home />
       },
       {
-        path: "",
-        loader: getUser,
-        element: <Outlet />,
-        id: "root",
-        children: [
-          {
-            path: "servers",
-            element: <Servers />
-          },
-          {
-            path: "servers/:serverId",
-            element: <Dashboard />
-          }
-        ]
+        path: "servers",
+        element: <Guilds />
       },
+      {
+        path: "servers/:serverId",
+        element: <Dashboard />
+      }
     ]
   }
 ])
