@@ -31,6 +31,8 @@ function authenticateAndFallback(code: string | null) {
                 })
                 .catch(() => null)
         }) : getCurrentUser()
-            .then((r) => r.json())
+            .then((response) => {
+                return response.json()
+            })
             .catch(() => null);
 }
