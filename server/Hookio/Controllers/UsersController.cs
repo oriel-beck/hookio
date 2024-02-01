@@ -70,7 +70,7 @@ namespace Hookio.Controllers
                 var token = _tokenHandler.CreateToken(tokenDescriptor);
                 var tokenString = _tokenHandler.WriteToken(token);
                 // TODO: fix cookie auth
-                HttpContext.Response.Cookies.Append("Authorization", tokenString, new CookieOptions
+                HttpContext.Response.Cookies.Append("Authorization", tokenString, new()
                 {
                     HttpOnly = true,
                     Expires = DateTime.UtcNow.AddHours(12),
