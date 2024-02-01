@@ -1,5 +1,5 @@
 import { useOutletContext } from "react-router-dom";
-import Guild from "../components/server";
+import Guild from "../components/guild";
 import type { User } from "../types/types";
 
 export default function Guilds() {

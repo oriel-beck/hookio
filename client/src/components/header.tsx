@@ -2,8 +2,8 @@ import { User } from "../types/types"
 import { useCallback, useEffect, useState } from "react";
 
 export default function Header({ user, showLogin = true }: { user: User | null, showLogin?: boolean }) {
-    const discordAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=1198355601990893688&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2F&scope=identify+guilds+email";
-
+    // TODO: use a proper redirect URL in prod
+    const discordAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=1198355601990893688&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2F&scope=identify+guilds+email&prompt=none";
     const [open, setOpen] = useState(false);
 
     const handleOutsideClick = useCallback((event: MouseEvent) => {
