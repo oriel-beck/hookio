@@ -12,3 +12,11 @@ export interface Guild {
   icon: string;
   id: string;
 }
+
+export interface Announcement {
+  id: number;
+  announcementType: 0,
+  origin: string;
+  message: string;
+  // TODO: embeds
+}

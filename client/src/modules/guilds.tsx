@@ -5,7 +5,7 @@ import type { User } from "../types/types";
 export default function Guilds() {
     const user = useOutletContext() as User;
     return (
-        <div className="flex flex-col m-5 bg-zinc-700 pb-10">
+        <div className="flex flex-col m-5 mt-10 bg-zinc-700 pb-10">
             <div className="w-full p-5 bg-zinc-800 text-white">
                 <div className="flex">
                     <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

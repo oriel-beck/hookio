@@ -12,7 +12,7 @@ export default function Layout({ user }: { user: User }) {
     return (
         <>
             <Header user={user} />
-            <main className='min-h-screen bg-zinc-900 p-10 h-full'>
+            <main className=''>
                 <Outlet context={user} />
             </main>
         </>
