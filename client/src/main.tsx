@@ -9,6 +9,7 @@ import Dashboard from './modules/dashboard.tsx';
 import getUser from './loaders/get-user.ts';
 import Home from './modules/home.tsx';
 import './index.scss';
+import LoginGuard from './modules/guard.tsx';
 
 const router = createBrowserRouter([
   {
@@ -23,11 +24,11 @@ const router = createBrowserRouter([
       },
       {
         path: "servers",
-        element: <Guilds />
+        element: <LoginGuard><Guilds /></LoginGuard>
       },
       {
         path: "servers/:serverId",
-        element: <Dashboard />
+        element: <LoginGuard><Dashboard /></LoginGuard>
       }
     ]
   }
