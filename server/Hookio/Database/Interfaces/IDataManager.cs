@@ -1,6 +1,7 @@
 ﻿using Discord.Rest;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
+using Hookio.Enunms;
 
 namespace Hookio.Database.Interfaces
 {
@@ -15,8 +16,10 @@ namespace Hookio.Database.Interfaces
         #endregion
 
         #region announcements
-        public Task<AnnouncementResponse?> GetAnnouncementById(int id);
-        public Task<AnnouncementResponse?> CreateAnnouncement(ulong guildId, AnnouncementRequest request);
+        public Task<SubscriptionResponse?> GetSubscriptionById(int id);
+        public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionCreateRequest request);
+
+        public Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider);
         // TODO: make a system that makes sure the user interacting with the announcement has perms in the provided guild
         //public Task<AnnouncementResponse?> UpdateAnnouncement(AnnouncementResponse response);
         #endregion

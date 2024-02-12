@@ -5,11 +5,13 @@ import {
 } from 'react-router-dom';
 import App from './App.tsx';
 import Guilds from './modules/guilds.tsx';
-import Dashboard from './modules/dashboard.tsx';
 import getUser from './loaders/get-user.ts';
 import Home from './modules/home.tsx';
 import './index.scss';
 import LoginGuard from './modules/guard.tsx';
+import ProviderSelection from './modules/provider-selection.tsx';
+import SubscriptionsManager from './modules/subscriptions-manager.tsx';
+import getAllSubscriptions from './loaders/get-all-subscriptions.ts';
 
 const router = createBrowserRouter([
   {
@@ -28,7 +30,12 @@ const router = createBrowserRouter([
       },
       {
         path: "servers/:serverId",
-        element: <LoginGuard><Dashboard /></LoginGuard>
+        element: <LoginGuard><ProviderSelection /></LoginGuard>
+      },
+      {
+        path: "servers/:serverId/:provider",
+        loader: getAllSubscriptions,
+        element: <LoginGuard><SubscriptionsManager /></LoginGuard>
       }
     ]
   }

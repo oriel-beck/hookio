@@ -46,6 +46,11 @@ namespace Hookio.Controllers
                 }
                 ));
                 var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
+                if (result == null)
+                {
+                    logger.LogInformation($"[{nameof(Authenticate)}]: Failed to code exchange with code '{code}'");
+                    return Ok(false);
+                }
 
                 var client = new DiscordRestClient();
                 await client.LoginAsync(Discord.TokenType.Bearer, result.AccessToken);
@@ -69,7 +74,6 @@ namespace Hookio.Controllers
 
                 var token = _tokenHandler.CreateToken(tokenDescriptor);
                 var tokenString = _tokenHandler.WriteToken(token);
-                // TODO: fix cookie auth
                 HttpContext.Response.Cookies.Append("Authorization", tokenString, new()
                 {
                     HttpOnly = true,
@@ -81,7 +85,7 @@ namespace Hookio.Controllers
                 return Ok(currentUser);
             } catch (Exception ex)
             {
-                logger.LogError($"[DiscordCodeExchange] {ex.Message}");
+                logger.LogError($"[{nameof(Authenticate)}]: '{ex.Message}'");
                 return Ok(false);
             }
         }

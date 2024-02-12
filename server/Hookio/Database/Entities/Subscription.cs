@@ -5,17 +5,16 @@ using System.ComponentModel.DataAnnotations;
 namespace Hookio.Database.Entities
 {
     [PrimaryKey("Id")]
-    public class Announcement
+    [Index("GuildId")]
+    public class Subscription
     {
         [Key]
         public int Id { get; set; }
         public ulong GuildId { get; set; }
-        public AnnouncementType AnnouncementType { get; set; }
+        public SubscriptionType SubscriptionType { get; set; }
         public string WebhookUrl { get; set; }
         // The name/identifier of the channel (yt, twitch, kick, etc) the announcement is linked to
-        public string Origin { get; set; }
+        public string ChannelId { get; set; }
         // data sent to discord
-        public string Message { get; set; }
-        // embed data somehow? json?
     }
 }

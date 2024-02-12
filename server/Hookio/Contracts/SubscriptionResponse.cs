@@ -2,14 +2,12 @@
 
 namespace Hookio.Contracts
 {
-    public class AnnouncementResponse
+    public class SubscriptionResponse
     {
         public int Id { get; set; }
-        public AnnouncementType AnnouncementType { get; set; }
+        public SubscriptionType AnnouncementType { get; set; }
         // The name/identifier of the channel (yt, twitch, kick, etc) the announcement is linked to
-        public string Origin { get; set; }
+        public string ChannelId { get; set; }
         // data sent to discord
-        public string Message { get; set; }
-        // embed data somehow? json?
     }
 }

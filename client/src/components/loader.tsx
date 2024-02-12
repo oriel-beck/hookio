@@ -5,7 +5,7 @@ export default function Loader() {
         <>
             <Header showLogin={false} user={null} />
             <main>
-                <div className='flex items-center justify-center h-screen bg-gray-600'>
+                <div className='flex items-center justify-center h-full text-white' style={{ minHeight: '600px' }}>
                     <div
                         className="inline-block h-52 w-52 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
                         role="status">

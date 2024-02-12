@@ -13,10 +13,12 @@ export interface Guild {
   id: string;
 }
 
-export interface Announcement {
+export interface Subscription {
   id: number;
-  announcementType: 0,
-  origin: string;
-  message: string;
-  // TODO: embeds
+  subscriptionType: number;
+  channelId: string;
+}
+
+export interface Message {
+  // TODO
 }

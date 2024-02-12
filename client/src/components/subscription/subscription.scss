@@ -1,0 +1,20 @@
+.youtube {
+  background-color: #ff0000;
+  &:hover {
+    background-color: #be0202;
+  }
+}
+
+.twitch {
+  background-color: #6441a5;
+  &:hover {
+    background-attachment: #3b2663;
+  }
+}
+
+.kick {
+  background-color: #07bc0c;
+  &:hover {
+    background-color: #057a09;
+  }
+}

@@ -3,6 +3,7 @@ using Discord.Rest;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
+using Hookio.Enunms;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hookio.Database
@@ -13,17 +14,6 @@ namespace Hookio.Database
         {
             BaseAddress = new Uri("https://discord.com")
         };
-
-        private static HttpRequestMessage DiscordRequestMessage(string accessToken, string url)
-        {
-            return new HttpRequestMessage(HttpMethod.Get, url)
-            {
-                Headers = {
-                    Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken)
-                }
-
-            };
-        }
 
         #region users
         public async Task<IEnumerable<RestUserGuild>> GetUserServers(DiscordRestClient client)
@@ -112,7 +102,7 @@ namespace Hookio.Database
                 Avatar = user.GetAvatarUrl(),
                 Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
                 {
-                    Id = guild.Id,
+                    Id = guild.Id.ToString(),
                     Name = guild.Name,
                     Icon = guild.IconUrl is null ? "fallback" : guild.IconUrl,
                 }).ToList()
@@ -127,44 +117,61 @@ namespace Hookio.Database
         #endregion
 
         #region announcements
-        public async Task<AnnouncementResponse?> GetAnnouncementById(int id)
+        public async Task<SubscriptionResponse?> GetSubscriptionById(int id)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
-            IQueryable<Announcement> query = ctx.Announcements;
-            var announcement = await query.FirstOrDefaultAsync();
-            return announcement is null ? null : new AnnouncementResponse()
+            var announcement = await ctx.Subscriptions.FirstOrDefaultAsync(a => a.Id == id);
+            return announcement is null ? null : new SubscriptionResponse()
             {
                 Id = announcement.Id,
-                AnnouncementType = announcement.AnnouncementType,
-                Origin = announcement.Origin,
-                Message = announcement.Message,
+                AnnouncementType = announcement.SubscriptionType,
+                ChannelId = announcement.ChannelId,
                 // embed todo
             };
         }
 
-        public async Task<AnnouncementResponse?> CreateAnnouncement(ulong guildId, AnnouncementRequest request)
+        // TODO: third parameter for the Message (content, embed, avatar, username, maybe buttons at some point)
+        public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionCreateRequest request)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
-            Announcement announcement = new()
+            Subscription announcement = new()
             {
                 GuildId = guildId,
                 WebhookUrl = request.WebhookUrl,
-                Origin = request.Origin,
-                Message = request.Message,
-                AnnouncementType = request.AnnouncementType,
-                // embed tdod
+                ChannelId = request.ChannelId,
+                SubscriptionType = request.AnnouncementType,
             };
-            ctx.Announcements.Add(announcement);
+            ctx.Subscriptions.Add(announcement);
             await ctx.SaveChangesAsync();
-            return new AnnouncementResponse()
+            return new SubscriptionResponse()
             {
                 Id = announcement.Id,
-                AnnouncementType = announcement.AnnouncementType,
-                Origin = announcement.Origin,
-                Message = announcement.Message,
-                // embed todo
+                AnnouncementType = announcement.SubscriptionType,
+                ChannelId = announcement.ChannelId,
             };
+        }
 
+        public async Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            IQueryable<Subscription> query = ctx.Subscriptions;
+            if (provider is not null)
+            {
+                query = query.Where(subscription => (subscription.GuildId == guildId) && (subscription.SubscriptionType == provider));
+            }
+            else
+            {
+                query = query.Where(subscription => subscription.GuildId == guildId);
+            }
+
+            var subscriptions = (await query.ToListAsync()).Select(subscription => new SubscriptionResponse
+            {
+                Id = subscription.Id,
+                AnnouncementType = subscription.SubscriptionType,
+                ChannelId = subscription.ChannelId,
+            });
+
+            return [.. subscriptions];
         }
         #endregion
     }
