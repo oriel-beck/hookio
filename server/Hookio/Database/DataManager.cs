@@ -131,23 +131,24 @@ namespace Hookio.Database
         }
 
         // TODO: third parameter for the Message (content, embed, avatar, username, maybe buttons at some point)
-        public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionCreateRequest request)
+        public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request, MessageRequest message)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
-            Subscription announcement = new()
+            Subscription subscription = new()
             {
                 GuildId = guildId,
                 WebhookUrl = request.WebhookUrl,
                 ChannelId = request.ChannelId,
-                SubscriptionType = request.AnnouncementType,
+                SubscriptionType = request.SubscriptionType,
             };
-            ctx.Subscriptions.Add(announcement);
+            ctx.Subscriptions.Add(subscription);
+            
             await ctx.SaveChangesAsync();
             return new SubscriptionResponse()
             {
-                Id = announcement.Id,
-                AnnouncementType = announcement.SubscriptionType,
-                ChannelId = announcement.ChannelId,
+                Id = subscription.Id,
+                AnnouncementType = subscription.SubscriptionType,
+                ChannelId = subscription.ChannelId,
             };
         }
 

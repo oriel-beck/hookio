@@ -7,5 +7,8 @@ namespace Hookio.Database
     {
         public DbSet<User> Users {  get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Embed> Embeds { get; set; }
+        public DbSet<EmbedField> EmbedFields { get; set; }
     }
 }
