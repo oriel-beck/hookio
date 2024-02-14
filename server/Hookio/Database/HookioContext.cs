@@ -10,5 +10,22 @@ namespace Hookio.Database
         public DbSet<Message> Messages { get; set; }
         public DbSet<Embed> Embeds { get; set; }
         public DbSet<EmbedField> EmbedFields { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.Message)
+                .WithOne(m => m.Subscription)
+                .HasForeignKey<Message>(m => m.SubscriptionId);
+
+            modelBuilder.Entity<Message>()
+                .HasMany(m => m.Embeds)
+                .WithOne(e => e.Message)
+                .HasForeignKey(e => e.MessageId);
+
+            modelBuilder.Entity<Embed>()
+                .HasMany(e => e.Fields)
+                .WithOne(f => f.Embed)
+                .HasForeignKey(f => f.EmbedId);
+        }
     }
 }

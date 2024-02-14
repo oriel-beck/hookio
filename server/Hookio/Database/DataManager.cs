@@ -120,36 +120,152 @@ namespace Hookio.Database
         public async Task<SubscriptionResponse?> GetSubscriptionById(int id)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
-            var announcement = await ctx.Subscriptions.FirstOrDefaultAsync(a => a.Id == id);
-            return announcement is null ? null : new SubscriptionResponse()
-            {
-                Id = announcement.Id,
-                AnnouncementType = announcement.SubscriptionType,
-                ChannelId = announcement.ChannelId,
-                // embed todo
-            };
-        }
 
-        // TODO: third parameter for the Message (content, embed, avatar, username, maybe buttons at some point)
-        public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request, MessageRequest message)
-        {
-            var ctx = await contextFactory.CreateDbContextAsync();
-            Subscription subscription = new()
+            var subscription = await ctx.Subscriptions
+                .Include(s => s.Message)
+                    .ThenInclude(m => m!.Embeds)
+                        .ThenInclude(e => e.Fields)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (subscription == null)
             {
-                GuildId = guildId,
-                WebhookUrl = request.WebhookUrl,
-                ChannelId = request.ChannelId,
-                SubscriptionType = request.SubscriptionType,
-            };
-            ctx.Subscriptions.Add(subscription);
-            
-            await ctx.SaveChangesAsync();
-            return new SubscriptionResponse()
+                return null; // Subscription not found
+            }
+
+            return new SubscriptionResponse
             {
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
                 ChannelId = subscription.ChannelId,
+                Message = MapToMessageResponse(subscription.Message)
             };
+        }
+
+        private MessageResponse? MapToMessageResponse(Message? message)
+        {
+            if (message == null)
+            {
+                return null; // Message not found
+            }
+
+            return new MessageResponse
+            {
+                Content = message.Content,
+                Embeds = message.Embeds.Select(MapToEmbedResponse).ToList(),
+                // TODO: Set Username and Avatar properties
+            };
+        }
+
+        private EmbedResponse MapToEmbedResponse(Entities.Embed embed)
+        {
+            return new EmbedResponse
+            {
+                Description = embed.Description,
+                Url = embed.Url,
+                Title = embed.Title,
+                Color = embed.Color,
+                Image = embed.Image,
+                Author = embed.Author,
+                AuthorIcon = embed.AuthorIcon,
+                Footer = embed.Footer,
+                FooterIcon = embed.FooterIcon,
+                Thumbnail = embed.Thumbnail,
+                AddTimestamp = embed.AddTimestamp,
+                Fields = embed.Fields.Select(MapToEmbedFieldResponse).ToList()
+            };
+        }
+
+        private EmbedFieldResponse MapToEmbedFieldResponse(Entities.EmbedField field)
+        {
+            return new EmbedFieldResponse
+            {
+                Name = field.Name,
+                Value = field.Value,
+                Inline = field.Inline
+            };
+        }
+
+        // TODO: Add avatar and maybe buttons at some point
+        public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
+        {
+            if (!IsMessageValid(request.Message))
+            {
+                return null;
+            }
+
+            using (var context = await contextFactory.CreateDbContextAsync())
+            {
+                using (var transaction = await context.Database.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        var subscription = new Subscription
+                        {
+                            GuildId = guildId,
+                            WebhookUrl = request.WebhookUrl,
+                            ChannelId = request.ChannelId,
+                            SubscriptionType = request.SubscriptionType
+                        };
+                        context.Subscriptions.Add(subscription);
+
+                        var message = new Message
+                        {
+                            Content = request.Message.Content,
+                            Subscription = subscription
+                        };
+                        context.Messages.Add(message);
+
+                        await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
+
+                        foreach (var embedRequest in request.Message.Embeds)
+                        {
+                            var embed = new Entities.Embed
+                            {
+                                Description = embedRequest.Description,
+                                Url = embedRequest.Url,
+                                Title = embedRequest.Title,
+                                Color = embedRequest.Color,
+                                Image = embedRequest.Image,
+                                Author = embedRequest.Author,
+                                AuthorIcon = embedRequest.AuthorIcon,
+                                Thumbnail = embedRequest.Thumbnail,
+                                Message = message // Set Message navigation property
+                            };
+                            context.Embeds.Add(embed);
+
+                            await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedId
+
+                            foreach (var embedFieldRequest in embedRequest.Fields)
+                            {
+                                var embedField = new Entities.EmbedField
+                                {
+                                    Name = embedFieldRequest.Name,
+                                    Value = embedFieldRequest.Value,
+                                    Inline = embedFieldRequest.Inline,
+                                    Embed = embed // Set Embed navigation property
+                                };
+                                context.EmbedFields.Add(embedField);
+                            }
+                        }
+
+                        await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
+
+                        await transaction.CommitAsync();
+
+                        return new SubscriptionResponse
+                        {
+                            Id = subscription.Id,
+                            AnnouncementType = subscription.SubscriptionType,
+                            ChannelId = subscription.ChannelId
+                        };
+                    }
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync();
+                        throw; // Re-throw the exception for handling at a higher level
+                    }
+                }
+            }
         }
 
         public async Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider)
@@ -174,6 +290,24 @@ namespace Hookio.Database
 
             return [.. subscriptions];
         }
+
+        private static bool IsMessageValid(MessageRequest message)
+        {
+            // TODO: validate if the embed is valid (has description/title/fields)
+            int count = message.Content.Length;
+            foreach (EmbedRequest embedRequest in message.Embeds) 
+            {
+                count += embedRequest.Length;
+                foreach (EmbedFieldRequest embedField in embedRequest.Fields)
+                {
+                    if (embedField.Name.Length > EmbedFieldBuilder.MaxFieldNameLength) return false;
+                    if (embedField.Value.Length >  EmbedFieldBuilder.MaxFieldValueLength) return false;
+                }
+            }
+            if (count > 5500) return false;
+            return true;
+        }
+
         #endregion
     }
 }

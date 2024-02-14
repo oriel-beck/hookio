@@ -3,6 +3,7 @@ using System;
 using Hookio.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hookio.Migrations
 {
     [DbContext(typeof(HookioContext))]
-    partial class HookioContextModelSnapshot : ModelSnapshot
+    [Migration("20240214080348_connectAllEntities")]
+    partial class connectAllEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -171,6 +174,9 @@ namespace Hookio.Migrations
 
                     b.Property<DateTimeOffset>("ExpireAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Premium")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("PremiumExpires")
                         .HasColumnType("timestamp with time zone");

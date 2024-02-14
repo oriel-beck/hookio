@@ -1,6 +1,5 @@
 ﻿using Discord;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hookio.Database.Entities
 {
@@ -8,10 +7,9 @@ namespace Hookio.Database.Entities
     {
         [Key]
         public int Id { get; set; }
-
-        public string? Content { get; set; }
-        public int AnnouncementId {  get; set; }
-        [ForeignKey("AnnouncementId")]
-        public Subscription? Announcement { get; set; }
+        public string Content { get; set; }
+        public int SubscriptionId { get; set; }
+        public Subscription Subscription { get; set; }
+        public List<Embed> Embeds { get; set; }
     }
 }

@@ -1,12 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Hookio.Database.Entities
+﻿namespace Hookio.Contracts
 {
-    public class Embed
+    public class EmbedResponse
     {
-        [Key]
-        public int Id { get; set; }
         public string? Description { get; set; }
         public string? Url { get; set; }
         public string? Title { get; set; }
@@ -18,10 +13,6 @@ namespace Hookio.Database.Entities
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }
         public bool AddTimestamp { get; set; }
-        public int MessageId { get; set; }
-
-        [ForeignKey("MessageId")]
-        public Message Message { get; set; }
-        public List<EmbedField> Fields { get; set; }
+        public List<EmbedFieldResponse> Fields { get; set; } = [];
     }
 }

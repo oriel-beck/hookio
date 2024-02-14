@@ -1,11 +1,13 @@
 ﻿using Hookio.Enunms;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hookio.Database.Entities
 {
     [PrimaryKey("Id")]
     [Index("GuildId")]
+    [Index("SubscriptionType")]
     public class Subscription
     {
         [Key]
@@ -13,8 +15,9 @@ namespace Hookio.Database.Entities
         public ulong GuildId { get; set; }
         public SubscriptionType SubscriptionType { get; set; }
         public string WebhookUrl { get; set; }
-        // The name/identifier of the channel (yt, twitch, kick, etc) the announcement is linked to
         public string ChannelId { get; set; }
-        // data sent to discord
+        public int MessageId { get; set; }
+        public Message? Message { get; set; }
     }
+
 }

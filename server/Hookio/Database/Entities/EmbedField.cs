@@ -13,7 +13,8 @@ namespace Hookio.Database.Entities
         public string Value { get; set; }
         public bool Inline { get; set; }
         public int EmbedId { get; set; }
+
         [ForeignKey("EmbedId")]
-        public Embed? Embed { get; set; }
+        public Embed Embed { get; set; }
     }
 }

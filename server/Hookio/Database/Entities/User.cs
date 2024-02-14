@@ -14,7 +14,13 @@ namespace Hookio.Database.Entities
         public string RefreshToken { get; set; }
         [Required]
         public DateTimeOffset ExpireAt { get; set; }
-        public int Premium { get; set; } = 0;
+        public bool Premium
+        {
+            get
+            {
+                return PremiumExpires is not null && PremiumExpires > DateTimeOffset.UtcNow;
+            }
+        }
         public DateTimeOffset? PremiumExpires { get; set; }
     }
 }
