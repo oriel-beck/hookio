@@ -12,12 +12,14 @@ namespace Hookio.Database.Entities
     {
         [Key]
         public int Id { get; set; }
+        [Required]
         public ulong GuildId { get; set; }
         public SubscriptionType SubscriptionType { get; set; }
+        [Required]
         public string WebhookUrl { get; set; }
+        [Required]
         public string ChannelId { get; set; }
-        public int MessageId { get; set; }
-        public Message? Message { get; set; }
+        public List<Message> Messages { get; set; }
     }
 
 }

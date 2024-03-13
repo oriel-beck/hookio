@@ -122,7 +122,7 @@ namespace Hookio.Database
             var ctx = await contextFactory.CreateDbContextAsync();
 
             var subscription = await ctx.Subscriptions
-                .Include(s => s.Message)
+                .Include(s => s.Messages)
                     .ThenInclude(m => m!.Embeds)
                         .ThenInclude(e => e.Fields)
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -137,17 +137,12 @@ namespace Hookio.Database
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
                 ChannelId = subscription.ChannelId,
-                Message = MapToMessageResponse(subscription.Message)
+                Messages = subscription.Messages.Select(MapToMessageResponse).ToList(),
             };
         }
 
-        private MessageResponse? MapToMessageResponse(Message? message)
+        private MessageResponse MapToMessageResponse(Message message)
         {
-            if (message == null)
-            {
-                return null; // Message not found
-            }
-
             return new MessageResponse
             {
                 Content = message.Content,

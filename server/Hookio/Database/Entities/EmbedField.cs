@@ -12,9 +12,8 @@ namespace Hookio.Database.Entities
         [Required]
         public string Value { get; set; }
         public bool Inline { get; set; }
+        [ForeignKey("Embed")]
         public int EmbedId { get; set; }
-
-        [ForeignKey("EmbedId")]
         public Embed Embed { get; set; }
     }
 }

@@ -119,8 +119,7 @@ namespace Hookio.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubscriptionId")
-                        .IsUnique();
+                    b.HasIndex("SubscriptionId");
 
                     b.ToTable("Messages");
                 });
@@ -139,9 +138,6 @@ namespace Hookio.Migrations
 
                     b.Property<decimal>("GuildId")
                         .HasColumnType("numeric(20,0)");
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("integer");
 
                     b.Property<int>("SubscriptionType")
                         .HasColumnType("integer");
@@ -209,8 +205,8 @@ namespace Hookio.Migrations
             modelBuilder.Entity("Hookio.Database.Entities.Message", b =>
                 {
                     b.HasOne("Hookio.Database.Entities.Subscription", "Subscription")
-                        .WithOne("Message")
-                        .HasForeignKey("Hookio.Database.Entities.Message", "SubscriptionId")
+                        .WithMany("Messages")
+                        .HasForeignKey("SubscriptionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -229,7 +225,7 @@ namespace Hookio.Migrations
 
             modelBuilder.Entity("Hookio.Database.Entities.Subscription", b =>
                 {
-                    b.Navigation("Message");
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

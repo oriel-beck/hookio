@@ -18,9 +18,8 @@ namespace Hookio.Database.Entities
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }
         public bool AddTimestamp { get; set; }
+        [ForeignKey("Message")]
         public int MessageId { get; set; }
-
-        [ForeignKey("MessageId")]
         public Message Message { get; set; }
         public List<EmbedField> Fields { get; set; }
     }
