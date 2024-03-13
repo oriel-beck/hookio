@@ -29,6 +29,19 @@ namespace Hookio.Controllers
             return Ok(await dataManager.GetUser(userId));
         }
 
+        [HttpPost("logout")]
+        public IActionResult LogOut()
+        {
+            HttpContext.Response.Cookies.Append("Authorization", "", new()
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow,
+                SameSite = SameSiteMode.Strict
+            });
+            return NoContent();
+        }
+        
+
         [HttpPost("authenticate/{code}")]
         public async Task<ActionResult<CurrentUserResponse>> Authenticate(string code)
         {
