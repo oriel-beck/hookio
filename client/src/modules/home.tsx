@@ -1,5 +1,7 @@
 export default function Home() {
     return (
-        <>This is home</>
+        <div className="text-white flex-auto">
+            This is home
+        </div>
     )
 }

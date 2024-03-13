@@ -12,6 +12,8 @@ import LoginGuard from './modules/guard.tsx';
 import ProviderSelection from './modules/provider-selection.tsx';
 import SubscriptionsManager from './modules/subscriptions-manager.tsx';
 import getAllSubscriptions from './loaders/get-all-subscriptions.ts';
+import SubscriptionEditor from './modules/subscription-editor.tsx';
+import getSubscription from './loaders/get-subscription.ts';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +38,15 @@ const router = createBrowserRouter([
         path: "servers/:serverId/:provider",
         loader: getAllSubscriptions,
         element: <LoginGuard><SubscriptionsManager /></LoginGuard>
+      },
+      {
+        path: "servers/:serverId/:provider/new",
+        element: <LoginGuard><SubscriptionEditor /></LoginGuard>
+      },
+      {
+        path: "servers/:serverId/:provider/:subscriptionId",
+        loader: getSubscription,
+        element: <LoginGuard><SubscriptionEditor /></LoginGuard>
       }
     ]
   }

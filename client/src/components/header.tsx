@@ -1,66 +1,62 @@
+import { useNavigate } from "react-router-dom";
 import { User } from "../types/types"
-import { useCallback, useEffect, useState } from "react";
 
 export default function Header({ user, showLogin = true }: { user: User | null, showLogin?: boolean }) {
+    const navigate = useNavigate();
     // TODO: use a proper redirect URL in prod
-    const discordAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=1198355601990893688&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2F&scope=identify+guilds+email&prompt=none";
-    const [open, setOpen] = useState(false);
+    const discordAuthUrl = import.meta.env.VITE_DISCORD_LOGIN_URL;
 
-    const handleOutsideClick = useCallback((event: MouseEvent) => {
-        if ((event.target as HTMLElement).parentElement?.id === "clickable") return;
-        setOpen(false)
-    }, []);
-
-    useEffect(() => {
-        window.addEventListener("click", handleOutsideClick);
-        return () => {
-            window.removeEventListener("click", handleOutsideClick);
-        }
-    })
+    const onNavClick = (href: string) => navigate(href)
+    const logOut = async () => {
+        await fetch("/api/users/logout", { method: "POST" });
+        navigate("/?logout=true")
+    }
 
     return (
-        <header className="w-full h-14 flex flex-row items-center bg-zinc-800 text-white">
-            <h1 className="ml-3 text-xl">Hookio</h1>
+        <header className="w-full h-14 flex flex-row items-center bg-neutral-950 bg-opacity-70 text-white z-10 relative flex-initial">
+            <h1 className="ml-3 text-2xl font-bold">
+                <a href="/">
+                    Hookio
+                </a>
+            </h1>
+            {user &&
+                <nav role="navigation">
+                    <ul className="ml-10">
+                        <li onClick={() => onNavClick("/servers")} className="cursor-pointer py-1.5 px-3 hover:bg-white hover:bg-opacity-20 rounded ext-white font-semibold text-md">
+                            Servers
+                        </li>
+                    </ul>
+                </nav>
+            }
             <span aria-hidden='true' className="flex flex-1"></span>
             <div className="pr-5">
                 {user
                     ?
-                    <div>
-                        <div aria-haspopup='true' aria-expanded={open} id="clickable" onClick={() => setOpen(!open)} className="cursor-pointer flex flex-row items-center space-x-3 font-bold" typeof="button">
-                            <span>{user.username}</span>
-                            <img src={user.avatar} alt={user.username} height={40} width={40} className="rounded-full" />
-
-                        </div>
-                        {open &&
-                            <div id="clickable" className="relative left-0">
-                                <div id="clickable" className="absolute rounded-md mt-0.5 w-32 bg-zinc-700">
-                                    <h2 className="flex rounded-t-md border-b-zinc-600 border-t-0 border-l-0 border-r-0 border-2 justify-center p-2 bg-zinc-950">Actions</h2>
-                                    <ul id="clickable">
-                                        <li className="cursor-pointer hover:opacity-90 hover:bg-zinc-800">
-                                            <a className="flex items-center px-3 p-2" href="/servers">
-                                                <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                                                </svg>
-                                                Servers
-                                            </a>
-                                        </li>
-                                        <li className="cursor-pointer hover:opacity-90 hover:bg-zinc-800">
-                                            <a className="flex items-center px-3 p-2" href="/logout">
-                                                <svg className="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
-                                                </svg>
-                                                Log out
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
+                    <div className="flex space-x-3 justify-center">
+                        <div>
+                            <div className="flex flex-row items-center space-x-3 font-bold">
+                                <img src={user.avatar} alt={user.username} height={40} width={40} className="rounded-full" />
                             </div>
-                        }
+                        </div>
+                        <button onClick={logOut} className="p-2 rounded-full hover:bg-white hover:bg-opacity-30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                className="feather feather-log-out">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </button>
                     </div>
                     :
                     <>
                         {showLogin &&
-                            <a href={discordAuthUrl} className="bg-transparent hover:bg-indigo-900 font-semibold py-1.5 px-4 border border-white hover:border-transparent rounded">Log in</a>
+                            <a href={discordAuthUrl} className="p-[2px] relative" style={{ appearance: 'button' }}>
+                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg" />
+                                <div className="px-5 py-1.5 bg-black rounded-[6px] relative group transition duration-200 text-white hover:bg-transparent">
+                                    Login
+                                </div>
+                            </a>
                         }
                     </>
                 }
