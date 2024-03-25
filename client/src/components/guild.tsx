@@ -24,7 +24,7 @@ export default function Guild({ guild }: Props) {
                     width={125}
                     height={125}
                 />
-                <h2 id={`label-for-${guild.id}`} className="text-white flex text-center">{guild.name}</h2>
+                <h2 id={`label-for-${guild.id}`} className="text-white flex text-center w-32 justify-center">{guild.name}</h2>
             </div>
         </li>
     )

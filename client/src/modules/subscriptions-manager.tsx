@@ -28,7 +28,7 @@ export default function SubscriptionsManager() {
                             }
                         />
                         <div className="flex flex-col justify-center items-center space-y-4 p-5 text-white">
-                            {/* subscription list */}
+                            {/* subscription list TODO: design*/}
                             <div>
                                 {subscriptions.map((sub) => (
                                     <>
@@ -38,24 +38,12 @@ export default function SubscriptionsManager() {
                             </div>
 
                             {/* Create subscription button */}
-                            {
-                                subscriptions.length
-                                    ?
-                                    // If there are any subs, move to the bottom left
-                                    <div className="flex justify-end w-full">
-                                        <button onClick={() => onClick()}>
-                                            Create new Subscription
-                                        </button>
-                                    </div>
-                                    :
-                                    // If there are no subs, go to the center of the screen
-                                    <div className="flex">
-                                        <button onClick={() => onClick()}>
-                                            Create new Subscription
-                                        </button>
-                                    </div>
-                            }
-
+                            {/* If there are any subs, move to the bottom left */}
+                            <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
+                                <button className="border border-white rounded py-2 px-4 hover:bg-gray-400 hover:bg-opacity-60 duration-75" onClick={() => onClick()}>
+                                    Create new Subscription
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -63,8 +51,3 @@ export default function SubscriptionsManager() {
         </Suspense>
     )
 }
-/*
-
-
-
-*/

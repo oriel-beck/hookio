@@ -2,6 +2,39 @@ import { useNavigate } from "react-router-dom";
 import ConfigureButton from "../components/configure-button";
 import PageHeader from "../components/page-heading";
 
+interface Provider {
+    name: string;
+    path: string;
+    color: string;
+    img: ProviderImage;
+}
+
+interface ProviderImage {
+    src: string;
+    width: number;
+}
+
+const providers: Provider[] = [
+    {
+        name: "Youtube",
+        path: "youtube",
+        color: "#ff0000",
+        img: {
+            src: "/youtube.webp",
+            width: 100
+        }
+    },
+    {
+        name: "Twitch",
+        path: "twitch",
+        color: "#6441A5",
+        img: {
+            src: "/twitch.png",
+            width: 80
+        }
+    }
+]
+
 export default function ProviderSelection() {
     const navigate = useNavigate();
     function selectProvider(provider: string) {
@@ -19,31 +52,21 @@ export default function ProviderSelection() {
                 }
             />
             <div className="flex flex-col justify-center items-center space-y-4 p-5 text-white">
-                <div onClick={() => selectProvider("youtube")} onKeyUp={(ev) => ev.key === "Enter" || ev.key === " " ? selectProvider("youtube") : null} className="border-white border p-5 rounded flex items-center space-x-4 w-full h-24 hover:border-indigo-400 focus:border-indigo-400 focus:border-2 hover:border-1 outline-none" role="button" tabIndex={0}>
-                    <img
-                        src="/youtube.webp"
-                        width={100}
-                        aria-labelledby="youtube"
-                    />
-                    <h3 id="youtube" className="text-4xl font-bold" style={{ color: '#ff0000' }}>Youtube</h3>
-                    <span className="flex flex-1"></span>
-                    <div className="flex justify-end">
-                        <ConfigureButton onClick={() => selectProvider("youtube")} />
+                {providers.map((provider) => (
+                    <div key={provider.name} onClick={() => selectProvider(provider.path)} onKeyUp={(ev) => ev.key === "Enter" || ev.key === " " ? selectProvider(provider.path) : null} className="border-white border-2 p-5 rounded flex items-center justify-center space-x-4 w-full h-24 hover:border-indigo-400 focus:border-indigo-400 focus:border-2 hover:border-1 outline-none" role="button" tabIndex={0}>
+                        <img
+                            src={provider.img.src}
+                            width={provider.img.width}
+                            className="mr-5"
+                            aria-labelledby={provider.name}
+                        />
+                        <h3 id={provider.name} className="text-4xl font-bold" style={{ color: provider.color }}>{provider.name}</h3>
+                        <span className="flex flex-1"></span>
+                        <div className="hidden md:flex justify-end">
+                            <ConfigureButton onClick={() => selectProvider(provider.path)} />
+                        </div>
                     </div>
-                </div>
-                <div onClick={() => selectProvider("youtube")} onKeyUp={(ev) => ev.key === "Enter" || ev.key === " " ? selectProvider("youtube") : null} className="border-white border-2 p-5 rounded flex items-center justify-center space-x-4 w-full h-24 hover:border-indigo-400 focus:border-indigo-400 focus:border-2 hover:border-1 outline-none" role="button" tabIndex={0}>
-                    <img
-                        src="/twitch.png"
-                        width={80}
-                        className="mr-5"
-                        aria-labelledby="twitch"
-                    />
-                    <h3 id="twitch" className="text-4xl font-bold" style={{ color: '#6441A5' }}>Twitch</h3>
-                    <span className="flex flex-1"></span>
-                    <div className="flex justify-end">
-                        <ConfigureButton onClick={() => selectProvider("twitch")} />
-                    </div>
-                </div>
+                ))}
             </div>
         </div>
     )

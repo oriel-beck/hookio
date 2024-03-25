@@ -13,7 +13,7 @@ export default function Layout({ user }: { user: User }) {
     return (
         <>
             <Header user={user} />
-            <main className="relative z-10 h-full flex-auto flex flex-col">
+            <main className="z-10 h-full flex flex-col flex-auto">
                 <Outlet context={user} />
             </main>
             <BackgroundBeams />

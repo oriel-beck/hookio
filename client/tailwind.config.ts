@@ -1,5 +1,6 @@
 import flattenPalette from "tailwindcss/lib/util/flattenColorPalette";
 import aspectRatio from "@tailwindcss/aspect-ratio"
+import tailwindScrollbar from 'tailwind-scrollbar';
 
 const {
   default: flattenColorPalette,
@@ -10,7 +11,7 @@ export default {
   content: ["./src/**/*.{ts,tsx}"],
   darkMode: "class",
   theme: {},
-  plugins: [aspectRatio, addVariablesForColors],
+  plugins: [aspectRatio, addVariablesForColors, tailwindScrollbar({ nocompatible: true, preferredStrategy: 'pseudoelements' })],
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
