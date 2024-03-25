@@ -1,17 +1,23 @@
 ﻿using Discord;
+using Microsoft.AspNetCore.Components.Routing;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Contracts
 {
     public class EmbedFieldRequest
     {
-        public string Name { get; set; }
-        public string Value { get; set; }
+        [Required]
+        [MaxLength(256)]
+        public required string Name { get; set; }
+        [Required]
+        [MaxLength(1024)]
+        public required string Value { get; set; }
         public bool Inline { get; set; }
-        public bool IsValid
+        public int Length
         {
             get
             {
-                return Value.Length <= EmbedFieldBuilder.MaxFieldValueLength && Name.Length <= EmbedFieldBuilder.MaxFieldNameLength;
+                return Name.Length + Value.Length;
             }
         }
     }

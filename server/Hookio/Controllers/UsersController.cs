@@ -4,6 +4,7 @@ using Hookio.Database.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -71,9 +72,13 @@ namespace Hookio.Controllers
                 var user = client.CurrentUser;
                 user ??= await client.GetCurrentUserAsync();
 
+                await dataManager.CreateUser(client, result);
+                var currentUser = await dataManager.GetUser(user.Id);
+
                 var claims = new Claim[]
                 {
-                    new("id", user.Id.ToString())
+                    new("id", user.Id.ToString()),
+                    new("guilds", JsonConvert.SerializeObject(currentUser?.Guilds.Select(g => g.Id)))
                 };
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -93,8 +98,6 @@ namespace Hookio.Controllers
                     Expires = DateTime.UtcNow.AddHours(12),
                     SameSite = SameSiteMode.Strict
                 });
-                await dataManager.CreateUser(client, result);
-                var currentUser = await dataManager.GetUser(user.Id);
                 return Ok(currentUser);
             } catch (Exception ex)
             {

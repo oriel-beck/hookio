@@ -28,7 +28,7 @@ namespace Hookio.Database
             var accessToken = await GetAccessToken(userId);
             var client = new DiscordRestClient();
             await client.LoginAsync(TokenType.Bearer, accessToken);
-            return await ToUserContract(client);
+            return await ToContract(client);
         }
 
         public async Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token)
@@ -86,34 +86,6 @@ namespace Hookio.Database
                 return currentUser.AccessToken;
             }
         }
-
-        private async Task<CurrentUserResponse?> ToUserContract(DiscordRestClient client)
-        {
-            var user = client.CurrentUser;
-            user ??= await client.GetCurrentUserAsync();
-            if (user == null) return null;
-            var currentUser = new CurrentUserResponse()
-            {
-                Discriminator = user.Discriminator,
-                Id = user.Id,
-                Username = user.GlobalName is null ? user.Username : user.GlobalName,
-                // TODO: implement premium in the DB
-                Premium = 0,
-                Avatar = user.GetAvatarUrl(),
-                Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
-                {
-                    Id = guild.Id.ToString(),
-                    Name = guild.Name,
-                    Icon = guild.IconUrl is null ? "fallback" : guild.IconUrl,
-                }).ToList()
-            };
-            return currentUser;
-        }
-
-        public Task<bool> CanUserAccessGuild(ulong userId, ulong guildId)
-        {
-            throw new NotImplementedException();
-        }
         #endregion
 
         #region announcements
@@ -147,7 +119,8 @@ namespace Hookio.Database
             {
                 Content = message.Content,
                 Embeds = message.Embeds.Select(MapToEmbedResponse).ToList(),
-                // TODO: Set Username and Avatar properties
+                Avatar = message.webhookAvatar,
+                Username = message.webhookUsername,
             };
         }
 
@@ -155,12 +128,14 @@ namespace Hookio.Database
         {
             return new EmbedResponse
             {
+                Id = embed.Id,
                 Description = embed.Description,
-                Url = embed.Url,
+                TitleUrl = embed.TitleUrl,
                 Title = embed.Title,
                 Color = embed.Color,
                 Image = embed.Image,
                 Author = embed.Author,
+                AuthorUrl = embed.AuthorUrl,
                 AuthorIcon = embed.AuthorIcon,
                 Footer = embed.Footer,
                 FooterIcon = embed.FooterIcon,
@@ -174,6 +149,7 @@ namespace Hookio.Database
         {
             return new EmbedFieldResponse
             {
+                Id = field.Id,
                 Name = field.Name,
                 Value = field.Value,
                 Inline = field.Inline
@@ -183,83 +159,89 @@ namespace Hookio.Database
         // TODO: Add avatar and maybe buttons at some point
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
-            if (!IsMessageValid(request.Message))
+            using var context = await contextFactory.CreateDbContextAsync();
+            using var transaction = await context.Database.BeginTransactionAsync();
+            int length = 0;
+            try
             {
-                return null;
-            }
-
-            using (var context = await contextFactory.CreateDbContextAsync())
-            {
-                using (var transaction = await context.Database.BeginTransactionAsync())
+                var subscription = new Subscription
                 {
-                    try
+                    GuildId = guildId,
+                    WebhookUrl = request.WebhookUrl,
+                    ChannelId = request.ChannelId,
+                    SubscriptionType = request.SubscriptionType,
+                };
+                context.Subscriptions.Add(subscription);
+
+                var message = new Message
+                {
+                    Content = request.Message.Content,
+                    Subscription = subscription,
+                    webhookUsername = request.Message.Username,
+                    webhookAvatar = request.Message.Avatar,
+                };
+                context.Messages.Add(message);
+                length += request.Message.Content.Length;
+
+                await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
+
+                foreach (var embedRequest in request.Message.Embeds)
+                {
+                    var embed = new Entities.Embed
                     {
-                        var subscription = new Subscription
-                        {
-                            GuildId = guildId,
-                            WebhookUrl = request.WebhookUrl,
-                            ChannelId = request.ChannelId,
-                            SubscriptionType = request.SubscriptionType
-                        };
-                        context.Subscriptions.Add(subscription);
+                        Description = embedRequest.Description,
+                        TitleUrl = embedRequest.TitleUrl,
+                        Title = embedRequest.Title,
+                        Color = embedRequest.Color,
+                        Image = embedRequest.Image,
+                        Author = embedRequest.Author,
+                        AuthorUrl = embedRequest.AuthorUrl,
+                        AuthorIcon = embedRequest.AuthorIcon,
+                        Thumbnail = embedRequest.Thumbnail,
+                        Footer = embedRequest.Footer,
+                        FooterIcon = embedRequest.FooterIcon,
+                        Message = message // Set Message navigation property
+                    };
+                    context.Embeds.Add(embed);
+                    length += embedRequest.Length;
 
-                        var message = new Message
-                        {
-                            Content = request.Message.Content,
-                            Subscription = subscription
-                        };
-                        context.Messages.Add(message);
+                    await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedId
 
-                        await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
-
-                        foreach (var embedRequest in request.Message.Embeds)
-                        {
-                            var embed = new Entities.Embed
-                            {
-                                Description = embedRequest.Description,
-                                Url = embedRequest.Url,
-                                Title = embedRequest.Title,
-                                Color = embedRequest.Color,
-                                Image = embedRequest.Image,
-                                Author = embedRequest.Author,
-                                AuthorIcon = embedRequest.AuthorIcon,
-                                Thumbnail = embedRequest.Thumbnail,
-                                Message = message // Set Message navigation property
-                            };
-                            context.Embeds.Add(embed);
-
-                            await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedId
-
-                            foreach (var embedFieldRequest in embedRequest.Fields)
-                            {
-                                var embedField = new Entities.EmbedField
-                                {
-                                    Name = embedFieldRequest.Name,
-                                    Value = embedFieldRequest.Value,
-                                    Inline = embedFieldRequest.Inline,
-                                    Embed = embed // Set Embed navigation property
-                                };
-                                context.EmbedFields.Add(embedField);
-                            }
-                        }
-
-                        await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
-
-                        await transaction.CommitAsync();
-
-                        return new SubscriptionResponse
-                        {
-                            Id = subscription.Id,
-                            AnnouncementType = subscription.SubscriptionType,
-                            ChannelId = subscription.ChannelId
-                        };
-                    }
-                    catch (Exception)
+                    foreach (var embedFieldRequest in embedRequest.Fields)
                     {
-                        await transaction.RollbackAsync();
-                        throw; // Re-throw the exception for handling at a higher level
+                        var embedField = new Entities.EmbedField
+                        {
+                            Name = embedFieldRequest.Name,
+                            Value = embedFieldRequest.Value,
+                            Inline = embedFieldRequest.Inline,
+                            Embed = embed // Set Embed navigation property
+                        };
+                        context.EmbedFields.Add(embedField);
+                        length += embedFieldRequest.Length;
                     }
                 }
+
+                if (length > 6000)
+                {
+                    await transaction.RollbackAsync();
+                    return null;
+                }
+
+                await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
+
+                await transaction.CommitAsync();
+
+                return new SubscriptionResponse
+                {
+                    Id = subscription.Id,
+                    AnnouncementType = subscription.SubscriptionType,
+                    ChannelId = subscription.ChannelId
+                };
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw; // Re-throw the exception for handling at a higher level
             }
         }
 
@@ -276,31 +258,85 @@ namespace Hookio.Database
                 query = query.Where(subscription => subscription.GuildId == guildId);
             }
 
+            query = query.Include(x => x.Messages).ThenInclude(m => m.Embeds).ThenInclude(e => e.Fields);
+
             var subscriptions = (await query.ToListAsync()).Select(subscription => new SubscriptionResponse
             {
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
                 ChannelId = subscription.ChannelId,
+                GuildId = guildId,
+                Messages = subscription.Messages.Select(ToContract).ToList()
             });
 
             return [.. subscriptions];
         }
+        #endregion
 
-        private static bool IsMessageValid(MessageRequest message)
+        #region contracts
+        private async Task<CurrentUserResponse?> ToContract(DiscordRestClient client)
         {
-            // TODO: validate if the embed is valid (has description/title/fields)
-            int count = message.Content.Length;
-            foreach (EmbedRequest embedRequest in message.Embeds) 
+            var user = client.CurrentUser;
+            user ??= await client.GetCurrentUserAsync();
+            if (user == null) return null;
+            var currentUser = new CurrentUserResponse()
             {
-                count += embedRequest.Length;
-                foreach (EmbedFieldRequest embedField in embedRequest.Fields)
+                Discriminator = user.Discriminator,
+                Id = user.Id,
+                Username = user.GlobalName is null ? user.Username : user.GlobalName,
+                // TODO: implement premium in the DB
+                Premium = 0,
+                Avatar = user.GetAvatarUrl(),
+                Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
                 {
-                    if (embedField.Name.Length > EmbedFieldBuilder.MaxFieldNameLength) return false;
-                    if (embedField.Value.Length >  EmbedFieldBuilder.MaxFieldValueLength) return false;
-                }
-            }
-            if (count > 5500) return false;
-            return true;
+                    Id = guild.Id.ToString(),
+                    Name = guild.Name,
+                    Icon = guild.IconUrl is null ? "fallback" : guild.IconUrl,
+                }).ToList()
+            };
+            return currentUser;
+        }
+
+        private MessageResponse ToContract(Message message)
+        {
+            return new MessageResponse
+            {
+                Content = message.Content,
+                Username = message.webhookUsername,
+                Avatar = message.webhookAvatar,
+                Embeds = message.Embeds.Select(ToContract).ToList()
+            };
+        }
+
+        private EmbedResponse ToContract(Entities.Embed embed)
+        {
+            return new EmbedResponse
+            {
+                Title = embed.Title,
+                TitleUrl = embed.TitleUrl,
+                Description = embed.Description,
+                Footer = embed.Footer,
+                FooterIcon = embed.FooterIcon,
+                Author = embed.Author,
+                AuthorUrl = embed.AuthorUrl,
+                AuthorIcon = embed.AuthorIcon,
+                Image = embed.Image,
+                Thumbnail = embed.Thumbnail,
+                AddTimestamp = embed.AddTimestamp,
+                Color = embed.Color,
+                Fields = embed.Fields.Select(ToContract).ToList()
+            };
+        }
+
+        private EmbedFieldResponse ToContract(Entities.EmbedField field)
+        {
+            return new EmbedFieldResponse
+            {
+                Id = field.Id,
+                Name = field.Name,
+                Value = field.Value,
+                Inline = field.Inline
+            };
         }
 
         #endregion

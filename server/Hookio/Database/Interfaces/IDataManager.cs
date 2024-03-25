@@ -12,7 +12,6 @@ namespace Hookio.Database.Interfaces
         public Task<CurrentUserResponse?> GetUser(ulong userId);
         public Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token);
         public Task<string?> GetAccessToken(ulong userId);
-        public Task<bool> CanUserAccessGuild(ulong userId, ulong guildId);
         #endregion
 
         #region announcements

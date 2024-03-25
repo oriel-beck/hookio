@@ -12,7 +12,9 @@ namespace Hookio.Database.Entities
         public int SubscriptionId { get; set; }
         public Subscription Subscription { get; set; }
         public List<Embed> Embeds { get; set; }
-        // TODO: add the event here so it will only get the message that is required for this event
+        public string? webhookUsername { get; set; }
+        public string? webhookAvatar { get; set; }
+        // TODO: add the event to the message so it will only get the message that is required for this event
         // YT events: new, edit, (delete?, can call it end to match but eh)
         // Twitch events: new, edit, end
     }

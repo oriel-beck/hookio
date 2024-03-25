@@ -3,6 +3,7 @@ using System;
 using Hookio.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,13 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hookio.Migrations
 {
     [DbContext(typeof(HookioContext))]
-    partial class HookioContextModelSnapshot : ModelSnapshot
+    [Migration("20240322144046_addMissingProperties")]
+    partial class addMissingProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.3")
+                .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -37,9 +40,6 @@ namespace Hookio.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorIcon")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AuthorUrl")
                         .HasColumnType("text");
 
                     b.Property<string>("Color")
@@ -66,7 +66,7 @@ namespace Hookio.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
-                    b.Property<string>("TitleUrl")
+                    b.Property<string>("Url")
                         .HasColumnType("text");
 
                     b.HasKey("Id");

@@ -11,32 +11,29 @@ namespace Hookio.Controllers
     public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
     {
         [HttpGet("{guildId}/{provider?}")]
-        public async Task<ActionResult<List<SubscriptionResponse>>> GetGuildSubscription([DiscordGuildId] string guildId, SubscriptionType? provider)
+        public async Task<ActionResult<List<SubscriptionResponse>>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? provider)
         {
-            // TODO: validate user can access this guildId
-            _ = ulong.TryParse(guildId, out var result);
-
-            var announcements = await dataManager.GetSubscriptions(result, provider);
+            if(!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
+            var announcements = await dataManager.GetSubscriptions(guildId, provider);
             logger.LogInformation($"[{nameof(GetGuildSubscription)}]: returned '{announcements?.Count}' announcements for '{guildId}'");
             return Ok(announcements);
         }
 
         [HttpPost("{guildId}")]
-        public async Task<ActionResult<SubscriptionResponse>> CreateSubscription([DiscordGuildId] string guildId)
+        public async Task<ActionResult<SubscriptionResponse>> CreateSubscription([DiscordGuildId] ulong guildId, SubscriptionRequest subscription)
         {
-            _ = ulong.TryParse(guildId, out var result);
-            // TODO: validate user can access this guildId
-
-
-            // TODO: subscribe to youtube provider, and create an announcement in the database, and validate the user can access this guildId
-            return Ok(true);
+            if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
+            // TODO: subscribe to selected provider
+            var subscriptionResult = await dataManager.CreateSubscription(guildId, subscription);
+            return Ok(subscriptionResult);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<SubscriptionResponse?>> GetGuildSubscription(int id)
         {
-            // TODO: validate user can access this guildId that owns this subscription
             var announcement = await dataManager.GetSubscriptionById(id);
+            if (announcement is not null && !Util.CanAccessGuild(HttpContext.User, announcement.GuildId)) return Unauthorized();
+
             return Ok(announcement);
         }
     }

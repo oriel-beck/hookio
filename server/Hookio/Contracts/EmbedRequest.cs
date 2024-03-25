@@ -1,14 +1,21 @@
-﻿namespace Hookio.Contracts
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Hookio.Contracts
 {
     public class EmbedRequest
     {
+        [MaxLength(4096)]
         public string? Description { get; set; }
-        public string? Url { get; set; }
+        public string? TitleUrl { get; set; }
+        [MaxLength(256)]
         public string? Title { get; set; }
         public string? Color { get; set; }
         public string? Image { get; set; }
+        [MaxLength(256)]
         public string? Author { get; set; }
+        public string? AuthorUrl { get; set; }
         public string? AuthorIcon { get; set; }
+        [MaxLength(2048)]
         public string? Footer { get; set; }
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }

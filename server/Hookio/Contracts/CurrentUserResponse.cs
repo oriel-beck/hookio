@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Hookio.Contracts
+﻿namespace Hookio.Contracts
 {
     public class CurrentUserResponse
     {
