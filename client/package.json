@@ -22,7 +22,8 @@
     "react-router-dom": "^6.21.3",
     "sass": "^1.70.0",
     "sort-by": "^1.2.0",
-    "tailwind-merge": "^2.2.1"
+    "tailwind-merge": "^2.2.1",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

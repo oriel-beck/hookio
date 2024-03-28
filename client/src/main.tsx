@@ -12,7 +12,7 @@ import LoginGuard from './modules/guard.tsx';
 import ProviderSelection from './modules/provider-selection.tsx';
 import SubscriptionsManager from './modules/subscriptions-manager.tsx';
 import getAllSubscriptions from './loaders/get-all-subscriptions.ts';
-import SubscriptionEditor from './modules/subscription-editor.tsx';
+import SubscriptionEditor from './modules/subscription-editor/editor.tsx';
 import getSubscription from './loaders/get-subscription.ts';
 
 const router = createBrowserRouter([

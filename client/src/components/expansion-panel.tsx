@@ -1,7 +1,9 @@
 import React, { SyntheticEvent, useState } from "react";
 import { HiOutlineArrowCircleDown, HiOutlineArrowCircleUp, HiOutlineChevronDown, HiOutlineMinusCircle, HiOutlinePlusCircle } from "react-icons/hi";
+import { IoWarningOutline } from "react-icons/io5";
 
 interface Props {
+    invalid?: boolean;
     label: string;
     index?: number;
     max?: number;
@@ -14,7 +16,7 @@ interface Props {
 }
 
 
-export default function ExpansionPanel({ label, max, length, index, children, movePanelUp, movePanelDown, removePanel, addPanel }: Props) {
+export default function ExpansionPanel({ invalid, label, max, length, index, children, movePanelUp, movePanelDown, removePanel, addPanel }: Props) {
     const [isOpen, open] = useState(false);
 
     const togglePanel = (ev: SyntheticEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>) => {
@@ -29,8 +31,9 @@ export default function ExpansionPanel({ label, max, length, index, children, mo
                     <button onClick={(ev) => togglePanel(ev)} className={`transition-transform duration-300 transform ${isOpen ? 'rotate-180' : ''}`}>
                         <HiOutlineChevronDown className="w-6 h-6 text-white" />
                     </button>
-                    <div className="flex-grow" onClick={(ev) => togglePanel(ev)}>
-                        {label} {index != undefined ? index + 1 : ""}
+                    <div className="flex-grow flex space-x-2" onClick={(ev) => togglePanel(ev)}>
+                        <span>{label} {index != undefined ? index + 1 : ""}</span>
+                        {invalid && <IoWarningOutline className="w-6 h-6 text-red-400" />}
                     </div>
                     {index !== undefined &&
                         <div className="flex items-center space-x-2">

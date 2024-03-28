@@ -50,3 +50,12 @@ export interface EmbedField {
   value: string;
   inline: boolean;
 }
+
+export interface EmbedFormInitialValues {
+  webhookUrl?: string;
+  url?: string;
+  content?: string;
+  username?: string;
+  avatar?: string;
+  embeds: Embed[];
+}
