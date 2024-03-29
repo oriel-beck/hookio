@@ -52,7 +52,7 @@ namespace Hookio.Controllers
                 new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "code", code },
-                    { "redirect_uri", "http://localhost:5173/" },
+                    { "redirect_uri", Environment.GetEnvironmentVariable("DISCORD_REDIRECT_URI") },
                     { "grant_type", "authorization_code" },
                     { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
                     { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
