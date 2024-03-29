@@ -53,7 +53,7 @@ export function TextArea({
                 <Limit limit={limit} length={field.value.length} />
             </div>
             <textarea
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-600"
+                className="shadow h-40 appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-600"
                 {...field}
                 {...props}
                 {...(limit && { maxLength: limit })}

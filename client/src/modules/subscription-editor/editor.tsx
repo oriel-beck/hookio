@@ -78,7 +78,7 @@ export default function SubscriptionEditor() {
                             }
                         />
                         {/* subscription editor and subscription embed, split screen */}
-                        <div className="flex-1 flex flex-col md:flex-row pt-5 md:max-h-[70vh] text-white">
+                        <div className="flex-1 flex flex-col md:flex-row pt-5 md:max-h-[77vh] text-white">
                             {/* Content for the first half (embed inputs) */}
                             <Formik
                                 // TODO: implement the event tabs so it will use the correct message data for every event
