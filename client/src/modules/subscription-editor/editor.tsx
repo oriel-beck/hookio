@@ -7,46 +7,47 @@ import Loader from "../../components/loader";
 import PageHeader from "../../components/page-heading";
 import { Input, TextArea } from "../../components/input";
 import type { EmbedFormInitialValues, Subscription } from "../../types/types";
-import * as Yup from 'yup'
+import * as Yup from 'yup';
+import * as sanitizeHtml from 'sanitize-html';
 
 export default function SubscriptionEditor() {
     const data = useLoaderData() as { subscriptions: Promise<Subscription> };
     const validationSchema: Yup.ObjectSchema<EmbedFormInitialValues> = Yup.object({
-        webhookUrl: Yup.string().url().test({
+        webhookUrl: Yup.string().transform(sanitizeHtml).url().test({
             test(url, ctx) {
                 // TODO: validate webhook url
                 return true;
             }
         }),
-        url: Yup.string().url().required().test({
+        url: Yup.string().transform(sanitizeHtml).url().required().test({
             test(url, ctx) {
                 // TODO: validate url based on provider (youtube url, twitch url, etc)
                 return true;
             }
         }),
-        content: Yup.string().optional(),
-        username: Yup.string().optional(),
-        avatar: Yup.string().optional().url(),
+        content: Yup.string().transform(sanitizeHtml).optional(),
+        username: Yup.string().transform(sanitizeHtml).optional(),
+        avatar: Yup.string().transform(sanitizeHtml).optional().url(),
         embeds: Yup.array().of(
             Yup.object({
                 id: Yup.number().required(),
-                description: Yup.string().optional(),
-                title: Yup.string().optional(),
-                titleUrl: Yup.string().optional().url(),
-                author: Yup.string().optional(),
-                authorUrl: Yup.string().optional().url(),
-                authorIcon: Yup.string().optional().url(),
-                color: Yup.string().optional(),
-                image: Yup.string().optional().url(),
-                footer: Yup.string().optional(),
-                footerIcon: Yup.string().optional().url(),
-                thumbnail: Yup.string().optional().url(),
+                description: Yup.string().transform(sanitizeHtml).optional(),
+                title: Yup.string().transform(sanitizeHtml).optional(),
+                titleUrl: Yup.string().transform(sanitizeHtml).optional().url(),
+                author: Yup.string().transform(sanitizeHtml).optional(),
+                authorUrl: Yup.string().transform(sanitizeHtml).optional().url(),
+                authorIcon: Yup.string().transform(sanitizeHtml).optional().url(),
+                color: Yup.string().transform(sanitizeHtml).optional(),
+                image: Yup.string().transform(sanitizeHtml).optional().url(),
+                footer: Yup.string().transform(sanitizeHtml).optional(),
+                footerIcon: Yup.string().transform(sanitizeHtml).optional().url(),
+                thumbnail: Yup.string().transform(sanitizeHtml).optional().url(),
                 addTimestamp: Yup.boolean().required(),
                 fields: Yup.array().of(
                     Yup.object({
                         id: Yup.number().required(),
-                        name: Yup.string().required(),
-                        value: Yup.string().required(),
+                        name: Yup.string().transform(sanitizeHtml).required(),
+                        value: Yup.string().transform(sanitizeHtml).required(),
                         inline: Yup.boolean().required(),
                     })
                 ).required()
@@ -122,7 +123,7 @@ export default function SubscriptionEditor() {
                                                 </button>
                                             </form>
                                         </div>
-                                        <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto">
+                                        <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300">
                                             {/* Content for the second half (embed preview)*/}
                                             <EmbedPreview />
                                         </div>
