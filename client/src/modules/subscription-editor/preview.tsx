@@ -34,7 +34,7 @@ export default function EmbedPreview() {
                 }
                 {/* TODO: demo image */}
                 {formik.values?.embeds.map((embed) => (
-                    <Embed embed={embed} />
+                    <Embed key={embed.id} embed={embed} />
                 ))}
             </div>
         </div>
@@ -83,65 +83,72 @@ function Embed({ embed }: { embed: EmbedType, }) {
 
 
     return (
-        <div className="flex mb-5 flex-col max-w-[432px] bg-[#2b2d31] w-fit px-4 py-3 rounded-sm border-l-4" style={{ borderColor: embed.color }}>
+        <div className="flex mb-5 flex-col max-w-[432px] bg-[#2b2d31] px-4 py-3 rounded-sm border-l-4 " style={{ borderColor: embed.color }}>
             {/* Top */}
             <div className="flex">
                 {/* Author, title, description, image */}
-                <div className="max-w-[300px]">
-                    {/* Author */}
-                    {embed.author &&
-                        <div className="flex items-center space-x-2 mb-1">
-                            {embed.authorIcon &&
-                                <img className="w-6 h-6 rounded-full" src={embed.authorIcon} alt="" />
+                <div>
+                    <div className="flex">
+                        <div className="flex flex-col">
+                            {/* Author */}
+                            {embed.author &&
+                                <div className="flex items-center space-x-2">
+                                    {embed.authorIcon &&
+                                        <img className="w-6 h-6 rounded-full object-contain" src={embed.authorIcon} alt="" />
+                                    }
+                                    {embed.authorUrl
+                                        ?
+                                        <a target="_blank" className="text-[14px] font-semibold mb-1 hover:underline w-fit" href={embed.authorUrl}>{embed.author}</a>
+                                        :
+                                        <span className="text-[14px] font-semibold w-fit">{embed.author}</span>
+                                    }
+                                </div>
                             }
-                            {embed.authorUrl
-                                ?
-                                <a className="font-semibold mb-1 hover:underline w-fit" href={embed.authorUrl}>{embed.author}</a>
-                                :
-                                <span className="font-semibold mb-1 w-fit">{embed.author}</span>
+                            {/* Title */}
+                            {embed.title &&
+                                <>
+                                    {embed.titleUrl
+                                        ?
+                                        <a target="_blank" className="text-[22px] font-semibold text-[#00a8fc] hover:underline w-fit" href={embed.titleUrl}>{embed.title}</a>
+                                        :
+                                        <span className="text-[22px] font-semibold w-fit">{embed.title}</span>
+                                    }
+                                </>
+                            }
+                            {/* Description */}
+                            {embed.description &&
+                                <p className="mt-[8px] text-sm break-words whitespace-pre-line text-pretty">{embed.description}</p>
                             }
                         </div>
-                    }
-                    {/* Title */}
-                    {embed.title &&
-                        <div className="mb-1 mt-1 w-fit">
-                            {embed.titleUrl
-                                ?
-                                <a className="font-semibold text-[#00a8fc] hover:underline w-fit" href={embed.titleUrl}>{embed.title}</a>
-                                :
-                                <span className="font-semibold w-fit">{embed.title}</span>
-                            }
-                        </div>
-                    }
-                    {/* Description */}
-                    {embed.description &&
-                        <p className="break-words whitespace-pre-line text-pretty">{embed.description}</p>
-                    }
+                        <span className="flex-auto"></span>
+                        {/* TODO: fix thumbnail placement https://discord.com/channels/745961266149064774/881253551341457509/1223260537169772584
+                Maybe add to the same row as author and title and use a spacer between? */}
+                        {/* Thumbnail */}
+                        {embed.thumbnail &&
+                            <img className="max-w-[80px] max-h-[80px] rounded object-contain self-start" src={embed.thumbnail} alt="" />
+                        }
+                    </div>
                     {!!embed.fields.length &&
-                        <div className="grid gap-1 my-4" style={{ gridColumn: '1/2' }}>
+                        <div className="grid gap-1 mt-[8px] text-sm" style={{ gridColumn: '1/2' }}>
                             {embed.fields.map((field) => (
                                 <div key={field.id} className="flex flex-col" style={{ gridColumn: getFieldGridColumn(embed, field) }}>
                                     <h3 className="font-semibold">{field.name}</h3>
-                                    <p>{field.value}</p>
+                                    <p className="font-normal">{field.value}</p>
                                 </div>
                             ))}
                         </div>
                     }
                     {/* Image */}
                     {embed.image &&
-                        <img className="max-h-[300px] mx-w-[400px] rounded" src={embed.image} alt="Embed Image" />
+                        <img className="mt-[16px] max-h-[300px] max-w-[400px] rounded object-contain" src={embed.image} alt="Embed Image" />
                     }
-                </div >
-                {/* Thumbnail */}
-                {embed.thumbnail &&
-                    <img className="max-w-[80px] max-h-[80px] rounded" src={embed.thumbnail} alt="" />
-                }
+                </div>
             </div>
             {/* Bottom (footer) */}
             {embed.footer &&
                 <div className="flex items-center space-x-2 mt-2">
                     {(embed.footerIcon && (embed.addTimestamp || embed.footer)) &&
-                        <img className="rounded-full w-6 h-6" src={embed.footerIcon} alt="Footer icon" />
+                        <img className="rounded-full w-6 h-6 object-contain" src={embed.footerIcon} alt="Footer icon" />
                     }
                     <span>{embed.footer}</span>
                     {embed.addTimestamp &&
