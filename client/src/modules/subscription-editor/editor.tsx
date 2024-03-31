@@ -1,4 +1,4 @@
-import { Await, useLoaderData } from "react-router-dom";
+import { Await, useLoaderData, useParams } from "react-router-dom";
 import { Suspense } from "react";
 import { Field, FieldArray, FieldProps, Formik, useFormikContext } from "formik";
 import EmbedForm from "./embed-form";
@@ -10,18 +10,33 @@ import type { EmbedFormInitialValues, Subscription } from "../../types/types";
 import * as Yup from 'yup';
 import * as sanitizeHtml from 'sanitize-html';
 
+const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
+const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
+const youtubeRegex = new RegExp("https?:\\/\\/(?:www\\.)?youtube\\.com\\/channel\\/[a-zA-Z0-9_-]{22}", "s");
+
 export default function SubscriptionEditor() {
     const data = useLoaderData() as { subscriptions: Promise<Subscription> };
+    const params = useParams();
+
     const validationSchema: Yup.ObjectSchema<EmbedFormInitialValues> = Yup.object({
         webhookUrl: Yup.string().transform(sanitizeHtml).url().test({
             test(url, ctx) {
-                // TODO: validate webhook url
+                if (!webhookRegex.test(url || "")) return ctx.createError({ message: "Invalid webhook URL" });
                 return true;
             }
         }),
         url: Yup.string().transform(sanitizeHtml).url().required().test({
             test(url, ctx) {
-                // TODO: validate url based on provider (youtube url, twitch url, etc)
+                switch (params['provider']) {
+                    // youtube
+                    case 'youtube':
+                        if (!youtubeRegex.test(url || "")) return ctx.createError({ message: "Invalid channel URL" })
+                        break;
+                    // twitch
+                    case 'twitch':
+                        if (!twitchRegex.test(url || "")) return ctx.createError({ message: "Invalid channel URL" })
+                        break;
+                }
                 return true;
             }
         }),
@@ -123,7 +138,7 @@ export default function SubscriptionEditor() {
                                                 </button>
                                             </form>
                                         </div>
-                                        <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300">
+                                        <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px]">
                                             {/* Content for the second half (embed preview)*/}
                                             <EmbedPreview />
                                         </div>
