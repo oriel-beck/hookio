@@ -24,6 +24,7 @@
     "sass": "^1.70.0",
     "sort-by": "^1.2.0",
     "tailwind-merge": "^2.2.1",
+    "vite-plugin-node-polyfills": "^0.21.0",
     "yup": "^1.4.0"
   },
   "devDependencies": {
