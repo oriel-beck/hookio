@@ -1,6 +1,6 @@
 ﻿namespace Hookio.Enunms
 {
-    public enum TriggerType
+    public enum EventType
     {
         YoutubeVideoUploaded,
         YoutubeVideoEdited,

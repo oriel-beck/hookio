@@ -10,5 +10,6 @@ namespace Hookio.Database
         public DbSet<Message> Messages { get; set; }
         public DbSet<Embed> Embeds { get; set; }
         public DbSet<EmbedField> EmbedFields { get; set; }
+        public DbSet<Event> Events { get; set; }
     }
 }

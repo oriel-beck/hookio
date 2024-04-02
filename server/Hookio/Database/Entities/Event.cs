@@ -1,0 +1,20 @@
+﻿using Hookio.Enunms;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Hookio.Database.Entities
+{
+    public class Event
+    {
+        [Key]
+        public int Id { get; set; }
+        public EventType Type { get; set; }
+        [ForeignKey("Message")]
+        public int MessageId { get; set; }
+        public Message Message { get; set; }
+        [ForeignKey("Subscription")]
+        public int SubscriptionId { get; set; }
+        public Subscription Subscription { get; set; }
+
+    }
+}

@@ -8,9 +8,6 @@ namespace Hookio.Database.Entities
         [Key]
         public int Id { get; set; }
         public string Content { get; set; }
-        [ForeignKey("Subscription")]
-        public int SubscriptionId { get; set; }
-        public Subscription Subscription { get; set; }
         public List<Embed> Embeds { get; set; }
         public string? webhookUsername { get; set; }
         public string? webhookAvatar { get; set; }

@@ -94,9 +94,10 @@ namespace Hookio.Database
             var ctx = await contextFactory.CreateDbContextAsync();
 
             var subscription = await ctx.Subscriptions
-                .Include(s => s.Messages)
-                    .ThenInclude(m => m!.Embeds)
-                        .ThenInclude(e => e.Fields)
+                .Include(s => s.Events)
+                    .ThenInclude(e => e.Message)
+                        .ThenInclude(m => m!.Embeds)
+                            .ThenInclude(e => e.Fields)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (subscription == null)
@@ -109,54 +110,11 @@ namespace Hookio.Database
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
                 ChannelId = subscription.ChannelId,
-                Messages = subscription.Messages.Select(MapToMessageResponse).ToList(),
+                Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
             };
         }
 
-        private MessageResponse MapToMessageResponse(Message message)
-        {
-            return new MessageResponse
-            {
-                Content = message.Content,
-                Embeds = message.Embeds.Select(MapToEmbedResponse).ToList(),
-                Avatar = message.webhookAvatar,
-                Username = message.webhookUsername,
-            };
-        }
-
-        private EmbedResponse MapToEmbedResponse(Entities.Embed embed)
-        {
-            return new EmbedResponse
-            {
-                Id = embed.Id,
-                Description = embed.Description,
-                TitleUrl = embed.TitleUrl,
-                Title = embed.Title,
-                Color = embed.Color,
-                Image = embed.Image,
-                Author = embed.Author,
-                AuthorUrl = embed.AuthorUrl,
-                AuthorIcon = embed.AuthorIcon,
-                Footer = embed.Footer,
-                FooterIcon = embed.FooterIcon,
-                Thumbnail = embed.Thumbnail,
-                AddTimestamp = embed.AddTimestamp,
-                Fields = embed.Fields.Select(MapToEmbedFieldResponse).ToList()
-            };
-        }
-
-        private EmbedFieldResponse MapToEmbedFieldResponse(Entities.EmbedField field)
-        {
-            return new EmbedFieldResponse
-            {
-                Id = field.Id,
-                Name = field.Name,
-                Value = field.Value,
-                Inline = field.Inline
-            };
-        }
-
-        // TODO: Add avatar and maybe buttons at some point
+        // TODO: Maybe add buttons at some point
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
             using var context = await contextFactory.CreateDbContextAsync();
@@ -173,52 +131,68 @@ namespace Hookio.Database
                 };
                 context.Subscriptions.Add(subscription);
 
-                var message = new Message
+                foreach (var eventRequest in request.Events)
                 {
-                    Content = request.Message.Content,
-                    Subscription = subscription,
-                    webhookUsername = request.Message.Username,
-                    webhookAvatar = request.Message.Avatar,
-                };
-                context.Messages.Add(message);
-                length += request.Message.Content.Length;
 
-                await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
-
-                foreach (var embedRequest in request.Message.Embeds)
-                {
-                    var embed = new Entities.Embed
+                    var eventEntity = new Event
                     {
-                        Description = embedRequest.Description,
-                        TitleUrl = embedRequest.TitleUrl,
-                        Title = embedRequest.Title,
-                        Color = embedRequest.Color,
-                        Image = embedRequest.Image,
-                        Author = embedRequest.Author,
-                        AuthorUrl = embedRequest.AuthorUrl,
-                        AuthorIcon = embedRequest.AuthorIcon,
-                        Thumbnail = embedRequest.Thumbnail,
-                        Footer = embedRequest.Footer,
-                        FooterIcon = embedRequest.FooterIcon,
-                        Message = message // Set Message navigation property
+                        Type = eventRequest.Key,
+                        Subscription = subscription
                     };
-                    context.Embeds.Add(embed);
-                    length += embedRequest.Length;
 
-                    await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedId
+                    context.Events.Add(eventEntity);
+                    await context.SaveChangesAsync(); // SaveChangesAsync to generate EventId
 
-                    foreach (var embedFieldRequest in embedRequest.Fields)
+                    var message = new Message
                     {
-                        var embedField = new Entities.EmbedField
+                        Content = eventRequest.Value.Message.Content,
+                        webhookUsername = eventRequest.Value.Message.Username,
+                        webhookAvatar = eventRequest.Value.Message.Avatar,
+                    };
+                    context.Messages.Add(message);
+                    length += eventRequest.Value.Message.Content.Length;
+                    
+                    eventEntity.Message = message;
+
+                    await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
+
+
+                    foreach (var embedRequest in eventRequest.Value.Message.Embeds)
+                    {
+                        var embed = new Entities.Embed
                         {
-                            Name = embedFieldRequest.Name,
-                            Value = embedFieldRequest.Value,
-                            Inline = embedFieldRequest.Inline,
-                            Embed = embed // Set Embed navigation property
+                            Description = embedRequest.Description,
+                            TitleUrl = embedRequest.TitleUrl,
+                            Title = embedRequest.Title,
+                            Color = embedRequest.Color,
+                            Image = embedRequest.Image,
+                            Author = embedRequest.Author,
+                            AuthorUrl = embedRequest.AuthorUrl,
+                            AuthorIcon = embedRequest.AuthorIcon,
+                            Thumbnail = embedRequest.Thumbnail,
+                            Footer = embedRequest.Footer,
+                            FooterIcon = embedRequest.FooterIcon,
+                            Message = message // Set Message navigation property
                         };
-                        context.EmbedFields.Add(embedField);
-                        length += embedFieldRequest.Length;
+                        context.Embeds.Add(embed);
+                        length += embedRequest.Length;
+
+                        await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedId
+
+                        foreach (var embedFieldRequest in embedRequest.Fields)
+                        {
+                            var embedField = new Entities.EmbedField
+                            {
+                                Name = embedFieldRequest.Name,
+                                Value = embedFieldRequest.Value,
+                                Inline = embedFieldRequest.Inline,
+                                Embed = embed // Set Embed navigation property
+                            };
+                            context.EmbedFields.Add(embedField);
+                            length += embedFieldRequest.Length;
+                        }
                     }
+                    
                 }
 
                 if (length > 6000)
@@ -258,7 +232,7 @@ namespace Hookio.Database
                 query = query.Where(subscription => subscription.GuildId == guildId);
             }
 
-            query = query.Include(x => x.Messages).ThenInclude(m => m.Embeds).ThenInclude(e => e.Fields);
+            query = query.Include(x => x.Events).ThenInclude(e => e.Message).ThenInclude(m => m.Embeds).ThenInclude(e => e.Fields);
 
             var subscriptions = (await query.ToListAsync()).Select(subscription => new SubscriptionResponse
             {
@@ -266,7 +240,7 @@ namespace Hookio.Database
                 AnnouncementType = subscription.SubscriptionType,
                 ChannelId = subscription.ChannelId,
                 GuildId = guildId,
-                Messages = subscription.Messages.Select(ToContract).ToList()
+                Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
             });
 
             return [.. subscriptions];
@@ -291,20 +265,20 @@ namespace Hookio.Database
                 {
                     Id = guild.Id.ToString(),
                     Name = guild.Name,
-                    Icon = guild.IconUrl is null ? "fallback" : guild.IconUrl,
+                    Icon = guild.IconUrl,
                 }).ToList()
             };
             return currentUser;
         }
-
+        #endregion
         private MessageResponse ToContract(Message message)
         {
             return new MessageResponse
             {
                 Content = message.Content,
-                Username = message.webhookUsername,
+                Embeds = message.Embeds.Select(ToContract).ToList(),
                 Avatar = message.webhookAvatar,
-                Embeds = message.Embeds.Select(ToContract).ToList()
+                Username = message.webhookUsername,
             };
         }
 
@@ -312,18 +286,19 @@ namespace Hookio.Database
         {
             return new EmbedResponse
             {
-                Title = embed.Title,
-                TitleUrl = embed.TitleUrl,
+                Id = embed.Id,
                 Description = embed.Description,
-                Footer = embed.Footer,
-                FooterIcon = embed.FooterIcon,
+                TitleUrl = embed.TitleUrl,
+                Title = embed.Title,
+                Color = embed.Color,
+                Image = embed.Image,
                 Author = embed.Author,
                 AuthorUrl = embed.AuthorUrl,
                 AuthorIcon = embed.AuthorIcon,
-                Image = embed.Image,
+                Footer = embed.Footer,
+                FooterIcon = embed.FooterIcon,
                 Thumbnail = embed.Thumbnail,
                 AddTimestamp = embed.AddTimestamp,
-                Color = embed.Color,
                 Fields = embed.Fields.Select(ToContract).ToList()
             };
         }
@@ -339,6 +314,13 @@ namespace Hookio.Database
             };
         }
 
-        #endregion
+        private EventResponse ToContract(Entities.Event eventEntity) {
+            return new EventResponse
+            {
+                Id = eventEntity.Id,
+                EventType = eventEntity.Type,
+                Message = ToContract(eventEntity.Message),
+            };
+        }
     }
 }

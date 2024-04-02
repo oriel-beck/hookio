@@ -19,7 +19,7 @@ namespace Hookio.Database.Entities
         public string WebhookUrl { get; set; }
         [Required]
         public string ChannelId { get; set; }
-        public List<Message> Messages { get; set; }
+        public List<Event> Events { get; set; }
     }
 
 }
