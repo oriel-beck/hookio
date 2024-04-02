@@ -3,16 +3,19 @@ import EmbedFieldsBuilder from "./embed-field-form";
 import MultiExpansionField from "../../components/multi-expansion-field";
 import ExpansionPanel from "../../components/expansion-panel";
 import { Input, TextArea } from "../../components/input";
-import type { Embed, EmbedField, EmbedFormInitialValues } from "../../types/types";
+import type { Embed, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../../types/types";
+import { EventType } from "../../util/enums";
+import { generateNewEmbed } from "../../util/util";
 
 interface Props {
     helpers: FieldArrayRenderProps;
-    values: EmbedFormInitialValues;
+    values: MessageFormikInitialValue;
+    eventType: EventType;
 }
 
-export default function EmbedForm({ helpers, values }: Props) {
-    const formik = useFormikContext<EmbedFormInitialValues>();
-    const errors = formik.errors.embeds as FormikErrors<Embed & { invalid: boolean }>[];
+export default function EmbedForm({ helpers, values, eventType }: Props) {
+    const formik = useFormikContext<FormikInitialValue>();
+    const errors = (formik.errors.events?.[eventType.toString()] as FormikErrors<EventFormikInitialValue>)?.message?.embeds as FormikErrors<Embed & { invalid: boolean }>[];
     return (
         <MultiExpansionField helpers={helpers} max={10} label="Embed" length={values.embeds.length} generate={generateNewEmbed}>
             {({ max, label, movePanelDown, movePanelUp, addPanel, removePanel }) => (
@@ -25,17 +28,17 @@ export default function EmbedForm({ helpers, values }: Props) {
                                     <div>
                                         <ExpansionPanel label="Author">
                                             <div className="p-2">
-                                                <Field name={`embeds.${embedIndex}.author`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.author`}>
                                                     {(props: FieldProps) =>
                                                         <Input {...props} label="Author" placeholder="" limit={256} />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.authorUrl`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.authorUrl`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.authorUrl} {...props} label="Author URL" placeholder="" />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.authorIcon`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.authorIcon`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.authorIcon} {...props} label="Author Icon" placeholder="" />
                                                     }
@@ -44,22 +47,22 @@ export default function EmbedForm({ helpers, values }: Props) {
                                         </ExpansionPanel>
                                         <ExpansionPanel label="Body">
                                             <div className="p-2">
-                                                <Field name={`embeds.${embedIndex}.title`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.title`}>
                                                     {(props: FieldProps) =>
                                                         <Input {...props} label="Title" placeholder="" limit={256} />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.titleUrl`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.titleUrl`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.titleUrl} {...props} label="Title URL" placeholder="" />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.description`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.description`}>
                                                     {(props: FieldProps) =>
                                                         <TextArea {...props} label="Description" placeholder="" limit={4096} />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.color`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.color`}>
                                                     {(props: FieldProps) =>
                                                         // TODO: color wheel
                                                         <Input {...props} label="Color" placeholder="" />
@@ -67,15 +70,15 @@ export default function EmbedForm({ helpers, values }: Props) {
                                                 </Field>
                                             </div>
                                         </ExpansionPanel>
-                                        <EmbedFieldsBuilder embed={embed} embedIndex={embedIndex} />
+                                        <EmbedFieldsBuilder eventType={eventType} embed={embed} embedIndex={embedIndex} />
                                         <ExpansionPanel label="Images">
                                             <div className="p-2">
-                                                <Field name={`embeds.${embedIndex}.image`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.image`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.image} {...props} label="Image" placeholder="" />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.thumbnail`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.thumbnail`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.thumbnail} {...props} label="Thumbnail" placeholder="" />
                                                     }
@@ -84,17 +87,17 @@ export default function EmbedForm({ helpers, values }: Props) {
                                         </ExpansionPanel>
                                         <ExpansionPanel label="Footer">
                                             <div className="p-2">
-                                                <Field name={`embeds.${embedIndex}.footer`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.footer`}>
                                                     {(props: FieldProps) =>
                                                         <Input {...props} label="Footer" placeholder="" limit={2048} />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.footerIcon`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.footerIcon`}>
                                                     {(props: FieldProps) =>
                                                         <Input error={errors?.at(embedIndex)?.footerIcon} {...props} label="Footer Icon" placeholder="" />
                                                     }
                                                 </Field>
-                                                <Field name={`embeds.${embedIndex}.addTimestamp`}>
+                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.addTimestamp`}>
                                                     {(props: FieldProps) =>
                                                         // TODO: checkbox
                                                         <Input {...props} label="Add Timestamp" placeholder="" />
@@ -113,21 +116,3 @@ export default function EmbedForm({ helpers, values }: Props) {
     )
 }
 
-function generateNewEmbed(): Embed {
-    return {
-        id: Math.random(),
-        addTimestamp: false,
-        description: "",
-        title: "",
-        titleUrl: "",
-        author: "",
-        authorUrl: "",
-        authorIcon: "",
-        color: "",
-        image: "",
-        footer: "",
-        footerIcon: "",
-        thumbnail: "",
-        fields: [] as EmbedField[]
-    }
-}

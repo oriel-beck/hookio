@@ -20,7 +20,7 @@ export default function Guild({ guild }: Props) {
                     aria-labelledby={`label-for-${guild.id}`}
                     onClick={() => onClick()}
                     className="cursor-pointer rounded-full border-gray-500 border-2 hover:border-green-300"
-                    src={guild.icon === "fallback" ? fallback : guild.icon}
+                    src={guild.icon ? guild.icon : fallback}
                     width={125}
                     height={125}
                 />

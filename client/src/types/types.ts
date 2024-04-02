@@ -1,3 +1,5 @@
+import type { EventType } from "../util/enums";
+
 export interface User {
   id: string;
   username: string;
@@ -17,7 +19,13 @@ export interface Subscription {
   id: number;
   subscriptionType: number;
   channelId: string;
-  messages: Message[];
+  events: Record<string, EventResponse>
+}
+
+export interface EventResponse {
+  id: number;
+  eventType: EventType;
+  message: Message;
 }
 
 export interface Message {
@@ -51,11 +59,19 @@ export interface EmbedField {
   inline: boolean;
 }
 
-export interface EmbedFormInitialValues {
-  webhookUrl?: string;
-  url?: string;
+export interface MessageFormikInitialValue {
   content?: string;
   username?: string;
   avatar?: string;
   embeds: Embed[];
+}
+
+export interface EventFormikInitialValue {
+  message: MessageFormikInitialValue
+}
+
+export interface FormikInitialValue {
+  webhookUrl?: string;
+  url?: string;
+  events: Record<string, EventFormikInitialValue>
 }

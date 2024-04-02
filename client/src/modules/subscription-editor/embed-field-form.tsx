@@ -2,15 +2,23 @@ import { Field, FieldArray, FieldProps, FormikErrors, useFormikContext } from "f
 import ExpansionPanel from "../../components/expansion-panel";
 import MultiExpansionField from "../../components/multi-expansion-field";
 import { Input } from "../../components/input";
-import { Embed, EmbedField, EmbedFormInitialValues } from "../../types/types";
+import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue } from "../../types/types";
+import { EventType } from "../../util/enums";
+import { generateNewField } from "../../util/util";
 
-export default function EmbedFieldsBuilder({ embed, embedIndex }: { embed: Embed, embedIndex: number }) {
-    const formik = useFormikContext<EmbedFormInitialValues>();
-    const errors = (formik.errors.embeds?.at(embedIndex) as FormikErrors<Embed & { invalid: boolean }>)?.fields as FormikErrors<EmbedField>[];
+interface Props {
+    embed: Embed;
+    embedIndex: number;
+    eventType: EventType;
+}
+
+export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Props) {
+    const formik = useFormikContext<FormikInitialValue>();
+    const errors = ((formik.errors.events?.[eventType.toString()] as FormikErrors<EventFormikInitialValue>)?.message?.embeds?.at(embedIndex) as FormikErrors<Embed & { invalid: boolean }>)?.fields as FormikErrors<EmbedField>[];
 
     return (
         <ExpansionPanel label="Fields">
-            <FieldArray name={`embeds.${embedIndex}.fields`}>
+            <FieldArray name={`events.${eventType}.message.embeds.${embedIndex}.fields`}>
                 {(helpers) => (
                     <MultiExpansionField helpers={helpers} max={25} label="Field" length={embed.fields.length} generate={generateNewField}>
                         {({ max, label, movePanelDown, movePanelUp, addPanel, removePanel }) => (
@@ -22,17 +30,17 @@ export default function EmbedFieldsBuilder({ embed, embedIndex }: { embed: Embed
                                             <div className="p-5 mt-2 w-full space-y-3">
                                                 <div className="space-y-1">
                                                     <div className="p-2">
-                                                        <Field name={`embeds.${embedIndex}.fields.${fieldIndex}.name`}>
+                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.name`}>
                                                             {(props: FieldProps) =>
                                                                 <Input {...props} label="Name" placeholder="" limit={256} />
                                                             }
                                                         </Field>
-                                                        <Field name={`embeds.${embedIndex}.fields.${fieldIndex}.value`}>
+                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.value`}>
                                                             {(props: FieldProps) =>
                                                                 <Input {...props} label="Value" placeholder="" limit={1024} />
                                                             }
                                                         </Field>
-                                                        <Field name={`embeds.${embedIndex}.fields.${fieldIndex}.inline`}>
+                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.inline`}>
                                                             {(props: FieldProps) =>
                                                                 // TODO: checkbox
                                                                 <Input {...props} label="Inline" placeholder="" />
@@ -53,11 +61,3 @@ export default function EmbedFieldsBuilder({ embed, embedIndex }: { embed: Embed
     )
 }
 
-function generateNewField(): EmbedField {
-    return {
-        id: Math.random(),
-        name: "",
-        value: "",
-        inline: false
-    }
-}

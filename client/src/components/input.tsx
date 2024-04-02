@@ -23,7 +23,7 @@ export function Input({
                 <label className="block text-white text-sm font-bold" id={field.name}>{label}</label>
                 {error && <IoWarningOutline className="w-5 h-5 text-red-400" />}
                 <span className="flex-1"></span>
-                <Limit limit={limit} length={field.value.length} />
+                <Limit limit={limit} length={field.value?.length} />
             </div>
             <input
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-600"

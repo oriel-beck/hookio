@@ -1,5 +1,6 @@
 import { useFormikContext } from "formik";
-import type { Embed as EmbedType, EmbedFormInitialValues, EmbedField } from "../../types/types";
+import type { Embed as EmbedType, FormikInitialValue, EmbedField } from "../../types/types";
+import { EventType } from "../../util/enums";
 
 const getDate = () => new Date().toLocaleString('en', {
     hour: '2-digit',
@@ -7,8 +8,9 @@ const getDate = () => new Date().toLocaleString('en', {
     hour12: true
 })
 
-export default function EmbedPreview() {
-    const formik = useFormikContext<EmbedFormInitialValues>();
+export default function EmbedPreview({ eventType }: { eventType: EventType }) {
+    const formik = useFormikContext<FormikInitialValue>();
+    const data = formik.values.events[eventType.toString()].message
     const fallbacks = {
         username: "Hookio",
         avatar: "https://c8.alamy.com/comp/R1PP58/hook-vector-icon-isolated-on-transparent-background-hook-transparency-logo-concept-R1PP58.jpg"
@@ -18,22 +20,22 @@ export default function EmbedPreview() {
         <div className="relative pr-5">
             {/* pfp */}
             <div className="absolute top-2 left-2">
-                <img className="w-10 h-10 rounded-full" src={formik.values.avatar || fallbacks.avatar} alt="Avatar" />
+                <img className="w-10 h-10 rounded-full" src={data.avatar || fallbacks.avatar} alt="Avatar" />
             </div>
             <div className="ml-16 pt-2">
                 {/* Username, date */}
                 <div className="flex items-center">
-                    <span className="text-lg">{formik.values.username || fallbacks.username}</span>
+                    <span className="text-lg">{data.username || fallbacks.username}</span>
                     <span className="mx-1 flex justify-center rounded h-[1rem] w-7 items-center pb-0.5 bg-[#5865f2]" style={{ fontSize: '11px' }}>BOT</span>
                     <span className="mt-1 ml-2 text-xs text-[#949ba4]">Today at {getDate()}</span>
                 </div>
-                {formik.values.content &&
+                {data.content &&
                     <div className="overflow-hidden max-w-full pb-2">
-                        <p className="max-w-full break-words whitespace-pre-line text-pretty">{formik.values.content}</p>
+                        <p className="max-w-full break-words whitespace-pre-line text-pretty">{data.content}</p>
                     </div>
                 }
                 {/* TODO: demo image */}
-                {formik.values?.embeds.map((embed) => (
+                {data?.embeds.map((embed) => (
                     <Embed key={embed.id} embed={embed} />
                 ))}
             </div>
