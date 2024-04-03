@@ -4,5 +4,8 @@
     {
         YoutubeVideoUploaded,
         YoutubeVideoEdited,
+        TwitchStreamStarted,
+        TwitchStreamUpdated,
+        TwitchStreamEnded
     }
 }
