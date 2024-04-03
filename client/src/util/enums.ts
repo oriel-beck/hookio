@@ -5,5 +5,8 @@ export enum Provider {
 
 export enum EventType {
     'Video Uploaded',
-    'Video Edited'
+    'Video Edited',
+    'Stream Started',
+    'Stream Updated',
+    'Stream Ended'
 }

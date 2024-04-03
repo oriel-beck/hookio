@@ -6,10 +6,10 @@ import EmbedPreview from "./preview";
 import Loader from "../../components/loader";
 import PageHeader from "../../components/page-heading";
 import { Input, TextArea } from "../../components/input";
-import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
-import * as Yup from 'yup';
 import { EventType, Provider } from "../../util/enums";
 import { generateDefaultEvents, getEventTypes } from "../../util/util";
+import * as Yup from 'yup';
+import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
 
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
@@ -19,7 +19,7 @@ export default function SubscriptionEditor() {
     const data = useLoaderData() as { subscriptions: Promise<Subscription> };
     const params = useParams();
     const availableEvents = getEventTypes(Provider[params['provider'] as keyof typeof Provider]);
-    const [eventType, setEventType] = useState<EventType>(availableEvents[0]);
+    const [eventType, setEventType] = useState<EventType>(availableEvents[0])
 
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
         id: Yup.number().required(),
@@ -137,7 +137,7 @@ export default function SubscriptionEditor() {
                                         <span className="flex-auto"></span>
                                         <ul className="flex items-center space-x-5">
                                             {availableEvents.map((ev) => (
-                                                <li>
+                                                <li key={ev}>
                                                     <button onClick={() => setEventType(ev)} className={`cursor-pointer ${ev === eventType ? 'border-b-2 border-white' : ''}`}>
                                                         {EventType[ev]}
                                                     </button>
@@ -158,6 +158,7 @@ export default function SubscriptionEditor() {
                                                     <EmbedForm eventType={eventType} helpers={helpers} values={values.events[eventType.toString()].message} />
                                                 )}
                                             </FieldArray>
+                                            {/* TODO: actually make a good button */}
                                             <button className="py-2 px-4 rounded-sm bg-green-300 text-purple-800 font-semibold" type="submit" disabled={isSubmitting}>
                                                 Save
                                             </button>

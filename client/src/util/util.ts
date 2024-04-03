@@ -6,8 +6,7 @@ export function getEventTypes(provider: Provider) {
         case Provider.youtube:
             return [EventType["Video Uploaded"], EventType["Video Edited"]]
         case Provider.twitch:
-            // TODO: twitch events
-            return []
+            return [EventType["Stream Started"], EventType["Stream Updated"], EventType["Stream Ended"]]
     }
 }
 
@@ -51,7 +50,17 @@ export function generateDefaultEvents(provider: Provider): { [eventType: string]
                 }
             }
         case Provider.twitch:
-            return {}
+            return {
+                [EventType["Stream Started"].toString()]: {
+                    message: generateDefaultMessage()
+                },
+                [EventType["Stream Updated"].toString()]: {
+                    message: generateDefaultMessage()
+                },
+                [EventType["Stream Ended"].toString()]: {
+                    message: generateDefaultMessage()
+                }
+            }
     }
 }
 
