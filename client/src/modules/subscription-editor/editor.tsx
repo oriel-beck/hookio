@@ -87,7 +87,14 @@ export default function SubscriptionEditor() {
             // YouTube video create
             "0": eventSchema.optional(),
             // YouTube video edit (title/description changed)
-            "1": eventSchema.optional()
+            "1": eventSchema.optional(),
+
+            // Twitch stream created
+            "2": eventSchema.optional(),
+            // Twitch stream updated
+            "3": eventSchema.optional(),
+            // Twitch stream ended
+            "4": eventSchema.optional(),
         })
     });
 
@@ -100,7 +107,6 @@ export default function SubscriptionEditor() {
             >
                 {(subscription?: Subscription) => (
                     <Formik
-                        // TODO: implement the event tabs so it will use the correct message data for every event
                         initialValues={{
                             webhookUrl: "",
                             url: "",
@@ -116,10 +122,6 @@ export default function SubscriptionEditor() {
                     >
                         {({
                             values,
-                            // errors,
-                            // touched,
-                            // handleChange,
-                            // handleBlur,
                             handleSubmit,
                             isSubmitting,
                         }) => (
