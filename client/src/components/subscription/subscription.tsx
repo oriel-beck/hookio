@@ -10,7 +10,7 @@ export default function Subscription({ subscription }: { subscription: Subscript
     return (
         <div className="rounded bg-zinc-300">
             <div className="p-3 bg-zinc-500 rounded-t font-bold text-lg">
-                <h3>{subscription.channelId}</h3>
+                <h3>{subscription.url}</h3>
             </div>
             <div className="flex justify-end">
                 <button onClick={() => onClick()} className={`text-white font-bold py-2 px-4 rounded m-2 w-full ${getButtonClass(subscription.subscriptionType)}`}>Edit</button>

@@ -72,3 +72,17 @@ export function generateDefaultMessage(): MessageFormikInitialValue {
         embeds: []
     }
 }
+
+export async function submitSubscription(values: FormikInitialValue, type: Provider, guildId: string, id?: number) {
+    const data = {
+        subscriptionType: type,
+        webhookUrl: values.webhookUrl,
+        url: values.url,
+        events: Object.entries(values.events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message, eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
+    }
+
+    if (id) return await fetch(`/api/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body: JSON.stringify(data), headers: {
+        'Content-Type': 'application/json'
+    } });
+}

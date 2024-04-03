@@ -111,6 +111,7 @@ namespace Hookio.Database
                 AnnouncementType = subscription.SubscriptionType,
                 Url = subscription.Url,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
+                GuildId = subscription.GuildId,
             };
         }
 
@@ -137,7 +138,7 @@ namespace Hookio.Database
                     var eventEntity = new Event
                     {
                         Type = eventRequest.Key,
-                        Subscription = subscription
+                        Subscription = subscription // Set Subscription navigation property
                     };
 
                     context.Events.Add(eventEntity);
@@ -148,6 +149,7 @@ namespace Hookio.Database
                         Content = eventRequest.Value.Message.Content,
                         webhookUsername = eventRequest.Value.Message.Username,
                         webhookAvatar = eventRequest.Value.Message.Avatar,
+                        Event = eventEntity, // Set Event navigation property
                     };
                     context.Messages.Add(message);
                     length += eventRequest.Value.Message.Content.Length;
@@ -155,7 +157,6 @@ namespace Hookio.Database
                     eventEntity.Message = message;
 
                     await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
-
 
                     foreach (var embedRequest in eventRequest.Value.Message.Embeds)
                     {
@@ -270,7 +271,6 @@ namespace Hookio.Database
             };
             return currentUser;
         }
-        #endregion
         private MessageResponse ToContract(Message message)
         {
             return new MessageResponse
@@ -322,5 +322,6 @@ namespace Hookio.Database
                 Message = ToContract(eventEntity.Message),
             };
         }
+        #endregion
     }
 }

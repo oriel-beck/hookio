@@ -10,3 +10,11 @@ export enum EventType {
     'Stream Updated',
     'Stream Ended'
 }
+
+export enum APIEvents {
+    YoutubeVideoUploaded,
+    YoutubeVideoEdited,
+    TwitchStreamStarted,
+    TwitchStreamUpdated,
+    TwitchStreamEnded
+}

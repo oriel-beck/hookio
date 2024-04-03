@@ -31,10 +31,19 @@ namespace Hookio.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<SubscriptionResponse?>> GetGuildSubscription(int id)
         {
-            var announcement = await dataManager.GetSubscriptionById(id);
-            if (announcement is not null && !Util.CanAccessGuild(HttpContext.User, announcement.GuildId)) return Unauthorized();
+            var subscription = await dataManager.GetSubscriptionById(id);
+            if (subscription is not null && !Util.CanAccessGuild(HttpContext.User, subscription.GuildId)) return Unauthorized();
 
-            return Ok(announcement);
+            return subscription is null ? NotFound() : Ok(subscription);
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult<SubscriptionResponse>> UpdateSubscription(int id)
+        {
+            var subscription = await dataManager.GetSubscriptionById(id);
+            if (subscription is not null && !Util.CanAccessGuild(HttpContext.User, subscription.GuildId)) return Unauthorized();
+
+            return Ok(subscription);
         }
     }
 }

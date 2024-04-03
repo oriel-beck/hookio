@@ -18,7 +18,7 @@ export interface Guild {
 export interface Subscription {
   id: number;
   subscriptionType: number;
-  channelId: string;
+  url: string;
   events: Record<string, EventResponse>
 }
 

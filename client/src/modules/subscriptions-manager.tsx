@@ -31,9 +31,9 @@ export default function SubscriptionsManager() {
                             {/* subscription list TODO: design*/}
                             <div>
                                 {subscriptions.map((sub) => (
-                                    <>
+                                    <div key={sub.id}>
                                         {sub.id}
-                                    </>
+                                    </div>
                                 ))}
                             </div>
 
