@@ -133,7 +133,6 @@ export default function SubscriptionEditor() {
                                         </svg>
                                     }
                                 >
-                                    {/* TODO: tabs */}
                                     <>
                                         <span className="flex-auto"></span>
                                         <ul className="flex items-center space-x-5">
@@ -152,7 +151,7 @@ export default function SubscriptionEditor() {
                                     {/* Content for the first half (embed inputs) */}
                                     <div className="basis-1/2 flex-1 overflow-y-auto px-5 scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300">
                                         <form onSubmit={handleSubmit}>
-                                            <SubscriptionFields eventType={eventType} />
+                                            <SubscriptionAndContentFields eventType={eventType} />
                                             <FieldArray
                                                 name={`events.${eventType}.message.embeds`}>
                                                 {(helpers) => (
@@ -179,20 +178,20 @@ export default function SubscriptionEditor() {
 }
 
 
-function SubscriptionFields({ eventType }: { eventType: EventType }) {
+function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
     const formik = useFormikContext<FormikInitialValue>();
     const errors = formik.errors;
     return (
         <div className="space-y-4">
             <div>
-                <Field name={`events.${eventType}.message.url`} >
+                <Field name={`url`} >
                     {(props: FieldProps) => (
                         <Input error={errors.url} {...props} label="URL" placeholder={getPlaceholderByPath(location.pathname)!} />
                     )}
                 </Field>
             </div>
             <div>
-                <Field name={`events.${eventType}.message.webhookUrl`}>
+                <Field name={`webhookUrl`}>
                     {(props: FieldProps) => (
                         <Input error={errors.webhookUrl} {...props} label="Webhook URL" placeholder="https://discord.com/api/webhooks/..." />
                     )}
