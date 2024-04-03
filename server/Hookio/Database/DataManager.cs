@@ -109,7 +109,7 @@ namespace Hookio.Database
             {
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
-                ChannelId = subscription.ChannelId,
+                Url = subscription.Url,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
             };
         }
@@ -126,7 +126,7 @@ namespace Hookio.Database
                 {
                     GuildId = guildId,
                     WebhookUrl = request.WebhookUrl,
-                    ChannelId = request.ChannelId,
+                    Url = request.Url,
                     SubscriptionType = request.SubscriptionType,
                 };
                 context.Subscriptions.Add(subscription);
@@ -209,7 +209,7 @@ namespace Hookio.Database
                 {
                     Id = subscription.Id,
                     AnnouncementType = subscription.SubscriptionType,
-                    ChannelId = subscription.ChannelId
+                    Url = subscription.Url
                 };
             }
             catch (Exception)
@@ -238,7 +238,7 @@ namespace Hookio.Database
             {
                 Id = subscription.Id,
                 AnnouncementType = subscription.SubscriptionType,
-                ChannelId = subscription.ChannelId,
+                Url = subscription.Url,
                 GuildId = guildId,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
             });

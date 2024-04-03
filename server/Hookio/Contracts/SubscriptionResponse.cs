@@ -8,7 +8,7 @@ namespace Hookio.Contracts
         public ulong GuildId { get; set; }
         public SubscriptionType AnnouncementType { get; set; }
         // The name/identifier of the channel (yt, twitch, kick, etc) the announcement is linked to
-        public string ChannelId { get; set; }
+        public string Url { get; set; }
         // data sent to discord
         public Dictionary<EventType, EventResponse>? Events { get; set; }
     }
