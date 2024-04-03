@@ -1,4 +1,4 @@
-import { Embed, EmbedField, EventFormikInitialValue, MessageFormikInitialValue } from "../types/types";
+import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../types/types";
 import { EventType, Provider } from "./enums";
 
 export function getEventTypes(provider: Provider) {
@@ -68,7 +68,7 @@ export function generateDefaultMessage(): MessageFormikInitialValue {
     return {
         content: "",
         username: "Hookio",
-        avatar: "",
+        avatar: "https://c8.alamy.com/comp/R1PP58/hook-vector-icon-isolated-on-transparent-background-hook-transparency-logo-concept-R1PP58.jpg",
         embeds: []
     }
 }

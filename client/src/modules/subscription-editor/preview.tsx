@@ -11,21 +11,17 @@ const getDate = () => new Date().toLocaleString('en', {
 export default function EmbedPreview({ eventType }: { eventType: EventType }) {
     const formik = useFormikContext<FormikInitialValue>();
     const data = formik.values.events[eventType.toString()].message
-    const fallbacks = {
-        username: "Hookio",
-        avatar: "https://c8.alamy.com/comp/R1PP58/hook-vector-icon-isolated-on-transparent-background-hook-transparency-logo-concept-R1PP58.jpg"
-    }
 
     return (
         <div className="relative pr-5">
             {/* pfp */}
             <div className="absolute top-2 left-2">
-                <img className="w-10 h-10 rounded-full" src={data.avatar || fallbacks.avatar} alt="Avatar" />
+                <img className="w-10 h-10 rounded-full" src={data.avatar} alt="Avatar" />
             </div>
             <div className="ml-16 pt-2">
                 {/* Username, date */}
                 <div className="flex items-center">
-                    <span className="text-lg">{data.username || fallbacks.username}</span>
+                    <span className="text-lg">{data.username}</span>
                     <span className="mx-1 flex justify-center rounded h-[1rem] w-7 items-center pb-0.5 bg-[#5865f2]" style={{ fontSize: '11px' }}>BOT</span>
                     <span className="mt-1 ml-2 text-xs text-[#949ba4]">Today at {getDate()}</span>
                 </div>

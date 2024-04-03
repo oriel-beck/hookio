@@ -10,6 +10,7 @@ import { EventType, Provider } from "../../util/enums";
 import { generateDefaultEvents, getEventTypes } from "../../util/util";
 import * as Yup from 'yup';
 import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
+import ExpansionPanel from "../../components/expansion-panel";
 
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
@@ -193,13 +194,31 @@ function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
                     )}
                 </Field>
             </div>
-            <div>
-                <Field name={`webhookUrl`}>
-                    {(props: FieldProps) => (
-                        <Input error={errors.webhookUrl} {...props} label="Webhook URL" placeholder="https://discord.com/api/webhooks/..." />
-                    )}
-                </Field>
-            </div>
+            <ExpansionPanel label="Webhook">
+                <div className="p-4">
+                    <div>
+                        <Field name={`webhookUrl`}>
+                            {(props: FieldProps) => (
+                                <Input error={errors.webhookUrl} {...props} label="Webhook URL" placeholder="https://discord.com/api/webhooks/..." />
+                            )}
+                        </Field>
+                    </div>
+                    <div>
+                        <Field name={`events.${eventType}.message.username`}>
+                            {(props: FieldProps) => (
+                                <Input {...props} label="Username" placeholder="" />
+                            )}
+                        </Field>
+                    </div>
+                    <div>
+                        <Field name={`events.${eventType}.message.avatar`}>
+                            {(props: FieldProps) => (
+                                <Input {...props} label="Avatar" placeholder="" />
+                            )}
+                        </Field>
+                    </div>
+                </div>
+            </ExpansionPanel>
             <div>
                 <Field name={`events.${eventType}.message.content`}>
                     {(props: FieldProps) => (
