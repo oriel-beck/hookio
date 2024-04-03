@@ -137,8 +137,8 @@ export default function SubscriptionEditor() {
                                         <span className="flex-auto"></span>
                                         <ul className="flex items-center space-x-5">
                                             {availableEvents.map((ev) => (
-                                                <li key={ev}>
-                                                    <button onClick={() => setEventType(ev)} className={`cursor-pointer ${ev === eventType ? 'border-b-2 border-white' : ''}`}>
+                                                <li key={ev} className={`cursor-pointer pb-1 relative w-fit block after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
+                                                    <button onClick={() => setEventType(ev)}>
                                                         {EventType[ev]}
                                                     </button>
                                                 </li>
