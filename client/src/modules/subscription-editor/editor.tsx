@@ -164,7 +164,7 @@ export default function SubscriptionEditor() {
                                             </button>
                                         </form>
                                     </div>
-                                    <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px]">
+                                    <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px] md:min-h-0">
                                         {/* Content for the second half (embed preview)*/}
                                         <EmbedPreview eventType={eventType} />
                                     </div>
