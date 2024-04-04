@@ -6,6 +6,7 @@ namespace Hookio.Contracts
 {
     public class EmbedFieldRequest
     {
+        public int? Id { get; set; }
         [Required]
         [MaxLength(256)]
         public required string Name { get; set; }

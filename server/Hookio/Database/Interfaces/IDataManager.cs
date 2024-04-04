@@ -17,10 +17,8 @@ namespace Hookio.Database.Interfaces
         #region announcements
         public Task<SubscriptionResponse?> GetSubscriptionById(int id);
         public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request);
-
+        public Task<SubscriptionResponse?> UpdateSubscription(int id, SubscriptionRequest request);
         public Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider);
-        // TODO: make a system that makes sure the user interacting with the announcement has perms in the provided guild
-        //public Task<AnnouncementResponse?> UpdateAnnouncement(AnnouncementResponse response);
         #endregion
     }
 }

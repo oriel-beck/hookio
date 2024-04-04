@@ -41,7 +41,7 @@ namespace Hookio.Controllers
             });
             return NoContent();
         }
-        
+
 
         [HttpPost("authenticate/{code}")]
         public async Task<ActionResult<CurrentUserResponse>> Authenticate(string code)
@@ -74,36 +74,43 @@ namespace Hookio.Controllers
 
                 await dataManager.CreateUser(client, result);
                 var currentUser = await dataManager.GetUser(user.Id);
+                
+                CreateTokenAndSetCookie(_tokenHandler, HttpContext, user, currentUser?.Guilds.Select(g => g.Id));
 
-                var claims = new Claim[]
-                {
-                    new("id", user.Id.ToString()),
-                    new("guilds", JsonConvert.SerializeObject(currentUser?.Guilds.Select(g => g.Id)))
-                };
-
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddHours(12),
-                    SigningCredentials = new SigningCredentials(
-                        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)),
-                        SecurityAlgorithms.HmacSha256Signature)
-                };
-
-                var token = _tokenHandler.CreateToken(tokenDescriptor);
-                var tokenString = _tokenHandler.WriteToken(token);
-                HttpContext.Response.Cookies.Append("Authorization", tokenString, new()
-                {
-                    HttpOnly = true,
-                    Expires = DateTime.UtcNow.AddHours(12),
-                    SameSite = SameSiteMode.Strict
-                });
                 return Ok(currentUser);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 logger.LogError($"[{nameof(Authenticate)}]: '{ex.Message}'");
                 return Ok(false);
             }
+        }
+
+        internal static void CreateTokenAndSetCookie(JwtSecurityTokenHandler tokenHandler, HttpContext context, RestSelfUser user, IEnumerable<string>? guildIds)
+        {
+            var claims = new Claim[]
+                            {
+                    new("id", user.Id.ToString()),
+                    new("guilds", JsonConvert.SerializeObject(guildIds))
+             };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(12),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+            context.Response.Cookies.Append("Authorization", tokenString, new()
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddHours(12),
+                SameSite = SameSiteMode.Strict
+            });
         }
     }
 }

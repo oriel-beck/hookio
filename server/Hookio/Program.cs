@@ -1,4 +1,5 @@
 using System.Text;
+using Discord.Net;
 using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
@@ -34,6 +35,15 @@ builder.Services.AddAuthentication(options =>
         {
             context.Token = context.Request.Cookies["Authorization"];
             return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            if (DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes > 10)
+            {
+                // TODO: renew token (implement redis cache first)
+            }
+
+            return Task.CompletedTask;
         }
     };
 
@@ -41,9 +51,9 @@ builder.Services.AddAuthentication(options =>
     {
         ClockSkew = TimeSpan.FromMinutes(5), // Set a reasonable clock skew
         ValidateLifetime = true,
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateIssuerSigningKey = false,
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = false,
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)
         )

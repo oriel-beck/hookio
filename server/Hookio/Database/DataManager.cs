@@ -22,7 +22,7 @@ namespace Hookio.Database
             return servers;
         }
 
-        public async Task<CurrentUserResponse?> GetUser(ulong userId) 
+        public async Task<CurrentUserResponse?> GetUser(ulong userId)
         {
             // TODO: change this to use the database for getting the user data, save user data on login (avatar, id, etc)
             var accessToken = await GetAccessToken(userId);
@@ -45,8 +45,8 @@ namespace Hookio.Database
             if (currentUser == null)
             {
                 await ctx.Users.AddAsync(newUser);
-            } 
-            else 
+            }
+            else
             {
                 currentUser.RefreshToken = newUser.RefreshToken;
                 currentUser.AccessToken = newUser.AccessToken;
@@ -62,7 +62,7 @@ namespace Hookio.Database
             var ctx = contextFactory.CreateDbContext();
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == userId);
             if (currentUser is null) return null;
-            if (currentUser.ExpireAt <  DateTimeOffset.UtcNow)
+            if (currentUser.ExpireAt < DateTimeOffset.UtcNow)
             {
                 // generate a new access token and update the db
                 var discordResponse = await _http.PostAsync($"/api/v10/oauth2/token",
@@ -88,7 +88,7 @@ namespace Hookio.Database
         }
         #endregion
 
-        #region announcements
+        #region subscriptions
         public async Task<SubscriptionResponse?> GetSubscriptionById(int id)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
@@ -119,6 +119,13 @@ namespace Hookio.Database
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
             using var context = await contextFactory.CreateDbContextAsync();
+            var subscriptions = await context.Subscriptions.Where(x => x.GuildId == guildId).ToListAsync();
+            if (subscriptions.Count >= 2)
+            {
+                // TODO: Premium only, need a Guild entity for that
+                return null;
+            }
+
             using var transaction = await context.Database.BeginTransactionAsync();
             int length = 0;
             try
@@ -153,7 +160,7 @@ namespace Hookio.Database
                     };
                     context.Messages.Add(message);
                     length += eventRequest.Value.Message.Content.Length;
-                    
+
                     eventEntity.Message = message;
 
                     await context.SaveChangesAsync(); // SaveChangesAsync to generate SubscriptionId
@@ -190,10 +197,8 @@ namespace Hookio.Database
                                 Embed = embed // Set Embed navigation property
                             };
                             context.EmbedFields.Add(embedField);
-                            length += embedFieldRequest.Length;
                         }
                     }
-                    
                 }
 
                 if (length > 6000)
@@ -211,6 +216,186 @@ namespace Hookio.Database
                     Id = subscription.Id,
                     AnnouncementType = subscription.SubscriptionType,
                     Url = subscription.Url
+                };
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw; // Re-throw the exception for handling at a higher level
+            }
+        }
+
+        public async Task<SubscriptionResponse?> UpdateSubscription(int id, SubscriptionRequest request)
+        {
+            using var context = await contextFactory.CreateDbContextAsync();
+            using var transaction = await context.Database.BeginTransactionAsync();
+            int length = 0;
+            try
+            {
+                // Get current subscription
+                var subscription = await context.Subscriptions.Where(x => x.Id == id).FirstOrDefaultAsync();
+                if (subscription == null)
+                {
+                    return null;
+                }
+
+                if (subscription.Url != request.Url)
+                {
+                    // TODO: unsubscribe from old, subscribe to new
+                }
+
+                if (request.WebhookUrl is not null)
+                {
+                    subscription.WebhookUrl = request.WebhookUrl;
+                }
+
+                var events = await context.Events
+                    .Where(x => x.SubscriptionId == id)
+                        .Include(x => x.Message)
+                            .ThenInclude(x => x.Embeds)
+                                .ThenInclude(x => x.Fields)
+                    .ToListAsync();
+
+                foreach (var eventRequest in request.Events)
+                {
+                    // Get the current event of this event type
+                    var currentEvent = events.Find(ev => ev.Id == eventRequest.Value.Id);
+                    
+                    if (currentEvent == null) 
+                    {
+                        var newEvent = new Event
+                        {
+                            Type = eventRequest.Value.EventType,
+                            Subscription = subscription,
+                        };
+                        context.Events.Add(newEvent);
+                        await context.SaveChangesAsync(); // Save to generate EventId
+                        currentEvent = newEvent;
+                    }
+
+                    // Update the current event based on incoming data
+                    var incomingMessage = eventRequest.Value.Message;
+                    currentEvent.Message.Content = incomingMessage.Content;
+                    currentEvent.Message.webhookAvatar = incomingMessage.Avatar;
+                    currentEvent.Message.webhookUsername = incomingMessage.Username;
+
+                    // Find all embeds that were not provided in this update request, delete them later
+                    List<Entities.Embed> notFoundEmbeds = currentEvent.Message.Embeds.Where(embed => !incomingMessage.Embeds.Any(req => req.Id == embed.Id))
+                                          .Select(embed => embed)
+                                          .ToList();
+
+                    length += eventRequest.Value.Message.Content.Length;
+
+                    foreach (var incomingEmbed in incomingMessage.Embeds)
+                    {
+                        // Get current embed from the database if possible
+                        var currentEmbed = currentEvent.Message.Embeds.Find(embed => embed.Id == incomingEmbed.Id);
+                        if (currentEmbed is null)
+                        {
+                            // If there is no embed with this ID, create a new one
+                            var newEmbed = new Entities.Embed
+                            {
+                                Author = incomingEmbed.Author,
+                                AuthorUrl = incomingEmbed.AuthorUrl,
+                                AuthorIcon = incomingEmbed.AuthorIcon,
+                                Title = incomingEmbed.Title,
+                                TitleUrl = incomingEmbed.TitleUrl,
+                                Description = incomingEmbed.Description,
+                                Image = incomingEmbed.Image,
+                                Thumbnail = incomingEmbed.Thumbnail,
+                                Color = incomingEmbed.Color,
+                                Footer = incomingEmbed.Footer,
+                                FooterIcon = incomingEmbed.FooterIcon,
+                                AddTimestamp = incomingEmbed.AddTimestamp,
+                                Message = currentEvent.Message // Set Message naviagation property
+                            };
+
+                            context.Embeds.Add(newEmbed);
+                            await context.SaveChangesAsync(); // Save to generate EmbedId
+
+                            // This also adds field lengths
+                            length += incomingEmbed.Length;
+
+                            // Set the new embed as the current one
+                            currentEmbed = newEmbed;
+                        }
+                        else
+                        {
+                            // If there is an embed with this Id, upadte it and all of its fields
+                            currentEmbed.Author = incomingEmbed.Author;
+                            currentEmbed.AuthorUrl = incomingEmbed.AuthorUrl;
+                            currentEmbed.AuthorIcon = incomingEmbed.AuthorIcon;
+                            currentEmbed.Title = incomingEmbed.Title;
+                            currentEmbed.TitleUrl = incomingEmbed.TitleUrl;
+                            currentEmbed.Description = incomingEmbed.Description;
+                            currentEmbed.Image = incomingEmbed.Image;
+                            currentEmbed.Thumbnail = incomingEmbed.Thumbnail;
+                            currentEmbed.Color = incomingEmbed.Color;
+                            currentEmbed.Footer = incomingEmbed.Footer;
+                            currentEmbed.FooterIcon = incomingEmbed.FooterIcon;
+                            currentEmbed.AddTimestamp = incomingEmbed.AddTimestamp;
+
+                            length += Util.GetEmbedLength(currentEmbed);
+                        }
+
+                        // If there are any fields missing in this update that existed before, delete them.
+                        List<Entities.EmbedField> notFoundFields = currentEmbed.Fields.Where(field => !incomingEmbed.Fields.Any(req => req.Id == field.Id))
+                            .Select(field => field)
+                            .ToList();
+
+                        foreach (var incomingEmbedField in incomingEmbed.Fields)
+                        {
+                            var currentEmbedField = currentEmbed.Fields.Find(embed => embed.Id == incomingEmbedField.Id);
+
+                            if (currentEmbedField is null)
+                            {
+                                var newField = new Entities.EmbedField
+                                {
+                                    Name = incomingEmbedField.Name,
+                                    Value = incomingEmbedField.Value,
+                                    Inline = incomingEmbedField.Inline,
+                                    Embed = currentEmbed // Set Embed navigation property
+                                };
+
+                                context.EmbedFields.Add(newField);
+                            }
+                            else
+                            {
+                                currentEmbedField.Name = incomingEmbedField.Name;
+                                currentEmbedField.Value = incomingEmbedField.Value;
+                                currentEmbedField.Inline = incomingEmbedField.Inline;
+
+                                length += currentEmbedField.Name.Length + currentEmbedField.Value.Length;
+                            }
+                        }
+
+                        foreach (var notFoundField in notFoundFields)
+                        {
+                            context.EmbedFields.Remove(notFoundField);
+                        }
+
+                        foreach (var notFoundEmbed in notFoundEmbeds)
+                        {
+                            context.Embeds.Remove(notFoundEmbed);
+                        }
+                    }
+                }
+
+                if (length > 6000)
+                {
+                    await transaction.RollbackAsync();
+                    return null;
+                }
+
+                await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
+
+                await transaction.CommitAsync();
+
+                return new SubscriptionResponse
+                {
+                    Id = subscription.Id,
+                    AnnouncementType = subscription.SubscriptionType,
+                    Url = subscription.Url,
                 };
             }
             catch (Exception)
@@ -259,7 +444,7 @@ namespace Hookio.Database
                 Discriminator = user.Discriminator,
                 Id = user.Id,
                 Username = user.GlobalName is null ? user.Username : user.GlobalName,
-                // TODO: implement premium in the DB
+                // TODO: implement premium in the DB, patreon tiers = guild amounts, the Guild itself will contain the unlocked features for each tier
                 Premium = 0,
                 Avatar = user.GetAvatarUrl(),
                 Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
@@ -314,7 +499,8 @@ namespace Hookio.Database
             };
         }
 
-        private EventResponse ToContract(Entities.Event eventEntity) {
+        private EventResponse ToContract(Entities.Event eventEntity)
+        {
             return new EventResponse
             {
                 Id = eventEntity.Id,

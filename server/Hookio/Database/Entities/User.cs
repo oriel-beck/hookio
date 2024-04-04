@@ -15,6 +15,7 @@ namespace Hookio.Database.Entities
         public string RefreshToken { get; set; }
         [Required]
         public DateTimeOffset ExpireAt { get; set; }
+        // TODO: implement premium level (tiers in Patreon)
         public DateTimeOffset? PremiumExpires { get; set; }
         [NotMapped]
         public bool Premium
