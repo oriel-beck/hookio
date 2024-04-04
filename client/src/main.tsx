@@ -8,7 +8,7 @@ import Guilds from './modules/guilds.tsx';
 import getUser from './loaders/get-user.ts';
 import Home from './modules/home.tsx';
 import './index.scss';
-import LoginGuard from './modules/guard.tsx';
+import LoginGuard from './components/guard.tsx';
 import ProviderSelection from './modules/provider-selection.tsx';
 import SubscriptionsManager from './modules/subscriptions-manager.tsx';
 import getAllSubscriptions from './loaders/get-all-subscriptions.ts';
