@@ -10,7 +10,7 @@ export default function SubscriptionsManager() {
     return (
         <Suspense fallback={<Loader />}>
             <Await resolve={data.subscriptions}>
-                <InternalSubscriptionManager/>
+                <InternalSubscriptionManager />
             </Await>
         </Suspense>
     )
@@ -39,21 +39,25 @@ function InternalSubscriptionManager() {
             />
             <div className="flex flex-col justify-center items-center space-y-4 p-5 text-white">
                 {/* subscription list TODO: design*/}
-                <div>
+                <div className="flex space-x-4 justify-start w-full">
                     {Array.isArray(subscriptions) && subscriptions.map((sub) => (
-                        <div key={sub.id}>
-                            {sub.id}
+                        <div key={sub.id} className="flex flex-col">
+                            <button onClick={() => onClick(sub.id)} className={`${sub.subscriptionType === 0 ? 'bg-red-500 text-white' : sub.subscriptionType === 1 ? 'bg-purple-900 text-white' : ''} py-2 px-4 rounded border border-white hover:bg-opacity-60`}>
+                                Edit {sub.subscriptionType === 0 ? 'Youtube' : sub.subscriptionType === 1 ? 'Twitch' : ''} Subscription {sub.id}
+                            </button>
                         </div>
                     ))}
                 </div>
 
                 {/* Create subscription button */}
                 {/* If there are any subs, move to the bottom left */}
-                <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
-                    <button className="border border-white rounded py-2 px-4 hover:bg-gray-400 hover:bg-opacity-60 duration-75" onClick={() => onClick()}>
-                        Create new Subscription
-                    </button>
-                </div>
+                {Array.isArray(subscriptions) &&
+                    <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
+                        <button className={`border border-white rounded py-2 px-4 duration-75 ${subscriptions.length >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => subscriptions.length < 2 ? onClick() : null}>
+                            Create new Subscription
+                        </button>
+                    </div>
+                }
             </div>
         </div>
     )
