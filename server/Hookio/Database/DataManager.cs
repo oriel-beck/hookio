@@ -108,7 +108,7 @@ namespace Hookio.Database
             return new SubscriptionResponse
             {
                 Id = subscription.Id,
-                AnnouncementType = subscription.SubscriptionType,
+                SubscriptionType = subscription.SubscriptionType,
                 Url = subscription.Url,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
                 GuildId = subscription.GuildId,
@@ -214,7 +214,7 @@ namespace Hookio.Database
                 return new SubscriptionResponse
                 {
                     Id = subscription.Id,
-                    AnnouncementType = subscription.SubscriptionType,
+                    SubscriptionType = subscription.SubscriptionType,
                     Url = subscription.Url
                 };
             }
@@ -394,7 +394,7 @@ namespace Hookio.Database
                 return new SubscriptionResponse
                 {
                     Id = subscription.Id,
-                    AnnouncementType = subscription.SubscriptionType,
+                    SubscriptionType = subscription.SubscriptionType,
                     Url = subscription.Url,
                 };
             }
@@ -423,7 +423,7 @@ namespace Hookio.Database
             var subscriptions = (await query.ToListAsync()).Select(subscription => new SubscriptionResponse
             {
                 Id = subscription.Id,
-                AnnouncementType = subscription.SubscriptionType,
+                SubscriptionType = subscription.SubscriptionType,
                 Url = subscription.Url,
                 GuildId = guildId,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
@@ -431,6 +431,8 @@ namespace Hookio.Database
 
             return [.. subscriptions];
         }
+
+        // TODO: DeleteSubscription
         #endregion
 
         #region contracts
