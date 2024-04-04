@@ -78,11 +78,23 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
         subscriptionType: type,
         webhookUrl: values.webhookUrl,
         url: values.url,
-        events: Object.entries(values.events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message, eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
+        events: Object.entries(values.events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
     }
 
     if (id) return await fetch(`/api/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
     return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body: JSON.stringify(data), headers: {
         'Content-Type': 'application/json'
     } });
+}
+
+function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
+    message.embeds = message.embeds.map((embed) => {
+        if (embed.id && embed.id < 1) embed.id = undefined;
+        embed.fields.map((field) => {
+            if (field.id && field.id < 1) field.id = undefined;
+            return field;
+        });
+        return embed;
+    });
+    return message;
 }

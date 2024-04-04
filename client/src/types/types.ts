@@ -36,7 +36,7 @@ export interface Message {
 }
 
 export interface Embed {
-  id: number;
+  id?: number;
   description?: string;
   title?: string;
   titleUrl?: string;
@@ -53,7 +53,7 @@ export interface Embed {
 }
 
 export interface EmbedField {
-  id: number;
+  id?: number;
   name: string;
   value: string;
   inline: boolean;
