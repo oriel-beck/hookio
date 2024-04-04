@@ -10,7 +10,7 @@ import Home from './modules/home.tsx';
 import './index.scss';
 import LoginGuard from './modules/guard.tsx';
 import ProviderSelection from './modules/provider-selection.tsx';
-import SubscriptionsManager from './modules/subscriptions-manager.tsx';
+import SubscriptionsManager from './modules/subscription-manager/subscriptions-manager.tsx';
 import getAllSubscriptions from './loaders/get-all-subscriptions.ts';
 import SubscriptionEditor from './modules/subscription-editor/editor.tsx';
 import getSubscription from './loaders/get-subscription.ts';
