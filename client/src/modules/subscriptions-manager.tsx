@@ -1,9 +1,22 @@
-import { useAsyncValue, useNavigate, useParams } from "react-router-dom";
-import PageHeader from "../../components/page-heading";
-import type { Subscription } from "../../types/types";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { Await, useAsyncValue, useLoaderData, useNavigate, useParams } from "react-router-dom"
+import type { Subscription } from "../types/types";
+import Loader from "../components/loader";
+import PageHeader from "../components/page-heading";
 
-export default function InternalSubscriptionManager() {
+export default function SubscriptionsManager() {
+    const data = useLoaderData() as { subscriptions: Promise<Subscription[]> };
+
+    return (
+        <Suspense fallback={<Loader />}>
+            <Await resolve={data.subscriptions}>
+                <InternalSubscriptionManager/>
+            </Await>
+        </Suspense>
+    )
+}
+
+function InternalSubscriptionManager() {
     const subscriptions = useAsyncValue() as Subscription[];
     const params = useParams();
     const navigate = useNavigate();
