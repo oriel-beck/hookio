@@ -41,6 +41,7 @@ function FormikForm() {
 
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
         id: Yup.number().required(),
+        index: Yup.number().optional(),
         name: Yup.string().required(),
         value: Yup.string().required(),
         inline: Yup.boolean().required(),
@@ -48,6 +49,7 @@ function FormikForm() {
 
     const embedSchema: Yup.ObjectSchema<Embed> = Yup.object({
         id: Yup.number().required(),
+        index: Yup.number().optional(),
         description: Yup.string().optional(),
         title: Yup.string().optional(),
         titleUrl: Yup.string().optional().url(),

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../types/types";
 import { EventType, Provider } from "./enums";
 
@@ -12,7 +13,7 @@ export function getEventTypes(provider: Provider) {
 
 export function generateNewEmbed(): Embed {
     return {
-        id: Math.random(),
+        id: randomUUID(),
         addTimestamp: false,
         description: "",
         title: "",
@@ -31,7 +32,7 @@ export function generateNewEmbed(): Embed {
 
 export function generateNewField(): EmbedField {
     return {
-        id: Math.random(),
+        id: randomUUID(),
         name: "",
         value: "",
         inline: false
@@ -78,20 +79,26 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
         subscriptionType: type,
         webhookUrl: values.webhookUrl,
         url: values.url,
-        events: Object.entries(values.events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
+        events: convertEventsToSendableData(values.events)
     }
 
-    if (id) return await fetch(`/api/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    if (id) return await fetch(`/api/subscriptions/${guildId}/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
     return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body: JSON.stringify(data), headers: {
         'Content-Type': 'application/json'
     } });
 }
 
+const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
+
 function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
-    message.embeds = message.embeds.map((embed) => {
-        if (embed.id && embed.id < 1) embed.id = undefined;
-        embed.fields.map((field) => {
-            if (field.id && field.id < 1) field.id = undefined;
+    message.embeds = message.embeds.map((embed, embedIndex) => {
+        // If the embed ID is string (created locally), remove it
+        if (embed.id && typeof embed.id === 'string') embed.id = undefined;
+        embed.index = embedIndex;
+        embed.fields.map((field, fieldIndex) => {
+            // If the embed field ID is string (created locally), remove it
+            if (field.id && typeof field.id === 'string') field.id = undefined;
+            field.index = fieldIndex;
             return field;
         });
         return embed;

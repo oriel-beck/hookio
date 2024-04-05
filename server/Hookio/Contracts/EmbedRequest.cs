@@ -5,6 +5,8 @@ namespace Hookio.Contracts
     public class EmbedRequest
     {
         public int? Id { get; set; }
+        [Required]
+        public int Index { get; set; }
         [MaxLength(4096)]
         public string? Description { get; set; }
         public string? TitleUrl { get; set; }

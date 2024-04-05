@@ -1,6 +1,7 @@
 ﻿using Hookio.Contracts;
 using Hookio.Database.Interfaces;
 using Hookio.Enunms;
+using Hookio.Exceptions;
 using Hookio.ModelBindings;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,29 +20,45 @@ namespace Hookio.Controllers
             return Ok(announcements);
         }
 
-        [HttpPost("{guildId}")]
+        [HttpPost("{guildId:ulong}")]
         public async Task<ActionResult<SubscriptionResponse>> CreateSubscription([DiscordGuildId] ulong guildId, SubscriptionRequest subscription)
         {
             if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
             // TODO: subscribe to selected provider
-            var subscriptionResult = await dataManager.CreateSubscription(guildId, subscription);
-            return Ok(subscriptionResult);
+            try
+            {
+                var subscriptionResult = await dataManager.CreateSubscription(guildId, subscription);
+                return Ok(subscriptionResult);
+            }
+            catch(EmbedTooLongException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch(RequiresPremiumException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                // fallback
+                return StatusCode(500);
+            }
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<SubscriptionResponse?>> GetGuildSubscription(int id)
+        [HttpGet("{guildId:ulong}/{id:int}")]
+        public async Task<ActionResult<SubscriptionResponse?>> GetGuildSubscription([DiscordGuildId] ulong guildId, int id)
         {
-            var subscription = await dataManager.GetSubscriptionById(id);
-            if (subscription is not null && !Util.CanAccessGuild(HttpContext.User, subscription.GuildId)) return Unauthorized();
+            if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized("You cannot access this guild's subscriptions");
+            var subscription = await dataManager.GetSubscription(guildId, id);
 
             return subscription is null ? NotFound() : Ok(subscription);
         }
 
-        [HttpPatch("{id:int}")]
-        public async Task<ActionResult<SubscriptionResponse>> UpdateSubscription(int id)
+        [HttpPatch("{guildId:ulong}/{id:int}")]
+        public async Task<ActionResult<SubscriptionResponse>> UpdateSubscription([DiscordGuildId] ulong guildId, int id, SubscriptionRequest subscriptionRequest)
         {
-            var subscription = await dataManager.GetSubscriptionById(id);
-            if (subscription is not null && !Util.CanAccessGuild(HttpContext.User, subscription.GuildId)) return Unauthorized();
+            if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized("You cannot access this guild's subscriptions");
+            var subscription = await dataManager.UpdateSubscription(guildId, id, subscriptionRequest);
 
             return Ok(subscription);
         }

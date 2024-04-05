@@ -4,6 +4,7 @@ using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Hookio.Enunms;
+using Hookio.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hookio.Database
@@ -89,15 +90,18 @@ namespace Hookio.Database
         #endregion
 
         #region subscriptions
-        public async Task<SubscriptionResponse?> GetSubscriptionById(int id)
+        public async Task<SubscriptionResponse?> GetSubscription(ulong guildId, int id)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
 
             var subscription = await ctx.Subscriptions
+                .Where(x => 
+                    (x.GuildId == guildId) &&
+                    (x.Id == id))
                 .Include(s => s.Events)
                     .ThenInclude(e => e.Message)
-                        .ThenInclude(m => m!.Embeds)
-                            .ThenInclude(e => e.Fields)
+                        .ThenInclude(m => m!.Embeds.OrderBy(e => e.Index))
+                            .ThenInclude(e => e.Fields.OrderBy(f => f.Index))
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (subscription == null)
@@ -119,11 +123,11 @@ namespace Hookio.Database
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
             using var context = await contextFactory.CreateDbContextAsync();
-            var subscriptions = await context.Subscriptions.Where(x => x.GuildId == guildId).ToListAsync();
-            if (subscriptions.Count >= 2)
+            var subscriptionsCount = await context.Subscriptions.Where(x => x.GuildId == guildId).CountAsync();
+            if (subscriptionsCount >= 2)
             {
                 // TODO: Premium only, need a Guild entity for that
-                return null;
+                throw new RequiresPremiumException("This feature requires premium");
             }
 
             using var transaction = await context.Database.BeginTransactionAsync();
@@ -169,6 +173,7 @@ namespace Hookio.Database
                     {
                         var embed = new Entities.Embed
                         {
+                            Index = embedRequest.Index,
                             Description = embedRequest.Description,
                             TitleUrl = embedRequest.TitleUrl,
                             Title = embedRequest.Title,
@@ -191,6 +196,7 @@ namespace Hookio.Database
                         {
                             var embedField = new Entities.EmbedField
                             {
+                                Index = embedFieldRequest.Index,
                                 Name = embedFieldRequest.Name,
                                 Value = embedFieldRequest.Value,
                                 Inline = embedFieldRequest.Inline,
@@ -204,7 +210,7 @@ namespace Hookio.Database
                 if (length > 6000)
                 {
                     await transaction.RollbackAsync();
-                    return null;
+                    throw new EmbedTooLongException("The embeds and content length cannot be longer than 6k characters");
                 }
 
                 await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
@@ -225,7 +231,7 @@ namespace Hookio.Database
             }
         }
 
-        public async Task<SubscriptionResponse?> UpdateSubscription(int id, SubscriptionRequest request)
+        public async Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request)
         {
             using var context = await contextFactory.CreateDbContextAsync();
             using var transaction = await context.Database.BeginTransactionAsync();
@@ -233,7 +239,11 @@ namespace Hookio.Database
             try
             {
                 // Get current subscription
-                var subscription = await context.Subscriptions.Where(x => x.Id == id).FirstOrDefaultAsync();
+                var subscription = await context.Subscriptions.Where(x => 
+                        (x.Id == id) &&
+                        (x.GuildId == guildId))
+                    .FirstOrDefaultAsync();
+
                 if (subscription == null)
                 {
                     return null;
@@ -295,6 +305,7 @@ namespace Hookio.Database
                             // If there is no embed with this ID, create a new one
                             var newEmbed = new Entities.Embed
                             {
+                                Index = incomingEmbed.Index,
                                 Author = incomingEmbed.Author,
                                 AuthorUrl = incomingEmbed.AuthorUrl,
                                 AuthorIcon = incomingEmbed.AuthorIcon,
@@ -334,6 +345,7 @@ namespace Hookio.Database
                             currentEmbed.Footer = incomingEmbed.Footer;
                             currentEmbed.FooterIcon = incomingEmbed.FooterIcon;
                             currentEmbed.AddTimestamp = incomingEmbed.AddTimestamp;
+                            currentEmbed.Index = incomingEmbed.Index;
 
                             length += Util.GetEmbedLength(currentEmbed);
                         }
@@ -351,6 +363,7 @@ namespace Hookio.Database
                             {
                                 var newField = new Entities.EmbedField
                                 {
+                                    Index = incomingEmbedField.Index,
                                     Name = incomingEmbedField.Name,
                                     Value = incomingEmbedField.Value,
                                     Inline = incomingEmbedField.Inline,
@@ -361,6 +374,7 @@ namespace Hookio.Database
                             }
                             else
                             {
+                                currentEmbedField.Index = incomingEmbedField.Index;
                                 currentEmbedField.Name = incomingEmbedField.Name;
                                 currentEmbedField.Value = incomingEmbedField.Value;
                                 currentEmbedField.Inline = incomingEmbedField.Inline;

@@ -36,7 +36,10 @@ export interface Message {
 }
 
 export interface Embed {
-  id?: number;
+  /** String when generated locally, number when returned from server */
+  id?: number | string;
+  /** Required only in fetch */
+  index?: number;
   description?: string;
   title?: string;
   titleUrl?: string;
@@ -53,7 +56,10 @@ export interface Embed {
 }
 
 export interface EmbedField {
-  id?: number;
+  /** String when generated locally, number when returned from server */
+  id?: number | string;
+  /** Required only in fetch */
+  index?: number;
   name: string;
   value: string;
   inline: boolean;
