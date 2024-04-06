@@ -67,6 +67,7 @@ function FormikForm() {
     })
 
     const messageSchema: Yup.ObjectSchema<MessageFormikInitialValue> = Yup.object({
+        id: Yup.mixed().optional(),
         content: Yup.string().optional(),
         username: Yup.string().optional(),
         avatar: Yup.string().optional().url(),
@@ -74,6 +75,7 @@ function FormikForm() {
     });
 
     const eventSchema: Yup.ObjectSchema<EventFormikInitialValue> = Yup.object({
+        id: Yup.mixed().optional(),
         message: messageSchema
     })
 
@@ -140,6 +142,7 @@ function FormikForm() {
     return (
         <Formik
             initialValues={{
+                // Webhook url is not returned, schema is optional id this is an edit and not a new subscription
                 webhookUrl: "",
                 url: `${subscription?.url || ''}`,
                 events: subscription?.events ? convertAPIEventsToFront(subscription.events) : generateDefaultEvents(Provider[params['provider'] as keyof typeof Provider])
@@ -268,7 +271,7 @@ function getPlaceholderByPath(path: string) {
 }
 
 function convertAPIEventsToFront(events: Subscription['events']) {
-    return Object.entries(events).reduce((acc, [eventKey, { message }]) => ({ ...acc, [APIEvents[eventKey as keyof typeof APIEvents]]: { message } }), {} as {
+    return Object.entries(events).reduce((acc, [eventKey, { message, id }]) => ({ ...acc, [APIEvents[eventKey as keyof typeof APIEvents]]: { message, id } }), {} as {
         [eventType: string]: EventFormikInitialValue;
     })
 }

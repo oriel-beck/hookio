@@ -67,6 +67,7 @@ export interface EmbedField {
 }
 
 export interface MessageFormikInitialValue {
+  id?: unknown;
   content?: string;
   username?: string;
   avatar?: string;
@@ -74,6 +75,7 @@ export interface MessageFormikInitialValue {
 }
 
 export interface EventFormikInitialValue {
+  id?: unknown;
   message: MessageFormikInitialValue
 }
 

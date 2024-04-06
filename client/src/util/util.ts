@@ -43,21 +43,26 @@ export function generateDefaultEvents(provider: Provider): { [eventType: string]
         case Provider.youtube:
             return {
                 [EventType["Video Edited"].toString()]: {
+                    id: makeid(10),
                     message: generateDefaultMessage()
                 },
                 [EventType["Video Uploaded"].toString()]: {
+                    id: makeid(10),
                     message: generateDefaultMessage()
                 }
             }
         case Provider.twitch:
             return {
                 [EventType["Stream Started"].toString()]: {
+                    id: makeid(10),
                     message: generateDefaultMessage()
                 },
                 [EventType["Stream Updated"].toString()]: {
+                    id: makeid(10),
                     message: generateDefaultMessage()
                 },
                 [EventType["Stream Ended"].toString()]: {
+                    id: makeid(10),
                     message: generateDefaultMessage()
                 }
             }
@@ -66,6 +71,7 @@ export function generateDefaultEvents(provider: Provider): { [eventType: string]
 
 export function generateDefaultMessage(): MessageFormikInitialValue {
     return {
+        id: makeid(10),
         content: "",
         username: "Hookio",
         avatar: "https://c8.alamy.com/comp/R1PP58/hook-vector-icon-isolated-on-transparent-background-hook-transparency-logo-concept-R1PP58.jpg",
@@ -81,27 +87,32 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
         events: convertEventsToSendableData(values.events)
     }
 
-    if (id) return await fetch(`/api/subscriptions/${guildId}/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
-    return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body: JSON.stringify(data), headers: {
+    const headers = {
         'Content-Type': 'application/json'
-    } });
+    }
+
+    const body = JSON.stringify(data);
+
+    if (id) return await fetch(`/api/subscriptions/${guildId}/${id}`, { method: 'PATCH', body, headers });
+    return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body, headers });
 }
 
-const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message }]) => ({ ...acc, [eventType]: { message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
+const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message, id }]) => ({ ...acc, [eventType]: { id: typeof id === 'string' ? null : id, message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
 
 function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
     message.embeds = message.embeds.map((embed, embedIndex) => {
         // If the embed ID is string (created locally), remove it
-        if (embed.id && typeof embed.id === 'string') embed.id = undefined;
+        if (embed.id && typeof embed.id === 'string') embed.id = null;
         embed.index = embedIndex;
         embed.fields.map((field, fieldIndex) => {
             // If the embed field ID is string (created locally), remove it
-            if (field.id && typeof field.id === 'string') field.id = undefined;
+            if (field.id && typeof field.id === 'string') field.id = null;
             field.index = fieldIndex;
             return field;
         });
         return embed;
     });
+    if (typeof message.id === 'string') message.id = null; 
     return message;
 }
 
@@ -111,8 +122,8 @@ function makeid(length: number) {
     const charactersLength = characters.length;
     let counter = 0;
     while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
     }
     return result;
 }

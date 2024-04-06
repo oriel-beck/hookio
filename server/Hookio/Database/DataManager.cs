@@ -254,7 +254,7 @@ namespace Hookio.Database
                     // TODO: unsubscribe from old, subscribe to new
                 }
 
-                if (request.WebhookUrl is not null)
+                if (!string.IsNullOrEmpty(request.WebhookUrl))
                 {
                     subscription.WebhookUrl = request.WebhookUrl;
                 }
@@ -264,12 +264,12 @@ namespace Hookio.Database
                         .Include(x => x.Message)
                             .ThenInclude(x => x.Embeds)
                                 .ThenInclude(x => x.Fields)
-                    .ToListAsync();
+                    .ToDictionaryAsync(k => k.Id);
 
                 foreach (var eventRequest in request.Events)
                 {
                     // Get the current event of this event type
-                    var currentEvent = events.Find(ev => ev.Id == eventRequest.Value.Id);
+                    var _ = events.TryGetValue((int)eventRequest.Value.Id!, out var currentEvent);
                     
                     if (currentEvent == null) 
                     {
@@ -515,7 +515,7 @@ namespace Hookio.Database
             };
         }
 
-        private EventResponse ToContract(Entities.Event eventEntity)
+        private EventResponse ToContract(Event eventEntity)
         {
             return new EventResponse
             {
