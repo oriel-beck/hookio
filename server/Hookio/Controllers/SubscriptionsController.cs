@@ -11,16 +11,16 @@ namespace Hookio.Controllers
     [ApiController]
     public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
     {
-        [HttpGet("{guildId}/{provider?}")]
-        public async Task<ActionResult<List<SubscriptionResponse>>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? provider)
+        [HttpGet("{guildId}")]
+        public async Task<ActionResult<List<SubscriptionResponse>>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? subscriptionType)
         {
             if(!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
-            var announcements = await dataManager.GetSubscriptions(guildId, provider);
+            var announcements = await dataManager.GetSubscriptions(guildId, subscriptionType);
             logger.LogInformation($"[{nameof(GetGuildSubscription)}]: returned '{announcements?.Count}' announcements for '{guildId}'");
             return Ok(announcements);
         }
 
-        [HttpPost("{guildId:ulong}")]
+        [HttpPost("{guildId}")]
         public async Task<ActionResult<SubscriptionResponse>> CreateSubscription([DiscordGuildId] ulong guildId, SubscriptionRequest subscription)
         {
             if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
@@ -32,11 +32,17 @@ namespace Hookio.Controllers
             }
             catch(EmbedTooLongException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new
+                {
+                    ex.Message
+                });
             }
             catch(RequiresPremiumException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new
+                {
+                    ex.Message
+                });
             }
             catch (Exception)
             {
@@ -45,7 +51,7 @@ namespace Hookio.Controllers
             }
         }
 
-        [HttpGet("{guildId:ulong}/{id:int}")]
+        [HttpGet("{guildId}/{id:int}")]
         public async Task<ActionResult<SubscriptionResponse?>> GetGuildSubscription([DiscordGuildId] ulong guildId, int id)
         {
             if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized("You cannot access this guild's subscriptions");
@@ -54,7 +60,7 @@ namespace Hookio.Controllers
             return subscription is null ? NotFound() : Ok(subscription);
         }
 
-        [HttpPatch("{guildId:ulong}/{id:int}")]
+        [HttpPatch("{guildId}/{id:int}")]
         public async Task<ActionResult<SubscriptionResponse>> UpdateSubscription([DiscordGuildId] ulong guildId, int id, SubscriptionRequest subscriptionRequest)
         {
             if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized("You cannot access this guild's subscriptions");

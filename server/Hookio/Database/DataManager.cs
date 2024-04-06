@@ -398,7 +398,7 @@ namespace Hookio.Database
                 if (length > 6000)
                 {
                     await transaction.RollbackAsync();
-                    return null;
+                    throw new EmbedTooLongException();
                 }
 
                 await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
