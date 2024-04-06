@@ -23,7 +23,7 @@ function InternalSubscriptionManager() {
     const onClick = (id?: number) => navigate(id?.toString() || "new");
 
     useEffect(() => {
-        if (!Array.isArray(subscriptions)) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
+        if (!Array.isArray(subscriptions) && (subscriptions as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true })
     })
 
     return (
@@ -51,13 +51,11 @@ function InternalSubscriptionManager() {
 
                 {/* Create subscription button */}
                 {/* If there are any subs, move to the bottom left */}
-                {Array.isArray(subscriptions) &&
-                    <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
-                        <button className={`border border-white rounded py-2 px-4 duration-75 ${subscriptions.length >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => subscriptions.length < 2 ? onClick() : null}>
-                            Create new Subscription
-                        </button>
-                    </div>
-                }
+                <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
+                    <button className={`border border-white rounded py-2 px-4 duration-75 ${(subscriptions?.length || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (subscriptions.length || 0) < 2 ? onClick() : null}>
+                        Create new Subscription
+                    </button>
+                </div>
             </div>
         </div>
     )

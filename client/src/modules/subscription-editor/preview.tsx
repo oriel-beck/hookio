@@ -32,7 +32,7 @@ export default function EmbedPreview({ eventType }: { eventType: EventType }) {
                 }
                 {/* TODO: demo image */}
                 {data?.embeds.map((embed) => (
-                    <Embed key={embed.id} embed={embed} />
+                    <Embed key={embed.id as string} embed={embed} />
                 ))}
             </div>
         </div>
@@ -129,7 +129,7 @@ function Embed({ embed }: { embed: EmbedType, }) {
                     {!!embed.fields.length &&
                         <div className="grid gap-1 mt-[8px] text-sm" style={{ gridColumn: '1/2' }}>
                             {embed.fields.map((field) => (
-                                <div key={field.id} className="flex flex-col" style={{ gridColumn: getFieldGridColumn(embed, field) }}>
+                                <div key={field.id as string} className="flex flex-col" style={{ gridColumn: getFieldGridColumn(embed, field) }}>
                                     <h3 className="font-semibold">{field.name}</h3>
                                     <p className="font-normal">{field.value}</p>
                                 </div>

@@ -25,7 +25,7 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
                             <div>
                                 {!embed.fields.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => addPanel(ev)}>Add {label}</button>}
                                 {embed.fields?.map((field, fieldIndex) => (
-                                    <div key={field.id} className="px-2 mb-2">
+                                    <div key={field.id as string} className="px-2 mb-2">
                                         <ExpansionPanel invalid={!!errors?.at(fieldIndex)?.name || !!errors?.at(fieldIndex)?.value} max={max} label={label} length={embed.fields.length} index={fieldIndex} movePanelUp={movePanelUp} movePanelDown={movePanelDown} addPanel={addPanel} removePanel={removePanel}>
                                             <div className="p-5 mt-2 w-full space-y-3">
                                                 <div className="space-y-1">

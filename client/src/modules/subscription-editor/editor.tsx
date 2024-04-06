@@ -33,14 +33,10 @@ function FormikForm() {
     const availableEvents = getEventTypes(Provider[params['provider'] as keyof typeof Provider]);
     const [eventType, setEventType] = useState<EventType>(availableEvents[0]);
     const subscription = useAsyncValue() as Subscription;
-    const navigate = useNavigate()
-
-    useEffect(() => {
-        if (params['subscriptionId'] && 'status' in subscription) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
-    })
+    const navigate = useNavigate();
 
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
-        id: Yup.number().required(),
+        id: Yup.mixed().required(),
         index: Yup.number().optional(),
         name: Yup.string().required(),
         value: Yup.string().required(),
@@ -48,7 +44,7 @@ function FormikForm() {
     })
 
     const embedSchema: Yup.ObjectSchema<Embed> = Yup.object({
-        id: Yup.number().required(),
+        id: Yup.mixed().required(),
         index: Yup.number().optional(),
         description: Yup.string().optional(),
         title: Yup.string().optional(),
@@ -126,15 +122,20 @@ function FormikForm() {
 
     function getWebhookUrl() {
         // If this is not a new subscription then make webhook optional since it will not return from the backend
-        const schema = Yup.string().url().test({
+        const schema = Yup.string()
+        if (params['subscriptionId']) schema.optional();
+        schema.url().test({
             test(url, ctx) {
                 if (!webhookRegex.test(url || "")) return ctx.createError({ message: "Invalid webhook URL" });
                 return true;
             }
         });
-        if (params['subscriptionId']) schema.optional();
         return schema;
     }
+
+    useEffect(() => {
+        if (params['subscriptionId'] && 'status' in subscription) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
+    });
 
     return (
         <Formik
@@ -148,6 +149,7 @@ function FormikForm() {
                 ctx.setSubmitting(false);
             }}
             validationSchema={validationSchema}
+            validateOnMount={true}
         >
             {({
                 values,

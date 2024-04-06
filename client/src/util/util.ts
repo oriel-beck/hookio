@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../types/types";
 import { EventType, Provider } from "./enums";
 
@@ -13,7 +12,7 @@ export function getEventTypes(provider: Provider) {
 
 export function generateNewEmbed(): Embed {
     return {
-        id: randomUUID(),
+        id: makeid(10),
         addTimestamp: false,
         description: "",
         title: "",
@@ -32,7 +31,7 @@ export function generateNewEmbed(): Embed {
 
 export function generateNewField(): EmbedField {
     return {
-        id: randomUUID(),
+        id: makeid(10),
         name: "",
         value: "",
         inline: false
@@ -104,4 +103,16 @@ function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
         return embed;
     });
     return message;
+}
+
+function makeid(length: number) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
 }

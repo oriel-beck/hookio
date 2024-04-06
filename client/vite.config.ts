@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), 
       nodePolyfills({
-        include: ['path', 'url', 'fs'],
+        include: ['crypto'],
         protocolImports: true,
       }),
     ],

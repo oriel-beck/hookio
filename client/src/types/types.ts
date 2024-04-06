@@ -1,5 +1,6 @@
 import type { EventType } from "../util/enums";
 
+
 export interface User {
   id: string;
   username: string;
@@ -37,7 +38,7 @@ export interface Message {
 
 export interface Embed {
   /** String when generated locally, number when returned from server */
-  id?: number | string;
+  id?: unknown;
   /** Required only in fetch */
   index?: number;
   description?: string;
@@ -57,7 +58,7 @@ export interface Embed {
 
 export interface EmbedField {
   /** String when generated locally, number when returned from server */
-  id?: number | string;
+  id?: unknown;
   /** Required only in fetch */
   index?: number;
   name: string;

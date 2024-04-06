@@ -22,7 +22,7 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
                 <div>
                     {!values.embeds.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => addPanel(ev)}>Add {label}</button>}
                     {values.embeds?.map((embed, embedIndex) => (
-                        <ExpansionPanel invalid={!!errors?.at(embedIndex)?.invalid} key={embed.id} max={max} label={label} length={values.embeds.length} index={embedIndex} movePanelUp={movePanelUp} movePanelDown={movePanelDown} addPanel={addPanel} removePanel={removePanel}>
+                        <ExpansionPanel invalid={!!errors?.at(embedIndex)?.invalid} key={embed.id as string} max={max} label={label} length={values.embeds.length} index={embedIndex} movePanelUp={movePanelUp} movePanelDown={movePanelDown} addPanel={addPanel} removePanel={removePanel}>
                             <div className="p-5 mt-2 w-full space-y-3">
                                 <div className="space-y-1">
                                     <div>
