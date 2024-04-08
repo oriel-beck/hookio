@@ -42,42 +42,37 @@ export default function EmbedPreview({ eventType }: { eventType: EventType }) {
 
 function Embed({ embed }: { embed: EmbedType, }) {
 
-    const MAX_FIELDS_PER_ROW = 3
-    const FIELD_GRID_SIZE = 12
+    const MAX_FIELDS_PER_ROW = 3;
+    const FIELD_GRID_SIZE = 12;
 
     const getFieldGridColumn = (embed: EmbedType, field: EmbedField): string => {
-        const fieldIndex = embed.fields.indexOf(field)
+        const fieldIndex = embed.fields.indexOf(field);
 
-        if (!field.inline) return `1 / ${FIELD_GRID_SIZE + 1}`
+        if (!field.inline) return `1 / ${FIELD_GRID_SIZE + 1}`;
 
-        let startingField = fieldIndex
+        let startingField = fieldIndex;
         while (startingField > 0 && embed.fields[startingField - 1].inline) {
-            startingField -= 1
+            startingField--;
         }
 
-        let totalInlineFields = 0
-        while (
-            embed.fields.length > startingField + totalInlineFields &&
-            embed.fields[startingField + totalInlineFields].inline
-        ) {
-            totalInlineFields += 1
+        let totalInlineFields = 0;
+        for (let i = startingField; i < embed.fields.length && embed.fields[i].inline; i++) {
+            totalInlineFields++;
         }
 
-        const indexInSequence = fieldIndex - startingField
-        const currentRow = indexInSequence / MAX_FIELDS_PER_ROW
-        const indexOnRow = indexInSequence % MAX_FIELDS_PER_ROW
-        const totalOnLastRow =
-            totalInlineFields % MAX_FIELDS_PER_ROW || MAX_FIELDS_PER_ROW
-        const fullRows = (totalInlineFields - totalOnLastRow) / MAX_FIELDS_PER_ROW
-        const totalOnRow =
-            currentRow >= fullRows ? totalOnLastRow : MAX_FIELDS_PER_ROW
+        const indexInSequence = fieldIndex - startingField;
+        const currentRow = Math.floor(indexInSequence / MAX_FIELDS_PER_ROW);
+        const indexOnRow = indexInSequence % MAX_FIELDS_PER_ROW;
+        const totalOnLastRow = totalInlineFields % MAX_FIELDS_PER_ROW || MAX_FIELDS_PER_ROW;
+        const fullRows = Math.floor((totalInlineFields - totalOnLastRow) / MAX_FIELDS_PER_ROW);
+        const totalOnRow = currentRow >= fullRows ? totalOnLastRow : MAX_FIELDS_PER_ROW;
 
-        const columnSpan = FIELD_GRID_SIZE / totalOnRow
-        const start = indexOnRow * columnSpan + 1
-        const end = start + columnSpan
+        const columnSpan = FIELD_GRID_SIZE / totalOnRow;
+        const start = indexOnRow * columnSpan + 1;
+        const end = start + columnSpan;
 
-        return `${start} / ${end}`
-    }
+        return `${start} / ${end}`;
+    };
 
 
     return (
