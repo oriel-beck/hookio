@@ -357,7 +357,7 @@ namespace Hookio.Database
 
                         foreach (var incomingEmbedField in incomingEmbed.Fields)
                         {
-                            var currentEmbedField = currentEmbed.Fields.Find(embed => embed.Id == incomingEmbedField.Id);
+                            var currentEmbedField = (currentEmbed.Fields is null ? [] : currentEmbed.Fields).Find(embed => embed.Id == incomingEmbedField.Id);
 
                             if (currentEmbedField is null)
                             {

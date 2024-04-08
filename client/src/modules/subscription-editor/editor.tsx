@@ -229,7 +229,7 @@ function FormikForm() {
                             <EmbedPreview eventType={eventType} />
                         </div>
                     </div>
-                    {copyData && <CopyModal origin={copyData.origin} target={eventType} data={copyData.data} closeModal={closeModal} />}
+                    {copyData && <CopyModal originEventType={copyData.origin} targetEventType={eventType} targetId={values.events[eventType.toString()].id} data={copyData.data} closeModal={closeModal} />}
                 </div>
             )}
         </Formik>
