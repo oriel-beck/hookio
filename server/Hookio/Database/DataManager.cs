@@ -351,7 +351,7 @@ namespace Hookio.Database
                         }
 
                         // If there are any fields missing in this update that existed before, delete them.
-                        List<Entities.EmbedField> notFoundFields = currentEmbed.Fields.Where(field => !incomingEmbed.Fields.Any(req => req.Id == field.Id))
+                        List<Entities.EmbedField> notFoundFields = (currentEmbed.Fields is null ? [] : currentEmbed.Fields).Where(field => !incomingEmbed.Fields.Any(req => req.Id == field.Id))
                             .Select(field => field)
                             .ToList();
 
@@ -387,11 +387,11 @@ namespace Hookio.Database
                         {
                             context.EmbedFields.Remove(notFoundField);
                         }
+                    }
 
-                        foreach (var notFoundEmbed in notFoundEmbeds)
-                        {
-                            context.Embeds.Remove(notFoundEmbed);
-                        }
+                    foreach (var notFoundEmbed in notFoundEmbeds)
+                    {
+                        context.Embeds.Remove(notFoundEmbed);
                     }
                 }
 

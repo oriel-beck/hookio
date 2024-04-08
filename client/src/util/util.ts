@@ -90,6 +90,7 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
     const headers = {
         'Content-Type': 'application/json'
     }
+    console.log(data.events)
 
     const body = JSON.stringify(data);
 
@@ -100,7 +101,8 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
 const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message, id }]) => ({ ...acc, [eventType]: { id: typeof id === 'string' ? null : id, message: removeIDsFromNewEmbeds(message), eventType: +eventType } }), {} as Record<string, EventFormikInitialValue & { eventType: number }>)
 
 function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
-    message.embeds = message.embeds.map((embed, embedIndex) => {
+    const newMessage = structuredClone(message);
+    newMessage.embeds = newMessage.embeds.map((embed, embedIndex) => {
         // If the embed ID is string (created locally), remove it
         if (embed.id && typeof embed.id === 'string') embed.id = null;
         embed.index = embedIndex;
@@ -112,8 +114,7 @@ function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
         });
         return embed;
     });
-    if (typeof message.id === 'string') message.id = null; 
-    return message;
+    return newMessage;
 }
 
 function makeid(length: number) {

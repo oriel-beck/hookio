@@ -69,7 +69,13 @@ function FormikForm() {
     const messageSchema: Yup.ObjectSchema<MessageFormikInitialValue> = Yup.object({
         id: Yup.mixed().optional(),
         content: Yup.string().optional(),
-        username: Yup.string().optional(),
+        username: Yup.string().optional().test({
+            test(str, ctx) {
+                if (!str) return true;
+                if (/(?:discord|clyde|```|system message|everyone|here)/i.test(str)) return ctx.createError({ message: "Username contains forbidden characters" });
+                return true;
+            }
+        }),
         avatar: Yup.string().optional().url(),
         embeds: Yup.array().of(embedSchema).required()
     });
@@ -126,6 +132,7 @@ function FormikForm() {
         // If this is not a new subscription then make webhook optional since it will not return from the backend
         const schema = Yup.string()
         if (params['subscriptionId']) schema.optional();
+        else schema.required()
         schema.url().test({
             test(url, ctx) {
                 if (!webhookRegex.test(url || "")) return ctx.createError({ message: "Invalid webhook URL" });
@@ -142,7 +149,7 @@ function FormikForm() {
     return (
         <Formik
             initialValues={{
-                // Webhook url is not returned, schema is optional id this is an edit and not a new subscription
+                // Webhook url is not returned, schema is optional if this is an edit and not a new subscription
                 webhookUrl: "",
                 url: `${subscription?.url || ''}`,
                 events: subscription?.events ? convertAPIEventsToFront(subscription.events) : generateDefaultEvents(Provider[params['provider'] as keyof typeof Provider])
@@ -237,7 +244,7 @@ function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
                     <div>
                         <Field name={`events.${eventType}.message.username`}>
                             {(props: FieldProps) => (
-                                <Input {...props} label="Username" placeholder="" />
+                                <Input {...props} label="Username" placeholder="" error={errors.events?.[eventType]?.message?.username} limit={80} />
                             )}
                         </Field>
                     </div>
