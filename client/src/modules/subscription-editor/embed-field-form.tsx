@@ -1,7 +1,7 @@
 import { Field, FieldArray, FieldProps, FormikErrors, useFormikContext } from "formik";
 import ExpansionPanel from "../../components/expansion-panel";
 import MultiExpansionField from "../../components/multi-expansion-field";
-import { Input } from "../../components/input";
+import { Input, TextArea } from "../../components/input";
 import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { generateNewField } from "../../util/util";
@@ -21,12 +21,19 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
             <FieldArray name={`events.${eventType}.message.embeds.${embedIndex}.fields`}>
                 {(helpers) => (
                     <MultiExpansionField helpers={helpers} max={25} label="Field" length={embed.fields.length} generate={generateNewField}>
-                        {({ max, label, movePanelDown, movePanelUp, addPanel, removePanel }) => (
+                        {({ max, label, ...props }) => (
                             <div>
-                                {!embed.fields.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => addPanel(ev)}>Add {label}</button>}
+                                {!embed.fields.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => props.addPanel(ev)}>Add {label}</button>}
                                 {embed.fields?.map((field, fieldIndex) => (
                                     <div key={field.id as string} className="px-2 mb-2">
-                                        <ExpansionPanel invalid={!!errors?.at(fieldIndex)?.name || !!errors?.at(fieldIndex)?.value} max={max} label={label} length={embed.fields.length} index={fieldIndex} movePanelUp={movePanelUp} movePanelDown={movePanelDown} addPanel={addPanel} removePanel={removePanel}>
+                                        <ExpansionPanel
+                                            invalid={!!errors?.at(fieldIndex)?.name || !!errors?.at(fieldIndex)?.value}
+                                            max={max}
+                                            label={label}
+                                            length={embed.fields.length}
+                                            index={fieldIndex}
+                                            value={field}
+                                            {...props}>
                                             <div className="p-5 mt-2 w-full space-y-3">
                                                 <div className="space-y-1">
                                                     <div className="p-2">
@@ -37,7 +44,7 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
                                                         </Field>
                                                         <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.value`}>
                                                             {(props: FieldProps) =>
-                                                                <Input {...props} label="Value" placeholder="" limit={1024} />
+                                                                <TextArea {...props} label="Value" placeholder="" limit={1024} />
                                                             }
                                                         </Field>
                                                         <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.inline`}>

@@ -117,7 +117,7 @@ function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
     return newMessage;
 }
 
-function makeid(length: number) {
+export function makeid(length: number) {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;

@@ -1,5 +1,6 @@
 import { FieldArrayRenderProps } from "formik";
 import { SyntheticEvent } from "react";
+import { makeid } from "../util/util";
 
 interface Props {
     length: number;
@@ -17,6 +18,7 @@ interface ChildrenProps {
     removePanel: (index: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => void;
     movePanelUp: (index: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => void;
     movePanelDown: (index: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => void;
+    duplicatePanel?: (value: unknown, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
 }
 
 export default function MultiExpansionField({ children, max, label, length, helpers, generate }: Props) {
@@ -47,5 +49,13 @@ export default function MultiExpansionField({ children, max, label, length, help
         }
     };
 
-    return children({ max, label, addPanel, removePanel, movePanelDown, movePanelUp })
+    const duplicatePanel = (value: unknown, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => {
+        ev.preventDefault()
+        helpers.push({
+            ...value as object,
+            id: makeid(10)
+        });
+    }
+
+    return children({ max, label, addPanel, removePanel, movePanelDown, movePanelUp, duplicatePanel })
 }

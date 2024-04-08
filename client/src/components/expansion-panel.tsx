@@ -1,6 +1,7 @@
 import React, { SyntheticEvent, useState } from "react";
 import { HiOutlineArrowCircleDown, HiOutlineArrowCircleUp, HiOutlineChevronDown, HiOutlineMinusCircle, HiOutlinePlusCircle } from "react-icons/hi";
 import { IoWarningOutline } from "react-icons/io5";
+import { MdOutlineContentCopy } from "react-icons/md";
 
 interface Props {
     invalid?: boolean;
@@ -9,14 +10,16 @@ interface Props {
     max?: number;
     length?: number;
     children: React.ReactElement;
+    value?: unknown;
     movePanelUp?: (index: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
     movePanelDown?: (index: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
     removePanel?: (id: number, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
     addPanel?: (ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
+    duplicatePanel?: (value: unknown, ev: SyntheticEvent<HTMLButtonElement, MouseEvent>) => unknown;
 }
 
 
-export default function ExpansionPanel({ invalid, label, max, length, index, children, movePanelUp, movePanelDown, removePanel, addPanel }: Props) {
+export default function ExpansionPanel({ invalid, label, max, length, index, children, value, movePanelUp, movePanelDown, removePanel, addPanel, duplicatePanel }: Props) {
     const [isOpen, open] = useState(false);
 
     const togglePanel = (ev: SyntheticEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>) => {
@@ -37,6 +40,11 @@ export default function ExpansionPanel({ invalid, label, max, length, index, chi
                     </div>
                     {index !== undefined &&
                         <div className="flex items-center space-x-2">
+                            {length! < max! && (
+                                <button onClick={(ev) => duplicatePanel!(value, ev)}>
+                                    <MdOutlineContentCopy className="h-6 w-6 text-white" />
+                                </button>
+                            )}
                             {index !== 0 && (
                                 <button onClick={(ev) => movePanelUp!(index!, ev)}>
                                     <HiOutlineArrowCircleUp className="w-6 h-6 text-white" />

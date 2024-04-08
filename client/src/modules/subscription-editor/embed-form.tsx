@@ -18,11 +18,20 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
     const errors = (formik.errors.events?.[eventType.toString()] as FormikErrors<EventFormikInitialValue>)?.message?.embeds as FormikErrors<Embed & { invalid: boolean }>[];
     return (
         <MultiExpansionField helpers={helpers} max={10} label="Embed" length={values.embeds.length} generate={generateNewEmbed}>
-            {({ max, label, movePanelDown, movePanelUp, addPanel, removePanel }) => (
+            {({ max, label, ...props }) => (
                 <div>
-                    {!values.embeds.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => addPanel(ev)}>Add {label}</button>}
+                    {!values.embeds.length && <button className="py-2 px-4 bg-blue-500 text-white rounded-md mt-2" onClick={(ev) => props.addPanel(ev)}>Add {label}</button>}
                     {values.embeds?.map((embed, embedIndex) => (
-                        <ExpansionPanel invalid={!!errors?.at(embedIndex)?.invalid} key={embed.id as string} max={max} label={label} length={values.embeds.length} index={embedIndex} movePanelUp={movePanelUp} movePanelDown={movePanelDown} addPanel={addPanel} removePanel={removePanel}>
+                        <ExpansionPanel
+                            invalid={!!errors?.at(embedIndex)?.invalid}
+                            key={embed.id as string}
+                            max={max}
+                            label={label}
+                            length={values.embeds.length}
+                            index={embedIndex}
+                            {...props}
+                            value={embed}
+                        >
                             <div className="p-5 mt-2 w-full space-y-3">
                                 <div className="space-y-1">
                                     <div>
