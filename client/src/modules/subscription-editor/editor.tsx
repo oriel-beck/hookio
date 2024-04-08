@@ -5,7 +5,7 @@ import { MdOutlineContentCopy } from "react-icons/md";
 import EmbedPreview from "./preview";
 import EmbedForm from "./embed-form";
 import CopyModal from "./copy-modal";
-import { generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
+import { generateDefaultEvent, generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
 import { APIEvents, EventType, Provider } from "../../util/enums";
 import PageHeader from "../../components/page-heading";
 import ExpansionPanel from "../../components/expansion-panel";
@@ -13,6 +13,7 @@ import Loader from "../../components/loader";
 import { Input, TextArea } from "../../components/input";
 import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
 import * as Yup from 'yup';
+import { IoWarningOutline } from "react-icons/io5";
 
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
@@ -35,13 +36,12 @@ function FormikForm() {
     const availableEvents = getEventTypes(Provider[params['provider'] as keyof typeof Provider]);
     const [eventType, setEventType] = useState<EventType>(availableEvents[0]);
     const subscription = useAsyncValue() as Subscription;
-    
+
     const navigate = useNavigate();
 
     const [copyData, setCopyData] = useState<{ origin: EventType, data: EventFormikInitialValue } | null>(null);
     const openModal = (origin: EventType, data: EventFormikInitialValue) => setCopyData({ origin, data });
     const closeModal = () => setCopyData(null);
-
 
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
         id: Yup.mixed().required(),
@@ -90,7 +90,12 @@ function FormikForm() {
 
     const eventSchema: Yup.ObjectSchema<EventFormikInitialValue> = Yup.object({
         id: Yup.mixed().optional(),
-        message: messageSchema
+        message: messageSchema.required().test({
+            test: (val, ctx) => {
+                if (!val.content && !val.embeds.length) return ctx.createError({ message: "Invalid message" });
+                return true;
+            }
+        })
     })
 
     const validationSchema: Yup.ObjectSchema<FormikInitialValue> = Yup.object({
@@ -119,18 +124,18 @@ function FormikForm() {
             case 'youtube':
                 return Yup.object({
                     // YouTube video create
-                    "0": eventSchema.optional(),
+                    "0": eventSchema.required(),
                     // YouTube video edit (title/description changed)
-                    "1": eventSchema.optional(),
+                    "1": eventSchema.required(),
                 })
             case 'twitch':
                 return Yup.object({
                     // Twitch stream created
-                    "2": eventSchema.optional(),
+                    "2": eventSchema.required(),
                     // Twitch stream updated
-                    "3": eventSchema.optional(),
+                    "3": eventSchema.required(),
                     // Twitch stream ended
-                    "4": eventSchema.optional(), // TODO: maybe add a `delete message` option for stream ended, need to see how to implement that
+                    "4": eventSchema.required(), // TODO: maybe add a `delete message` option for stream ended, need to see how to implement that
                 })
             default:
                 return Yup.object({})
@@ -174,6 +179,7 @@ function FormikForm() {
                 values,
                 handleSubmit,
                 isSubmitting,
+                setFieldValue,
                 errors
             }) => (
                 <div className="flex flex-col m-5 flex-1">
@@ -191,13 +197,16 @@ function FormikForm() {
                             <ul className="flex items-center space-x-5">
                                 {availableEvents.map((ev) => (
                                     <li key={ev} className={`cursor-pointer pb-1 relative w-fit block after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
-                                        <div className="flex items-center">
+                                        <div className="flex items-center space-x-1">
+                                            {errors.events?.[ev.toString()]?.message &&
+                                                <IoWarningOutline className="w-5 h-5 text-red-400" />
+                                            }
                                             <button onClick={() => setEventType(ev)}>
                                                 {EventType[ev]}
                                             </button>
                                             {ev != eventType &&
                                                 <button onClick={() => openModal(ev, values.events[ev])}>
-                                                    <MdOutlineContentCopy className="h-5 w-5 ml-1" />
+                                                    <MdOutlineContentCopy className="h-5 w-5" />
                                                 </button>
                                             }
                                         </div>
@@ -218,10 +227,14 @@ function FormikForm() {
                                         <EmbedForm eventType={eventType} helpers={helpers} values={values.events[eventType.toString()].message} />
                                     )}
                                 </FieldArray>
-                                {/* TODO: actually make a good button */}
-                                <button className="py-2 px-4 rounded-sm bg-green-300 text-purple-800 font-semibold" type="submit" disabled={isSubmitting}>
-                                    {JSON.stringify(errors)}
-                                </button>
+                                <div className="w-full flex mt-2 space-x-2">
+                                    <button className="w-full text-lg font-semibold py-2 px-4 rounded-md border border-red-500 text-red-500 hover:opacity-90" onClick={() => setFieldValue(`events.${eventType}`, generateDefaultEvent())}>
+                                        Clear
+                                    </button>
+                                    <button className="w-full text-lg py-2 px-4 rounded-md bg-[#5865F2] border border-white text-white font-semibold disabled:bg-opacity-50 disabled:cursor-default hover:shadow-md hover:shadow-purple-900 disabled:shadow-none" type="submit" disabled={isSubmitting || !!Object.keys(errors).length}>
+                                        Save
+                                    </button>
+                                </div>
                             </form>
                         </div>
                         <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px] md:min-h-0">

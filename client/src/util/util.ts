@@ -42,30 +42,22 @@ export function generateDefaultEvents(provider: Provider): { [eventType: string]
     switch (provider) {
         case Provider.youtube:
             return {
-                [EventType["Video Edited"].toString()]: {
-                    id: makeid(10),
-                    message: generateDefaultMessage()
-                },
-                [EventType["Video Uploaded"].toString()]: {
-                    id: makeid(10),
-                    message: generateDefaultMessage()
-                }
+                [EventType["Video Edited"].toString()]: generateDefaultEvent(),
+                [EventType["Video Uploaded"].toString()]: generateDefaultEvent()
             }
         case Provider.twitch:
             return {
-                [EventType["Stream Started"].toString()]: {
-                    id: makeid(10),
-                    message: generateDefaultMessage()
-                },
-                [EventType["Stream Updated"].toString()]: {
-                    id: makeid(10),
-                    message: generateDefaultMessage()
-                },
-                [EventType["Stream Ended"].toString()]: {
-                    id: makeid(10),
-                    message: generateDefaultMessage()
-                }
+                [EventType["Stream Started"].toString()]: generateDefaultEvent(),
+                [EventType["Stream Updated"].toString()]: generateDefaultEvent(),
+                [EventType["Stream Ended"].toString()]: generateDefaultEvent()
             }
+    }
+}
+
+export function generateDefaultEvent() {
+    return {
+        id: makeid(10),
+        message: generateDefaultMessage()
     }
 }
 
