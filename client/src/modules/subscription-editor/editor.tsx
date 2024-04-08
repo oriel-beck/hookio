@@ -1,14 +1,16 @@
 import { Await, useAsyncValue, useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { Suspense, useEffect, useState } from "react";
 import { Field, FieldArray, FieldProps, Formik, useFormikContext } from "formik";
+import { MdOutlineContentCopy } from "react-icons/md";
+import EmbedPreview from "./preview";
+import EmbedForm from "./embed-form";
+import CopyModal from "./copy-modal";
 import { generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
 import { APIEvents, EventType, Provider } from "../../util/enums";
 import PageHeader from "../../components/page-heading";
 import ExpansionPanel from "../../components/expansion-panel";
-import { Input, TextArea } from "../../components/input";
 import Loader from "../../components/loader";
-import EmbedForm from "./embed-form";
-import EmbedPreview from "./preview";
+import { Input, TextArea } from "../../components/input";
 import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
 import * as Yup from 'yup';
 
@@ -33,7 +35,13 @@ function FormikForm() {
     const availableEvents = getEventTypes(Provider[params['provider'] as keyof typeof Provider]);
     const [eventType, setEventType] = useState<EventType>(availableEvents[0]);
     const subscription = useAsyncValue() as Subscription;
+    
     const navigate = useNavigate();
+
+    const [copyData, setCopyData] = useState<{ origin: EventType, data: EventFormikInitialValue } | null>(null);
+    const openModal = (origin: EventType, data: EventFormikInitialValue) => setCopyData({ origin, data });
+    const closeModal = () => setCopyData(null);
+
 
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
         id: Yup.mixed().required(),
@@ -105,6 +113,7 @@ function FormikForm() {
         events: getValidationEvents()
     });
 
+    // TODO: in prod, everything should be required, we do not want empty events
     function getValidationEvents() {
         switch (params['provider']) {
             case 'youtube':
@@ -121,7 +130,7 @@ function FormikForm() {
                     // Twitch stream updated
                     "3": eventSchema.optional(),
                     // Twitch stream ended
-                    "4": eventSchema.optional(),
+                    "4": eventSchema.optional(), // TODO: maybe add a `delete message` option for stream ended, need to see how to implement that
                 })
             default:
                 return Yup.object({})
@@ -182,9 +191,16 @@ function FormikForm() {
                             <ul className="flex items-center space-x-5">
                                 {availableEvents.map((ev) => (
                                     <li key={ev} className={`cursor-pointer pb-1 relative w-fit block after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
-                                        <button onClick={() => setEventType(ev)}>
-                                            {EventType[ev]}
-                                        </button>
+                                        <div className="flex items-center">
+                                            <button onClick={() => setEventType(ev)}>
+                                                {EventType[ev]}
+                                            </button>
+                                            {ev != eventType &&
+                                                <button onClick={() => openModal(ev, values.events[ev])}>
+                                                    <MdOutlineContentCopy className="h-5 w-5 ml-1" />
+                                                </button>
+                                            }
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
@@ -213,6 +229,7 @@ function FormikForm() {
                             <EmbedPreview eventType={eventType} />
                         </div>
                     </div>
+                    {copyData && <CopyModal origin={copyData.origin} target={eventType} data={copyData.data} closeModal={closeModal} />}
                 </div>
             )}
         </Formik>
