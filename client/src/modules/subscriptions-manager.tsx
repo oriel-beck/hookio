@@ -1,11 +1,11 @@
 import { Suspense, useEffect } from "react";
 import { Await, useAsyncValue, useLoaderData, useNavigate, useParams } from "react-router-dom"
-import type { Subscription } from "../types/types";
+import type { AllSubscriptionsResponse } from "../types/types";
 import Loader from "../components/loader";
 import PageHeader from "../components/page-heading";
 
 export default function SubscriptionsManager() {
-    const data = useLoaderData() as { subscriptions: Promise<Subscription[]> };
+    const data = useLoaderData() as { subscriptions: Promise<AllSubscriptionsResponse> };
 
     return (
         <Suspense fallback={<Loader />}>
@@ -17,13 +17,13 @@ export default function SubscriptionsManager() {
 }
 
 function InternalSubscriptionManager() {
-    const subscriptions = useAsyncValue() as Subscription[];
+    const data = useAsyncValue() as AllSubscriptionsResponse;
     const params = useParams();
     const navigate = useNavigate();
     const onClick = (id?: number) => navigate(id?.toString() || "new");
 
     useEffect(() => {
-        if (!Array.isArray(subscriptions) && (subscriptions as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true })
+        if ('status' in data && (data as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true })
     })
 
     return (
@@ -40,7 +40,7 @@ function InternalSubscriptionManager() {
             <div className="flex flex-col justify-center items-center space-y-4 p-5 text-white">
                 {/* subscription list TODO: design*/}
                 <div className="flex space-x-4 justify-start w-full">
-                    {Array.isArray(subscriptions) && subscriptions.map((sub) => (
+                    {Array.isArray(data.subscriptions) && data.subscriptions.map((sub) => (
                         <div key={sub.id} className="flex flex-col">
                             <button onClick={() => onClick(sub.id)} className={`${sub.subscriptionType === 0 ? 'bg-red-500 text-white' : sub.subscriptionType === 1 ? 'bg-purple-900 text-white' : ''} py-2 px-4 rounded border border-white hover:bg-opacity-60`}>
                                 Edit {sub.subscriptionType === 0 ? 'Youtube' : sub.subscriptionType === 1 ? 'Twitch' : ''} Subscription {sub.id}
@@ -51,8 +51,9 @@ function InternalSubscriptionManager() {
 
                 {/* Create subscription button */}
                 {/* If there are any subs, move to the bottom left */}
-                <div className={subscriptions.length ? "flex justify-end w-full" : "flex"}>
-                    <button className={`border border-white rounded py-2 px-4 duration-75 ${(subscriptions?.length || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (subscriptions.length || 0) < 2 ? onClick() : null}>
+                <div className={data.subscriptions.length ? "flex justify-end w-full" : "flex"}>
+                    {/* TODO: add tooltip to indicate more than X gloal is higher premium tier, depending on the user's premium tier */}
+                    <button className={`border border-white rounded py-2 px-4 duration-75 ${(data?.count || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (data.count || 0) < 2 ? onClick() : null}>
                         Create new Subscription
                     </button>
                 </div>

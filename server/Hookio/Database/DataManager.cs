@@ -419,7 +419,7 @@ namespace Hookio.Database
             }
         }
 
-        public async Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider)
+        public async Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
             IQueryable<Subscription> query = ctx.Subscriptions;
@@ -443,7 +443,11 @@ namespace Hookio.Database
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
             });
 
-            return [.. subscriptions];
+            return new GuildSubscriptionsResponse
+            {
+                Count = await ctx.Subscriptions.Where(s => s.GuildId == guildId).CountAsync(),
+                Subscriptions = subscriptions.ToList()
+            };
         }
 
         // TODO: DeleteSubscription

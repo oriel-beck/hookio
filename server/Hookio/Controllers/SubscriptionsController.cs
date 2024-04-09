@@ -12,12 +12,12 @@ namespace Hookio.Controllers
     public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
     {
         [HttpGet("{guildId}")]
-        public async Task<ActionResult<List<SubscriptionResponse>>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? subscriptionType)
+        public async Task<ActionResult<GuildSubscriptionsResponse>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? subscriptionType, bool withCounts = false)
         {
             if(!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
-            var announcements = await dataManager.GetSubscriptions(guildId, subscriptionType);
-            logger.LogInformation($"[{nameof(GetGuildSubscription)}]: returned '{announcements?.Count}' announcements for '{guildId}'");
-            return Ok(announcements);
+            var res = await dataManager.GetSubscriptions(guildId, subscriptionType, withCounts);
+            logger.LogInformation("[{0}]: returned '{1}' announcements{2} for '{3}', they have '{4}' subscriptions", nameof(GetGuildSubscription), res?.Subscriptions.Count, (subscriptionType is not null ? $" of subscriptionType '{subscriptionType}'" : ""), guildId, res?.Count);
+            return Ok(res);
         }
 
         [HttpPost("{guildId}")]

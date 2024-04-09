@@ -23,6 +23,11 @@ export interface Subscription {
   events: Record<string, EventResponse>
 }
 
+export interface AllSubscriptionsResponse {
+  count: number;
+  subscriptions: Subscription[];
+}
+
 export interface EventResponse {
   id: number;
   eventType: EventType;

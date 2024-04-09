@@ -18,7 +18,7 @@ namespace Hookio.Database.Interfaces
         public Task<SubscriptionResponse?> GetSubscription(ulong guildId, int id);
         public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request);
         public Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request);
-        public Task<List<SubscriptionResponse>?> GetSubscriptions(ulong guildId, SubscriptionType? provider);
+        public Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false);
         #endregion
     }
 }
