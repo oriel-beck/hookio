@@ -16,7 +16,7 @@ namespace Hookio.Controllers
         {
             if(!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
             var res = await dataManager.GetSubscriptions(guildId, subscriptionType, withCounts);
-            logger.LogInformation("[{0}]: returned '{1}' announcements{2} for '{3}', they have '{4}' subscriptions", nameof(GetGuildSubscription), res?.Subscriptions.Count, (subscriptionType is not null ? $" of subscriptionType '{subscriptionType}'" : ""), guildId, res?.Count);
+            logger.LogInformation("[{FunctionName}]: returned '{SubscriptionsCount}' announcements{Addition} for '{GuildId}', they have '{GlobalCount}' subscriptions", nameof(GetGuildSubscription), res?.Subscriptions.Count, (subscriptionType is not null ? $" of subscriptionType '{subscriptionType}'" : ""), guildId, res?.Count);
             return Ok(res);
         }
 

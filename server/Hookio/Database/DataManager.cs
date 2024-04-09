@@ -41,6 +41,7 @@ namespace Hookio.Database
                 ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
                 Id = client.CurrentUser.Id,
                 RefreshToken = token.RefreshToken,
+                Email = client.CurrentUser.Email,
             };
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == client.CurrentUser.Id);
             if (currentUser == null)

@@ -62,7 +62,13 @@ namespace Hookio.Controllers
                 var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
                 if (result == null)
                 {
-                    logger.LogInformation($"[{nameof(Authenticate)}]: Failed to code exchange with code '{code}'");
+                    logger.LogInformation("[{FunctionName}]: Failed to code exchange with code '{Scopes}'", nameof(Authenticate), code);
+                    return Ok(false);
+                }
+
+                if (!result.Scope.Contains("email") || !result.Scope.Contains("identify") || !result.Scope.Contains("guilds"))
+                {
+                    logger.LogInformation("[{FunctionName}]: Did not get all required scopes, cancelled login, got scopes '{Scopes}'", nameof(Authenticate), result.Scope);
                     return Ok(false);
                 }
 
