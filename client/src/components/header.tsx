@@ -3,7 +3,6 @@ import { User } from "../types/types"
 
 export default function Header({ user, showLogin = true }: { user: User | null, showLogin?: boolean }) {
     const navigate = useNavigate();
-    // TODO: use a proper redirect URL in prod
     const discordAuthUrl = import.meta.env.VITE_DISCORD_LOGIN_URL;
 
     const onNavClick = (href: string) => navigate(href)
@@ -38,7 +37,7 @@ export default function Header({ user, showLogin = true }: { user: User | null, 
                                 <img src={user.avatar} alt={user.username} height={40} width={40} className="rounded-full" />
                             </div>
                         </div>
-                        <button onClick={logOut} className="p-2 rounded-full hover:bg-white hover:bg-opacity-30">
+                        <button aria-label="Log Out" onClick={logOut} className="p-2 rounded-full hover:bg-white hover:bg-opacity-30">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
                                 stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                                 className="feather feather-log-out">

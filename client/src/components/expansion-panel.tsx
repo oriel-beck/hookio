@@ -2,6 +2,7 @@ import React, { SyntheticEvent, useState } from "react";
 import { HiOutlineArrowCircleDown, HiOutlineArrowCircleUp, HiOutlineChevronDown, HiOutlineMinusCircle, HiOutlinePlusCircle } from "react-icons/hi";
 import { IoWarningOutline } from "react-icons/io5";
 import { MdOutlineContentCopy } from "react-icons/md";
+import { makeid } from "../util/util";
 
 interface Props {
     invalid?: boolean;
@@ -21,6 +22,7 @@ interface Props {
 
 export default function ExpansionPanel({ invalid, label, max, length, index, children, value, movePanelUp, movePanelDown, removePanel, addPanel, duplicatePanel }: Props) {
     const [isOpen, open] = useState(false);
+    const id = makeid(10)
 
     const togglePanel = (ev: SyntheticEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>) => {
         ev.preventDefault();
@@ -31,35 +33,35 @@ export default function ExpansionPanel({ invalid, label, max, length, index, chi
         <div className="flex flex-col mt-2 border-gray-200">
             <div className="border flex flex-col items-center">
                 <div className={'flex w-full p-4' + (isOpen ? ' border-b border-gray-200' : '')}>
-                    <button onClick={(ev) => togglePanel(ev)} className={`transition-transform duration-300 transform ${isOpen ? 'rotate-180' : ''}`}>
+                    <button aria-labelledby={id} onClick={(ev) => togglePanel(ev)} className={`transition-transform duration-300 transform ${isOpen ? 'rotate-180' : ''}`}>
                         <HiOutlineChevronDown className="w-6 h-6 text-white" />
                     </button>
                     <div className="flex-grow flex space-x-2" onClick={(ev) => togglePanel(ev)}>
-                        <span>{label} {index != undefined ? index + 1 : ""}</span>
+                        <span id={id}>{label} {index != undefined ? index + 1 : ""}</span>
                         {invalid && <IoWarningOutline className="w-6 h-6 text-red-400" />}
                     </div>
                     {index !== undefined &&
                         <div className="flex items-center space-x-2">
                             {length! < max! && (
-                                <button onClick={(ev) => duplicatePanel!(value, ev)}>
+                                <button aria-label="Duplicate" onClick={(ev) => duplicatePanel!(value, ev)}>
                                     <MdOutlineContentCopy className="h-6 w-6 text-white" />
                                 </button>
                             )}
                             {index !== 0 && (
-                                <button onClick={(ev) => movePanelUp!(index!, ev)}>
+                                <button aria-label="Move up" onClick={(ev) => movePanelUp!(index!, ev)}>
                                     <HiOutlineArrowCircleUp className="w-6 h-6 text-white" />
                                 </button>
                             )}
                             {index !== length! - 1 && (
-                                <button onClick={(ev) => movePanelDown!(index!, ev)}>
+                                <button aria-label="Move down" onClick={(ev) => movePanelDown!(index!, ev)}>
                                     <HiOutlineArrowCircleDown className="w-6 h-6 text-white" />
                                 </button>
                             )}
-                            <button onClick={(ev) => removePanel!(index!, ev)}>
+                            <button aria-label="Remove" onClick={(ev) => removePanel!(index!, ev)}>
                                 <HiOutlineMinusCircle className="w-6 h-6 text-white" />
                             </button>
                             {length! < max! && index === length! - 1 && (
-                                <button onClick={addPanel}>
+                                <button aria-label="Add new" onClick={addPanel}>
                                     <HiOutlinePlusCircle className="w-6 h-6 text-white" />
                                 </button>
                             )}

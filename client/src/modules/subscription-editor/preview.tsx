@@ -114,8 +114,6 @@ function Embed({ embed }: { embed: EmbedType, }) {
                             }
                         </div>
                         <span className="flex-auto"></span>
-                        {/* TODO: fix thumbnail placement https://discord.com/channels/745961266149064774/881253551341457509/1223260537169772584
-                Maybe add to the same row as author and title and use a spacer between? */}
                         {/* Thumbnail */}
                         {embed.thumbnail &&
                             <img className="max-w-[80px] max-h-[80px] rounded object-contain self-start" src={embed.thumbnail} alt="" />

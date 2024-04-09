@@ -118,7 +118,6 @@ function FormikForm() {
         events: getValidationEvents()
     });
 
-    // TODO: in prod, everything should be required, we do not want empty events
     function getValidationEvents() {
         switch (params['provider']) {
             case 'youtube':
@@ -205,7 +204,7 @@ function FormikForm() {
                                                 {EventType[ev]}
                                             </button>
                                             {ev != eventType &&
-                                                <button onClick={() => openModal(ev, values.events[ev])}>
+                                                <button aria-label={`Copy from ${EventType[ev]}`} onClick={() => openModal(ev, values.events[ev])}>
                                                     <MdOutlineContentCopy className="h-5 w-5" />
                                                 </button>
                                             }
@@ -263,7 +262,7 @@ function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
                 </Field>
             </div>
             <ExpansionPanel invalid={!!errors.webhookUrl} label="Webhook">
-                <div className="p-4">
+                <div className="p-4 space-y-2">
                     <div>
                         <Field name={`webhookUrl`}>
                             {(props: FieldProps) => (
@@ -274,14 +273,14 @@ function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
                     <div>
                         <Field name={`events.${eventType}.message.username`}>
                             {(props: FieldProps) => (
-                                <Input {...props} label="Username" placeholder="" error={errors.events?.[eventType]?.message?.username} limit={80} />
+                                <Input {...props} label="Username" error={errors.events?.[eventType]?.message?.username} limit={80} />
                             )}
                         </Field>
                     </div>
                     <div>
                         <Field name={`events.${eventType}.message.avatar`}>
                             {(props: FieldProps) => (
-                                <Input {...props} label="Avatar" placeholder="" />
+                                <Input {...props} label="Avatar"  />
                             )}
                         </Field>
                     </div>

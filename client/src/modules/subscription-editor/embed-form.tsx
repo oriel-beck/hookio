@@ -2,7 +2,7 @@ import { Field, FieldArrayRenderProps, FieldProps, FormikErrors, useFormikContex
 import EmbedFieldsBuilder from "./embed-field-form";
 import MultiExpansionField from "../../components/multi-expansion-field";
 import ExpansionPanel from "../../components/expansion-panel";
-import { Input, TextArea } from "../../components/input";
+import { CheckBox, Input, TextArea } from "../../components/input";
 import type { Embed, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { generateNewEmbed } from "../../util/util";
@@ -36,82 +36,84 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
                                 <div className="space-y-1">
                                     <div>
                                         <ExpansionPanel label="Author">
-                                            <div className="p-2">
+                                            <div className="p-2 space-y-2">
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.author`}>
                                                     {(props: FieldProps) =>
-                                                        <Input {...props} label="Author" placeholder="" limit={256} />
+                                                        <Input {...props} label="Author" limit={256} />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.authorUrl`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.authorUrl} {...props} label="Author URL" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.authorUrl} {...props} label="Author URL" />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.authorIcon`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.authorIcon} {...props} label="Author Icon" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.authorIcon} {...props} label="Author Icon" />
                                                     }
                                                 </Field>
                                             </div>
                                         </ExpansionPanel>
                                         <ExpansionPanel label="Body">
-                                            <div className="p-2">
+                                            <div className="p-2 space-y-2">
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.title`}>
                                                     {(props: FieldProps) =>
-                                                        <Input {...props} label="Title" placeholder="" limit={256} />
+                                                        <Input {...props} label="Title" limit={256} />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.titleUrl`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.titleUrl} {...props} label="Title URL" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.titleUrl} {...props} label="Title URL" />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.description`}>
                                                     {(props: FieldProps) =>
-                                                        <TextArea {...props} label="Description" placeholder="" limit={4096} />
+                                                        <TextArea {...props} label="Description" limit={4096} />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.color`}>
                                                     {(props: FieldProps) =>
                                                         // TODO: color wheel
-                                                        <Input {...props} label="Color" placeholder="" />
+                                                        <Input {...props} label="Color" />
                                                     }
                                                 </Field>
                                             </div>
                                         </ExpansionPanel>
                                         <EmbedFieldsBuilder eventType={eventType} embed={embed} embedIndex={embedIndex} />
                                         <ExpansionPanel label="Images">
-                                            <div className="p-2">
+                                            <div className="p-2 space-y-2">
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.image`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.image} {...props} label="Image" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.image} {...props} label="Image" />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.thumbnail`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.thumbnail} {...props} label="Thumbnail" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.thumbnail} {...props} label="Thumbnail" />
                                                     }
                                                 </Field>
                                             </div>
                                         </ExpansionPanel>
                                         <ExpansionPanel label="Footer">
-                                            <div className="p-2">
-                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.footer`}>
-                                                    {(props: FieldProps) =>
-                                                        <Input {...props} label="Footer" placeholder="" limit={2048} />
-                                                    }
-                                                </Field>
+                                            <div className="p-2 space-y-2">
+                                                <div className="flex space-x-2">
+                                                    <Field name={`events.${eventType}.message.embeds.${embedIndex}.footer`}>
+                                                        {(props: FieldProps) =>
+                                                            <Input {...props} label="Footer" limit={2048} />
+                                                        }
+                                                    </Field>
+                                                    <Field name={`events.${eventType}.message.embeds.${embedIndex}.addTimestamp`}>
+                                                        {(props: FieldProps) =>
+                                                            <CheckBox {...props} label="Add Timestamp" />
+                                                        }
+                                                    </Field>
+                                                </div>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.footerIcon`}>
                                                     {(props: FieldProps) =>
-                                                        <Input error={errors?.at(embedIndex)?.footerIcon} {...props} label="Footer Icon" placeholder="" />
+                                                        <Input error={errors?.at(embedIndex)?.footerIcon} {...props} label="Footer Icon" />
                                                     }
                                                 </Field>
-                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.addTimestamp`}>
-                                                    {(props: FieldProps) =>
-                                                        // TODO: checkbox
-                                                        <Input {...props} label="Add Timestamp" placeholder="" />
-                                                    }
-                                                </Field>
+
                                             </div>
                                         </ExpansionPanel>
                                     </div>

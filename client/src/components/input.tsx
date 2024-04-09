@@ -1,9 +1,10 @@
 import { FieldProps } from "formik";
+import { HiOutlineXMark } from "react-icons/hi2";
 import { IoWarningOutline } from "react-icons/io5";
 
 export interface Props extends FieldProps {
     label: string;
-    placeholder: string;
+    placeholder?: string;
     error?: string;
     limit?: number;
 }
@@ -18,15 +19,16 @@ export function Input({
     ...props
 }: Props) {
     return (
-        <div className="mb-2">
+        <div className="w-full">
             <div className="flex space-x-2 items-center mb-1">
-                <label className="block text-white text-sm font-bold" id={field.name}>{label}</label>
+                <label className="block text-white text-sm font-bold" htmlFor={field.name}>{label}</label>
                 {error && <IoWarningOutline className="w-5 h-5 text-red-400" />}
                 <span className="flex-1"></span>
                 <Limit limit={limit} length={field.value?.length} />
             </div>
             <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-600"
+                id={field.name}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-700 focus:border-teal-400"
                 {...field}
                 {...props}
                 {...(limit && { maxLength: limit })}
@@ -45,7 +47,7 @@ export function TextArea({
     ...props
 }: Props) {
     return (
-        <div className="mb-2">
+        <div className="w-full">
             <div className="flex space-x-2 items-center mb-1">
                 <label className="block text-white text-sm font-bold" htmlFor={field.name}>{label}</label>
                 {error && <IoWarningOutline className="w-5 h-5 text-red-400" />}
@@ -53,11 +55,30 @@ export function TextArea({
                 <Limit limit={limit} length={field.value.length} />
             </div>
             <textarea
-                className="shadow h-40 appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-600"
+                id={field.name}
+                className="shadow h-40 appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-700 focus:border-teal-400"
                 {...field}
                 {...props}
                 {...(limit && { maxLength: limit })}
             />
+        </div>
+    )
+}
+
+export function CheckBox({
+    field, // { name, value, onChange, onBlur }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    form, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+    label,
+    ...props
+}: Props) {
+    return (
+        <div className="relative w-fit">
+            <div className="flex space-x-1 items-center mt-8">
+                <input id={field.name} type="checkbox"{...field} {...props} className="peer relative appearance-none outline-none shrink-0 w-5 h-5 border border-neutral-900 rounded-sm bg-zinc-700 hover:bg-gray-400 focus:border-teal-400" />
+                <label className="block text-white text-sm font-bold" htmlFor={field.name}>{label}</label>
+                <HiOutlineXMark className="right-[2.7rem] stroke-[3] absolute w-4 h-4 hidden peer-checked:block pointer-events-none"/>
+            </div>
         </div>
     )
 }

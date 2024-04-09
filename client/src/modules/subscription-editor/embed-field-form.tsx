@@ -1,7 +1,7 @@
 import { Field, FieldArray, FieldProps, FormikErrors, useFormikContext } from "formik";
 import ExpansionPanel from "../../components/expansion-panel";
 import MultiExpansionField from "../../components/multi-expansion-field";
-import { Input, TextArea } from "../../components/input";
+import { CheckBox, Input, TextArea } from "../../components/input";
 import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { generateNewField } from "../../util/util";
@@ -36,21 +36,23 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
                                             {...props}>
                                             <div className="p-5 mt-2 w-full space-y-3">
                                                 <div className="space-y-1">
-                                                    <div className="p-2">
-                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.name`}>
-                                                            {(props: FieldProps) =>
-                                                                <Input {...props} label="Name" placeholder="" limit={256} />
-                                                            }
-                                                        </Field>
+                                                    <div className="p-2 space-y-2">
+                                                        <div className="flex space-x-2 items-center">
+                                                            <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.name`}>
+                                                                {(props: FieldProps) =>
+                                                                    <Input {...props} label="Name" limit={256} />
+                                                                }
+                                                            </Field>
+                                                            <span className="flex-1"></span>
+                                                            <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.inline`}>
+                                                                {(props: FieldProps) =>
+                                                                    <CheckBox {...props} label="Inline" />
+                                                                }
+                                                            </Field>
+                                                        </div>
                                                         <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.value`}>
                                                             {(props: FieldProps) =>
-                                                                <TextArea {...props} label="Value" placeholder="" limit={1024} />
-                                                            }
-                                                        </Field>
-                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.inline`}>
-                                                            {(props: FieldProps) =>
-                                                                // TODO: checkbox
-                                                                <Input {...props} label="Inline" placeholder="" />
+                                                                <TextArea {...props} label="Value" limit={1024} />
                                                             }
                                                         </Field>
                                                     </div>
