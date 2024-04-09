@@ -4,6 +4,7 @@ namespace Hookio.Contracts
 {
     public class MessageRequest
     {
+        public int? Id { get; set; }
         [MaxLength(2000)]
         public string Content { get; set; } = string.Empty;
         public EmbedRequest[] Embeds { get; set; } = [];

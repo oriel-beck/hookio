@@ -143,9 +143,9 @@ function FormikForm() {
 
     function getWebhookUrl() {
         // If this is not a new subscription then make webhook optional since it will not return from the backend
-        const schema = Yup.string()
-        if (params['subscriptionId']) schema.optional();
-        else schema.required()
+        let schema = Yup.string()
+        if (params['subscriptionId']) schema = schema.optional();
+        else schema = schema.required();
         schema.url().test({
             test(url, ctx) {
                 if (!webhookRegex.test(url || "")) return ctx.createError({ message: "Invalid webhook URL" });

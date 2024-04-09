@@ -2,6 +2,7 @@
 {
     public class MessageResponse
     {
+        public int? Id { get; set; }
         public string Content { get; set; } = string.Empty;
         public List<EmbedResponse> Embeds { get; set; }
         public string? Username { get; set; }

@@ -106,6 +106,7 @@ function removeIDsFromNewEmbeds(message: MessageFormikInitialValue) {
         });
         return embed;
     });
+    if (typeof newMessage.id === 'string') newMessage.id = null;
     return newMessage;
 }
 

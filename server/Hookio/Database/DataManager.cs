@@ -476,6 +476,7 @@ namespace Hookio.Database
         {
             return new MessageResponse
             {
+                Id = message.Id,
                 Content = message.Content,
                 Embeds = message.Embeds.Select(ToContract).ToList(),
                 Avatar = message.webhookAvatar,
