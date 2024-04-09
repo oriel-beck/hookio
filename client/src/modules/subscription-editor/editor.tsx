@@ -95,6 +95,12 @@ function FormikForm() {
                 if (!val.content && !val.embeds.length) return ctx.createError({ message: "Invalid message" });
                 return true;
             }
+        }).test({
+            test: (val, ctx) => {
+                const count = (val.content?.length || 0) + val.embeds.reduce((embedsAcc, currentEmbed) => embedsAcc + (currentEmbed.description?.length || 0) + (currentEmbed.title?.length || 0) + (currentEmbed.author?.length || 0) + (currentEmbed.footer?.length || 0) + currentEmbed.fields.reduce((fieldsAcc, currentField) => fieldsAcc + (currentField.name?.length || 0) + (currentField.value?.length || 0), 0), 0);
+                if (count > 6000) return ctx.createError({ message: "Content over 6000" });
+                return true;
+            }
         })
     })
 
@@ -280,7 +286,7 @@ function SubscriptionAndContentFields({ eventType }: { eventType: EventType }) {
                     <div>
                         <Field name={`events.${eventType}.message.avatar`}>
                             {(props: FieldProps) => (
-                                <Input {...props} label="Avatar"  />
+                                <Input {...props} label="Avatar" />
                             )}
                         </Field>
                     </div>
