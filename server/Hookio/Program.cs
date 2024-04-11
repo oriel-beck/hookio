@@ -1,5 +1,4 @@
 using System.Text;
-using Discord.Net;
 using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
