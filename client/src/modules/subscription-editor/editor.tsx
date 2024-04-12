@@ -306,9 +306,6 @@ function FormikForm() {
                             <EmbedPreview eventType={eventType} />
                         </div>
                     </div>
-                    <pre className="text-white">
-                        {JSON.stringify(errors)}
-                    </pre>
                     {copyData && <CopyModal originEventType={copyData.origin} targetEventType={eventType} targetId={values.events[eventType.toString()].id} data={copyData.data} closeModal={closeModal} />}
                 </div>
             )}
