@@ -287,8 +287,8 @@ namespace Hookio.Database
                     // Update the current event based on incoming data
                     var incomingMessage = eventRequest.Value.Message;
                     currentEvent.Message.Content = incomingMessage.Content;
-                    currentEvent.Message.webhookAvatar = incomingMessage.Avatar;
-                    currentEvent.Message.webhookUsername = incomingMessage.Username;
+                    currentEvent.Message.WebhookAvatar = incomingMessage.Avatar;
+                    currentEvent.Message.WebhookUsername = incomingMessage.Username;
 
                     // Find all embeds that were not provided in this update request, delete them later
                     List<Entities.Embed> notFoundEmbeds = currentEvent.Message.Embeds.Where(embed => !incomingMessage.Embeds.Any(req => req.Id == embed.Id))
@@ -484,8 +484,8 @@ namespace Hookio.Database
                 Id = message.Id,
                 Content = message.Content,
                 Embeds = message.Embeds.Select(ToContract).ToList(),
-                Avatar = message.webhookAvatar,
-                Username = message.webhookUsername,
+                Avatar = message.WebhookAvatar,
+                Username = message.WebhookUsername,
             };
         }
 
