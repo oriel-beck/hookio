@@ -137,12 +137,13 @@ function FormikForm() {
                 return Yup.object({
                     // Twitch stream created
                     "2": eventSchema.required(),
-                    // Twitch stream updated
+                    // Twitch stream updated (title/description/game changed)
                     "3": eventSchema.required(),
                     // Twitch stream ended
                     "4": eventSchema.required(), // TODO: maybe add a `delete message` option for stream ended, need to see how to implement that
                 })
             default:
+                // Should not get here
                 return Yup.object({})
         }
     }
@@ -223,7 +224,7 @@ function FormikForm() {
                     {/* subscription editor and subscription embed, split screen */}
                     <div className="flex-1 flex flex-col md:flex-row pt-5 md:max-h-[77vh] text-white">
                         {/* Content for the first half (embed inputs) */}
-                        <div className="basis-1/2 flex-1 overflow-y-auto px-5 scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300">
+                        <div className="pb-4 md:pb-0 md:basis-1/2 md:flex-1 overflow-y-auto md:px-5 scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300">
                             <form onSubmit={handleSubmit}>
                                 <SubscriptionAndContentFields eventType={eventType} />
                                 <FieldArray
@@ -242,7 +243,7 @@ function FormikForm() {
                                 </div>
                             </form>
                         </div>
-                        <div className="basis-1/2 flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px] md:min-h-0">
+                        <div className="mb-4 md:mb-0 md:basis-1/2 md:flex-1 bg-[#313338] overflow-y-auto scrollbar-w-1 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-gray-600 scrollbar-track-gray-300 min-h-[700px] md:min-h-0">
                             {/* Content for the second half (embed preview)*/}
                             <EmbedPreview eventType={eventType} />
                         </div>

@@ -3,6 +3,7 @@ import { Await, useAsyncValue, useLoaderData, useNavigate, useParams } from "rea
 import type { AllSubscriptionsResponse } from "../types/types";
 import Loader from "../components/loader";
 import PageHeader from "../components/page-heading";
+import { motion } from "framer-motion";
 
 export default function SubscriptionsManager() {
     const data = useLoaderData() as { subscriptions: Promise<AllSubscriptionsResponse> };
@@ -27,7 +28,7 @@ function InternalSubscriptionManager() {
     })
 
     return (
-        <div className="flex flex-col m-5">
+        <div className="flex flex-col m-5 h-full">
             <PageHeader
                 title="YouTube subscriptions"
                 subtitle="Select a youtube subsciptions to edit or create a new one"
@@ -37,7 +38,7 @@ function InternalSubscriptionManager() {
                     </svg>
                 }
             />
-            <div className="flex flex-col justify-center items-center space-y-4 p-5 text-white">
+            <div className="flex flex-col items-center justify-between space-y-4 p-5 text-white h-full">
                 {/* subscription list TODO: design*/}
                 <div className="flex space-x-4 justify-start w-full">
                     {Array.isArray(data.subscriptions) && data.subscriptions.map((sub) => (
@@ -51,11 +52,17 @@ function InternalSubscriptionManager() {
 
                 {/* Create subscription button */}
                 {/* If there are any subs, move to the bottom left */}
-                <div className={data.subscriptions.length ? "flex justify-end w-full" : "flex"}>
-                    {/* TODO: add tooltip to indicate more than X gloal is higher premium tier, depending on the user's premium tier */}
-                    <button className={`border border-white rounded py-2 px-4 duration-75 ${(data?.count || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (data.count || 0) < 2 ? onClick() : null}>
+                <div className={data.subscriptions.length ? "flex justify-center md:justify-end w-full" : "flex"}>
+                    {/* TODO: make tooltip and button behavior depending on the user's premium tier */}
+                    <button className={`peer border border-white rounded py-2 px-4 duration-75 ${(data?.count || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (data.count || 0) < 2 ? onClick() : null}>
                         Create new Subscription
                     </button>
+                    {/* TODO: animate this to enter slowly and fade slowly */}
+                    {(data?.count || 0) >= 2 &&
+                        <motion.div className="absolute opacity-0 peer-hover:block peer-hover:opacity-100 mr-1.5 py-2 px-4 -mt-36 rounded w-48 h-18 text-wrap bg-zinc-500 transition-opacity duration-200 ease-in-out">
+                            You have reached the limit for subscriptions, please subscribe in Patreon to be able to create more.
+                        </motion.div>
+                    }
                 </div>
             </div>
         </div>

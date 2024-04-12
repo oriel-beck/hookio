@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import ConfigureButton from "../components/configure-button";
 import PageHeader from "../components/page-heading";
+import { motion } from 'framer-motion';
 
 interface Provider {
     name: string;
@@ -62,9 +63,10 @@ export default function ProviderSelection() {
                         />
                         <h3 id={provider.name} className="text-4xl font-bold" style={{ color: provider.color }}>{provider.name}</h3>
                         <span className="flex flex-1"></span>
-                        <div className="hidden md:flex justify-end">
+                        {/* TODO: animate when main div is hovered */}
+                        <motion.div whileHover={{ rotate: 180, dur: 200 }} className="hidden md:flex justify-end">
                             <ConfigureButton onClick={() => selectProvider(provider.path)} />
-                        </div>
+                        </motion.div>
                     </div>
                 ))}
             </div>

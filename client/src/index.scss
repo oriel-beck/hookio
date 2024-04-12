@@ -4,8 +4,4 @@
 
 body {
     height: 100vh;
-    @media screen and (max-width: 800px) {
-        min-height: 100vh;
-        height: unset;
-    }
 }

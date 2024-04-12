@@ -159,8 +159,8 @@ namespace Hookio.Database
                     var message = new Message
                     {
                         Content = eventRequest.Value.Message.Content,
-                        webhookUsername = eventRequest.Value.Message.Username,
-                        webhookAvatar = eventRequest.Value.Message.Avatar,
+                        WebhookUsername = eventRequest.Value.Message.Username,
+                        WebhookAvatar = eventRequest.Value.Message.Avatar,
                         Event = eventEntity, // Set Event navigation property
                     };
                     context.Messages.Add(message);
