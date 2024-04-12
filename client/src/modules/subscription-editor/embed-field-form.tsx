@@ -2,19 +2,19 @@ import { Field, FieldArray, FieldProps, FormikErrors, useFormikContext } from "f
 import ExpansionPanel from "../../components/expansion-panel";
 import MultiExpansionField from "../../components/multi-expansion-field";
 import { CheckBox, Input, TextArea } from "../../components/input";
-import { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue } from "../../types/types";
+import { EmbedField, EmbedFormikInitialValue, EventFormikInitialValue, FormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { generateNewField } from "../../util/util";
 
 interface Props {
-    embed: Embed;
+    embed: EmbedFormikInitialValue;
     embedIndex: number;
     eventType: EventType;
 }
 
 export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Props) {
     const formik = useFormikContext<FormikInitialValue>();
-    const errors = ((formik.errors.events?.[eventType.toString()] as FormikErrors<EventFormikInitialValue>)?.message?.embeds?.at(embedIndex) as FormikErrors<Embed & { invalid: boolean }>)?.fields as FormikErrors<EmbedField>[];
+    const errors = ((formik.errors.events?.[eventType.toString()] as FormikErrors<EventFormikInitialValue>)?.message?.embeds?.at(embedIndex) as FormikErrors<EmbedFormikInitialValue & { invalid: boolean }>)?.fields as FormikErrors<EmbedField>[];
 
     return (
         <ExpansionPanel label="Fields">
@@ -40,7 +40,7 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
                                                         <div className="flex space-x-2 items-center">
                                                             <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.name`}>
                                                                 {(props: FieldProps) =>
-                                                                    <Input {...props} label="Name" limit={256} />
+                                                                    <Input {...props} label="Name" error={errors?.at(fieldIndex)?.name} limit={256} />
                                                                 }
                                                             </Field>
                                                             <span className="flex-1"></span>
@@ -52,7 +52,7 @@ export default function EmbedFieldsBuilder({ embed, embedIndex, eventType }: Pro
                                                         </div>
                                                         <Field name={`events.${eventType}.message.embeds.${embedIndex}.fields.${fieldIndex}.value`}>
                                                             {(props: FieldProps) =>
-                                                                <TextArea {...props} label="Value" limit={1024} />
+                                                                <TextArea {...props} label="Value" error={errors?.at(fieldIndex)?.value} limit={1024} />
                                                             }
                                                         </Field>
                                                     </div>

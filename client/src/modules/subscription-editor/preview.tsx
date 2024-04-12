@@ -1,5 +1,5 @@
 import { useFormikContext } from "formik";
-import type { Embed as EmbedType, FormikInitialValue, EmbedField } from "../../types/types";
+import type { FormikInitialValue, EmbedField, EmbedFormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 
 const getDate = () => new Date().toLocaleString('en', {
@@ -40,12 +40,12 @@ export default function EmbedPreview({ eventType }: { eventType: EventType }) {
     )
 }
 
-function Embed({ embed }: { embed: EmbedType, }) {
+function Embed({ embed }: { embed: EmbedFormikInitialValue, }) {
 
     const MAX_FIELDS_PER_ROW = 3;
     const FIELD_GRID_SIZE = 12;
 
-    const getFieldGridColumn = (embed: EmbedType, field: EmbedField): string => {
+    const getFieldGridColumn = (embed: EmbedFormikInitialValue, field: EmbedField): string => {
         const fieldIndex = embed.fields.indexOf(field);
 
         if (!field.inline) return `1 / ${FIELD_GRID_SIZE + 1}`;
@@ -84,27 +84,27 @@ function Embed({ embed }: { embed: EmbedType, }) {
                     <div className="flex">
                         <div className="flex flex-col">
                             {/* Author */}
-                            {embed.author &&
+                            {embed.author?.text &&
                                 <div className="flex items-center space-x-2">
-                                    {embed.authorIcon &&
-                                        <img className="w-6 h-6 rounded-full object-contain" src={embed.authorIcon} alt="" />
+                                    {embed.author.icon &&
+                                        <img className="w-6 h-6 rounded-full object-contain" src={embed.author.icon} alt="" />
                                     }
-                                    {embed.authorUrl
+                                    {embed.author.url
                                         ?
-                                        <a target="_blank" className="text-[14px] font-semibold mb-1 hover:underline w-fit" href={embed.authorUrl}>{embed.author}</a>
+                                        <a target="_blank" className="text-[14px] font-semibold mb-1 hover:underline w-fit" href={embed.author.url}>{embed.author.text}</a>
                                         :
-                                        <span className="text-[14px] font-semibold w-fit">{embed.author}</span>
+                                        <span className="text-[14px] font-semibold w-fit">{embed.author.text}</span>
                                     }
                                 </div>
                             }
                             {/* Title */}
-                            {embed.title &&
+                            {embed.title?.text &&
                                 <>
-                                    {embed.titleUrl
+                                    {embed.title.url
                                         ?
-                                        <a target="_blank" className="text-[22px] font-semibold text-[#00a8fc] hover:underline w-fit" href={embed.titleUrl}>{embed.title}</a>
+                                        <a target="_blank" className="text-[22px] font-semibold text-[#00a8fc] hover:underline w-fit" href={embed.title.url}>{embed.title.text}</a>
                                         :
-                                        <span className="text-[22px] font-semibold w-fit">{embed.title}</span>
+                                        <span className="text-[22px] font-semibold w-fit">{embed.title.text}</span>
                                     }
                                 </>
                             }
@@ -136,17 +136,17 @@ function Embed({ embed }: { embed: EmbedType, }) {
                 </div>
             </div>
             {/* Bottom (footer) */}
-            {embed.footer &&
+            {embed.footer?.text &&
                 <div className="flex items-center space-x-2 mt-2">
-                    {(embed.footerIcon && (embed.addTimestamp || embed.footer)) &&
-                        <img className="rounded-full w-6 h-6 object-contain" src={embed.footerIcon} alt="Footer icon" />
+                    {(embed.footer.icon && (embed.addTimestamp || embed.footer.text)) &&
+                        <img className="rounded-full w-6 h-6 object-contain" src={embed.footer.icon} alt="Footer icon" />
                     }
-                    <span>{embed.footer}</span>
+                    <span>{embed.footer.text}</span>
                     {embed.addTimestamp &&
                         <span> • Today at {getDate()}</span>
                     }
                 </div>
             }
-        </div >
+        </div>
     )
 }

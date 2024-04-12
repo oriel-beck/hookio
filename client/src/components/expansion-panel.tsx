@@ -3,6 +3,8 @@ import { HiOutlineArrowCircleDown, HiOutlineArrowCircleUp, HiOutlineChevronDown,
 import { IoWarningOutline } from "react-icons/io5";
 import { MdOutlineContentCopy } from "react-icons/md";
 import { makeid } from "../util/util";
+import { AnimatePresence, motion } from "framer-motion";
+import { fadeVariants } from "../animation/fade-variants";
 
 interface Props {
     invalid?: boolean;
@@ -30,15 +32,21 @@ export default function ExpansionPanel({ invalid, label, max, length, index, chi
     }
 
     return (
-        <div className="flex flex-col mt-2 border-gray-200">
-            <div className="border flex flex-col items-center">
-                <div className={'flex w-full p-4' + (isOpen ? ' border-b border-gray-200' : '')}>
+        <div className="flex border flex-col mt-2 border-gray-200">
+            <div className="flex flex-col items-center">
+                <div className={`flex w-full p-4 ${isOpen ? ' border-b border-gray-200' : ''}`}>
                     <button aria-labelledby={id} onClick={(ev) => togglePanel(ev)} className={`transition-transform duration-300 transform ${isOpen ? 'rotate-180' : ''}`}>
                         <HiOutlineChevronDown className="w-6 h-6 text-white" />
                     </button>
                     <div className="flex-grow flex space-x-2" onClick={(ev) => togglePanel(ev)}>
                         <span id={id}>{label} {index != undefined ? index + 1 : ""}</span>
-                        {invalid && <IoWarningOutline className="w-6 h-6 text-red-400" />}
+                        <AnimatePresence>
+                            {invalid &&
+                                <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide">
+                                    <IoWarningOutline className="w-6 h-6 text-red-400" />
+                                </motion.span>
+                            }
+                        </AnimatePresence>
                     </div>
                     {index !== undefined &&
                         <div className="flex items-center space-x-2">

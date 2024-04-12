@@ -5,19 +5,25 @@ import { MdOutlineContentCopy } from "react-icons/md";
 import EmbedPreview from "./preview";
 import EmbedForm from "./embed-form";
 import CopyModal from "./copy-modal";
-import { generateDefaultEvent, generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
+import { convertEmbedToFormikData, generateDefaultEvent, generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
 import { APIEvents, EventType, Provider } from "../../util/enums";
 import PageHeader from "../../components/page-heading";
 import ExpansionPanel from "../../components/expansion-panel";
 import Loader from "../../components/loader";
 import { Input, TextArea } from "../../components/input";
-import type { Embed, EmbedField, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
+import type { EmbedField, EmbedFormikInitialValue, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue, Subscription } from "../../types/types";
 import * as Yup from 'yup';
 import { IoWarningOutline } from "react-icons/io5";
+import { AnimatePresence, motion } from "framer-motion";
+import { fadeVariants } from "../../animation/fade-variants";
 
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
 const youtubeRegex = new RegExp("https?:\\/\\/(?:www\\.)?youtube\\.com\\/channel\\/[a-zA-Z0-9_-]{22}", "s");
+const imageExtensionRegex = new RegExp("\\.(png|jpe?g|gif|bmp|webp)$");
+
+const invalidUrlError = "This is not a valid URL";
+const invalidDirectLinkError = "Please provide a direct link";
 
 export default function SubscriptionEditor() {
     const data = useLoaderData() as { subscription: Promise<Subscription> };
@@ -43,33 +49,81 @@ function FormikForm() {
     const openModal = (origin: EventType, data: EventFormikInitialValue) => setCopyData({ origin, data });
     const closeModal = () => setCopyData(null);
 
+    const isValidImageUrl = (url: string) => imageExtensionRegex.test(url);
+
     const fieldSchema: Yup.ObjectSchema<EmbedField> = Yup.object({
         id: Yup.mixed().required(),
         index: Yup.number().optional(),
-        name: Yup.string().required(),
-        value: Yup.string().required(),
+        name: Yup.string().required("Please provide a field name"),
+        value: Yup.string().required("Please provide a field value"),
         inline: Yup.boolean().required(),
     })
 
-    const embedSchema: Yup.ObjectSchema<Embed> = Yup.object({
+    const embedSchema: Yup.ObjectSchema<EmbedFormikInitialValue> = Yup.object({
         id: Yup.mixed().required(),
         index: Yup.number().optional(),
         description: Yup.string().optional(),
-        title: Yup.string().optional(),
-        titleUrl: Yup.string().optional().url(),
-        author: Yup.string().optional(),
-        authorUrl: Yup.string().optional().url(),
-        authorIcon: Yup.string().optional().url(),
+        title: Yup.object({
+            text: Yup.string().optional(),
+            url: Yup.string().optional().url(invalidUrlError)
+        }).test({
+            test(val, ctx) {
+                if (val.url && !val.text) return ctx.createError({ message: { text: "Please supply a title" } });
+                return true;
+            }
+        }),
+        author: Yup.object({
+            text: Yup.string().optional(),
+            url: Yup.string().url(invalidUrlError),
+            icon: Yup.string().optional().url(invalidUrlError).test({
+                test: (val, ctx) => {
+                    if (!val) return true;
+                    if (!isValidImageUrl(val)) return ctx.createError({ message: invalidDirectLinkError });
+                    return true;
+                }
+            })
+        }).test({
+            test: (val, ctx) => {
+                if ((val.url || val.icon) && !val.text) return ctx.createError({ message: { text: "Please supply an author" } });
+                return true;
+            }
+        }),
+
         color: Yup.string().optional(),
-        image: Yup.string().optional().url(),
-        footer: Yup.string().optional(),
-        footerIcon: Yup.string().optional().url(),
-        thumbnail: Yup.string().optional().url(),
+        image: Yup.string().optional().url(invalidUrlError).test({
+            test: (val, ctx) => {
+                if (!val) return true;
+                if (!isValidImageUrl(val)) return ctx.createError({ message: invalidDirectLinkError });
+                return true
+            }
+        }),
+        footer: Yup.object({
+            text: Yup.string().optional(),
+            icon: Yup.string().optional().url(invalidUrlError).test({
+                test: (val, ctx) => {
+                    if (!val) return true;
+                    if (!isValidImageUrl(val)) return ctx.createError({ message: invalidDirectLinkError });
+                    return true
+                }
+            })
+        }).test({
+            test: (val, ctx) => {
+                if (val.icon && !val.text) return ctx.createError({ message: { text: "Please supply a footer" } });
+                return true;
+            }
+        }),
+        thumbnail: Yup.string().optional().url(invalidUrlError).test({
+            test: (val, ctx) => {
+                if (!val) return true;
+                if (!isValidImageUrl(val)) return ctx.createError({ message: invalidDirectLinkError });
+                return true
+            }
+        }),
         addTimestamp: Yup.boolean().required(),
         fields: Yup.array().of(fieldSchema).required()
     }).test({
         test(embed, ctx) {
-            if (!embed.description && !embed.title && !embed.author && !embed.fields?.length && !embed.image && !embed.thumbnail && !embed.footer) return ctx.createError({ message: { invalid: true } });
+            if (!embed.description && !embed.title.text && !embed.author.text && !embed.fields?.length && !embed.image && !embed.thumbnail && !embed.footer.text) return ctx.createError({ message: { invalid: true } });
             return true;
         }
     })
@@ -97,7 +151,7 @@ function FormikForm() {
             }
         }).test({
             test: (val, ctx) => {
-                const count = (val.content?.length || 0) + val.embeds.reduce((embedsAcc, currentEmbed) => embedsAcc + (currentEmbed.description?.length || 0) + (currentEmbed.title?.length || 0) + (currentEmbed.author?.length || 0) + (currentEmbed.footer?.length || 0) + currentEmbed.fields.reduce((fieldsAcc, currentField) => fieldsAcc + (currentField.name?.length || 0) + (currentField.value?.length || 0), 0), 0);
+                const count = (val.content?.length || 0) + val.embeds.reduce((embedsAcc, currentEmbed) => embedsAcc + (currentEmbed.description?.length || 0) + (currentEmbed.title?.text?.length || 0) + (currentEmbed.author?.text?.length || 0) + (currentEmbed.footer?.text?.length || 0) + currentEmbed.fields.reduce((fieldsAcc, currentField) => fieldsAcc + (currentField.name?.length || 0) + (currentField.value?.length || 0), 0), 0);
                 if (count > 6000) return ctx.createError({ message: "Content over 6000" });
                 return true;
             }
@@ -131,14 +185,14 @@ function FormikForm() {
                     // YouTube video create
                     "0": eventSchema.required(),
                     // YouTube video edit (title/description changed)
-                    "1": eventSchema.required(),
+                    "1": eventSchema.required(), // TODO: maybe add an `edit message` option which when turned off will simply send a new message instead of editing the old one
                 })
             case 'twitch':
                 return Yup.object({
                     // Twitch stream created
                     "2": eventSchema.required(),
                     // Twitch stream updated (title/description/game changed)
-                    "3": eventSchema.required(),
+                    "3": eventSchema.required(), // TODO: maybe add an `edit message` option which when turned off will simply send a new message instead of editing the old one
                     // Twitch stream ended
                     "4": eventSchema.required(), // TODO: maybe add a `delete message` option for stream ended, need to see how to implement that
                 })
@@ -203,10 +257,14 @@ function FormikForm() {
                             <ul className="flex items-center space-x-5">
                                 {availableEvents.map((ev) => (
                                     <li key={ev} className={`cursor-pointer pb-1 relative w-fit block after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
-                                        <div className="flex items-center space-x-1">
+                                        <AnimatePresence>
                                             {errors.events?.[ev.toString()]?.message &&
-                                                <IoWarningOutline className="w-5 h-5 text-red-400" />
+                                                <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" className="cursor-default absolute -left-6 top-1" >
+                                                    <IoWarningOutline className="w-5 h-5 text-red-400" />
+                                                </motion.span>
                                             }
+                                        </AnimatePresence>
+                                        <div className="flex items-center space-x-1">
                                             <button onClick={() => setEventType(ev)}>
                                                 {EventType[ev]}
                                             </button>
@@ -248,6 +306,9 @@ function FormikForm() {
                             <EmbedPreview eventType={eventType} />
                         </div>
                     </div>
+                    <pre className="text-white">
+                        {JSON.stringify(errors)}
+                    </pre>
                     {copyData && <CopyModal originEventType={copyData.origin} targetEventType={eventType} targetId={values.events[eventType.toString()].id} data={copyData.data} closeModal={closeModal} />}
                 </div>
             )}
@@ -313,8 +374,6 @@ function getPlaceholderByPath(path: string) {
     }
 }
 
-function convertAPIEventsToFront(events: Subscription['events']) {
-    return Object.entries(events).reduce((acc, [eventKey, { message, id }]) => ({ ...acc, [APIEvents[eventKey as keyof typeof APIEvents]]: { message, id } }), {} as {
-        [eventType: string]: EventFormikInitialValue;
-    })
+function convertAPIEventsToFront(events: Subscription['events']): { [eventType: string]: EventFormikInitialValue } {
+    return Object.entries(events).reduce((acc, [eventKey, { message, id }]) => ({ ...acc, [APIEvents[eventKey as keyof typeof APIEvents]]: { message: { ...message, embeds: message.embeds.map((e) => convertEmbedToFormikData(e)) }, id } }), {})
 }

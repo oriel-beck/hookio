@@ -29,12 +29,13 @@ export interface AllSubscriptionsResponse {
 }
 
 export interface EventResponse {
-  id: number;
+  id: unknown;
   eventType: EventType;
   message: Message;
 }
 
 export interface Message {
+  id?: unknown;
   content?: string;
   embeds: Embed[];
   username?: string;
@@ -71,12 +72,44 @@ export interface EmbedField {
   inline: boolean;
 }
 
+export interface EmbedTitleFormikInitialValue {
+  text?: string;
+  url?: string;
+}
+
+export interface EmbedAuthorFormikInitialValue {
+  text?: string;
+  url?: string;
+  icon?: string;
+}
+
+export interface EmbedFooterFormikInitialValue {
+  text?: string;
+  icon?: string;
+}
+
+export interface EmbedFormikInitialValue {
+    /** String when generated locally, number when returned from server */
+    id?: unknown;
+    /** Required only in fetch */
+    index?: number;
+    description?: string;
+    title?: EmbedTitleFormikInitialValue;
+    author?: EmbedAuthorFormikInitialValue;
+    color?: string;
+    image?: string;
+    footer?: EmbedFooterFormikInitialValue;
+    thumbnail?: string;
+    addTimestamp: boolean;
+    fields: EmbedField[];
+}
+
 export interface MessageFormikInitialValue {
   id?: unknown;
   content?: string;
   username?: string;
   avatar?: string;
-  embeds: Embed[];
+  embeds: EmbedFormikInitialValue[];
 }
 
 export interface EventFormikInitialValue {
