@@ -3,10 +3,12 @@ using Hookio.Database.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.ModelBindings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hookio.Controllers
 {
+    [Authorize]
     [Route("/api/subscriptions")]
     [ApiController]
     public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase

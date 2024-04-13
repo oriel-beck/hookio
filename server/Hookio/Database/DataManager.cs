@@ -218,12 +218,15 @@ namespace Hookio.Database
 
                 await transaction.CommitAsync();
 
-                return new SubscriptionResponse
-                {
-                    Id = subscription.Id,
-                    SubscriptionType = subscription.SubscriptionType,
-                    Url = subscription.Url
-                };
+                var newSubscription = await context.Subscriptions
+                    .Where(x => x.Id == subscription.Id)
+                    .Include(x => x.Events)
+                    .ThenInclude(e => e.Message)
+                    .ThenInclude(m => m.Embeds)
+                    .ThenInclude(e => e.Fields)
+                    .SingleAsync();
+
+                return ToContract(newSubscription);
             }
             catch (Exception)
             {
@@ -477,6 +480,19 @@ namespace Hookio.Database
             };
             return currentUser;
         }
+
+        private SubscriptionResponse ToContract(Subscription subscription)
+        {
+            return new SubscriptionResponse
+            {
+                Url = subscription.Url,
+                Id = subscription.Id,
+                SubscriptionType = subscription.SubscriptionType,
+                GuildId = subscription.GuildId,
+                Events = subscription.Events.Select(ToContract).ToDictionary(ev => ev.EventType)
+            };
+        }
+
         private MessageResponse ToContract(Message message)
         {
             return new MessageResponse
