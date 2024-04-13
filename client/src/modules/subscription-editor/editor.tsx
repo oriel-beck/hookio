@@ -16,6 +16,7 @@ import * as Yup from 'yup';
 import { IoWarningOutline } from "react-icons/io5";
 import { AnimatePresence, motion } from "framer-motion";
 import { fadeVariants } from "../../animation/fade-variants";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
@@ -41,6 +42,7 @@ function FormikForm() {
     const params = useParams();
     const availableEvents = getEventTypes(Provider[params['provider'] as keyof typeof Provider]);
     const [eventType, setEventType] = useState<EventType>(availableEvents[0]);
+    const [open, setOpen] = useState(false);
     const subscription = useAsyncValue() as Subscription;
 
     const navigate = useNavigate();
@@ -229,7 +231,17 @@ function FormikForm() {
                 events: subscription?.events ? convertAPIEventsToFront(subscription.events) : generateDefaultEvents(Provider[params['provider'] as keyof typeof Provider])
             }}
             onSubmit={async (values, ctx) => {
-                await submitSubscription(values, Provider[params['provider'] as keyof typeof Provider], params['serverId']!, subscription?.id);
+                const res = await submitSubscription(values, Provider[params['provider'] as keyof typeof Provider], params['serverId']!, subscription?.id).then((r) => r.json().catch(() => null)).catch(() => null);
+                // TODO: handle premium error and 500 error (message in the corner of the screen)
+                if ('id' in res) {
+                    navigate(`/servers/${params.serverId}/${params.provider}/${res.id}`);
+                    ctx.setValues({
+                        webhookUrl: values.webhookUrl,
+                        url: res.url,
+                        events: convertAPIEventsToFront(res.events)
+                    });
+                    validationSchema.fields.webhookUrl = getWebhookUrl();
+                }
                 ctx.setSubmitting(false);
             }}
             validationSchema={validationSchema}
@@ -254,18 +266,18 @@ function FormikForm() {
                     >
                         <>
                             <span className="flex-auto"></span>
-                            <ul className="flex items-center space-x-5">
+                            <ul className="hidden md:flex items-center space-x-5">
                                 {availableEvents.map((ev) => (
-                                    <li key={ev} className={`cursor-pointer pb-1 relative w-fit block after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
-                                        <AnimatePresence>
-                                            {errors.events?.[ev.toString()]?.message &&
-                                                <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" className="cursor-default absolute -left-6 top-1" >
-                                                    <IoWarningOutline className="w-5 h-5 text-red-400" />
-                                                </motion.span>
-                                            }
-                                        </AnimatePresence>
+                                    <li key={ev} className={`hidden md:block cursor-pointer pb-1 relative w-fit after:block after:content-[''] after:absolute after:h-[3px] after:bg-white after:w-full after:scale-y-0 after:hover:scale-y-100 after:transition after:duration-200 after:origin-left ${ev === eventType ? 'after:scale-y-100' : ''}`}>
                                         <div className="flex items-center space-x-1">
-                                            <button onClick={() => setEventType(ev)}>
+                                            <button className="flex" onClick={() => setEventType(ev)}>
+                                                <AnimatePresence>
+                                                    {errors.events?.[ev.toString()]?.message &&
+                                                        <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" >
+                                                            <IoWarningOutline className="w-5 h-5 text-red-400 mr-1 mt-0.5" />
+                                                        </motion.span>
+                                                    }
+                                                </AnimatePresence>
                                                 {EventType[ev]}
                                             </button>
                                             {ev != eventType &&
@@ -277,6 +289,50 @@ function FormikForm() {
                                     </li>
                                 ))}
                             </ul>
+                            <div className="md:hidden items-start justify-start content-start flex self-end relative">
+                                <AnimatePresence>
+                                    {!!errors.events &&
+                                        <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" >
+                                            <IoWarningOutline className="w-5 h-5 text-red-400 mr-1" />
+                                        </motion.span>
+                                    }
+                                </AnimatePresence>
+                                <button className="peer" onClick={() => setOpen(!open)} onBlur={() => setOpen(false)} >
+                                    <BsThreeDotsVertical className="h-5 w-5" />
+                                </button>
+                                <AnimatePresence>
+                                    {open &&
+                                        <motion.ul variants={fadeVariants} animate="show" initial="hide" exit="hide" className="flex w-48 top-7 absolute shadow-lg -bottom-40 right-0 h-max border border-zinc-200 rounded-lg flex-col">
+                                            {availableEvents.map((ev) => (
+                                                <li key={ev} className="bg-zinc-700 flex items-center justify-between hover:bg-zinc-600 p-2 first:rounded-t-lg last:rounded-b-lg cursor-pointer">
+                                                    <button aria-label={`Copy from ${EventType[ev]}`} onClick={() => {
+                                                        setOpen(false);
+                                                        openModal(ev, values.events[ev]);
+                                                    }}>
+                                                        <MdOutlineContentCopy className="h-5 w-5" />
+                                                    </button>
+                                                    <div className="flex items-center space-x-2">
+                                                        <button className="w-full h-full" onClick={() => {
+                                                            setOpen(false);
+                                                            setEventType(ev);
+                                                        }}>
+                                                            {EventType[ev]}
+                                                        </button>
+                                                        {errors.events?.[ev.toString()]?.message ?
+                                                            <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" >
+                                                                <IoWarningOutline className="w-5 h-5 text-red-400 mr-1 mt-0.5" />
+                                                            </motion.span>
+                                                            :
+                                                            // Placeholder for warning icon
+                                                            <span className="w-[1.7rem] h-5 mt-0.5"></span>
+                                                        }
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </motion.ul>
+                                    }
+                                </AnimatePresence>
+                            </div>
                         </>
                     </PageHeader>
                     {/* subscription editor and subscription embed, split screen */}

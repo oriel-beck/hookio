@@ -21,18 +21,18 @@ function authenticateAndFallback(code: string | null) {
     // if there is a code, try to authenticate, if not, get the current user
     return code ? authenticate(code)
         .then((response) => {
-            return response.json()
+            return response.json().catch(() => null);
         })
         .then((json) => {
             // if auth returned false, try to get the currently authenticated user anyways
             return json ? json : getCurrentUser()
                 .then((response) => {
-                    return response.json()
+                    return response.json().catch(() => null);
                 })
                 .catch(() => null)
         }) : getCurrentUser()
             .then((response) => {
-                return response.json()
+                return response.json().catch(() => null);
             })
             .catch(() => null);
 }

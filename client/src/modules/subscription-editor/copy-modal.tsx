@@ -3,6 +3,7 @@ import { EventFormikInitialValue, FormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { HiXMark } from "react-icons/hi2";
 import { makeid } from "../../util/util";
+import { useEffect } from "react";
 
 interface Props {
     originEventType: EventType;
@@ -33,11 +34,17 @@ export default function CopyModal({ originEventType, targetEventType, targetId, 
         closeModal();
     }
 
+    useEffect(() => {
+        const onEscape = (ev: KeyboardEvent) => ev.key === "Escape" ? closeModal() : null;
+        document.addEventListener("keyup", onEscape);
+        return () => document.removeEventListener("keyup", onEscape);
+    });
+
     return (
         <>
             {/* Backdrop */}
             <div className="h-full w-full absolute top-0 left-0 bg-gray-500 bg-opacity-50 z-40" onClick={() => closeModal()}></div>
-            <div className=" absolute top-1/4 left-1/4 w-auto my-6 mx-auto max-w-3xl z-50 border border-white rounded text-white bg-gray-400 bg-opacity-90">
+            <div className=" absolute top-1/4 left-1/4 right-1/4 w-auto my-6 mx-auto max-w-3xl z-50 border border-white rounded text-white bg-zinc-600">
                 {/*content*/}
                 <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-transparent outline-none focus:outline-none">
                     {/*header*/}
