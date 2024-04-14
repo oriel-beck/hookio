@@ -289,7 +289,7 @@ function FormikForm() {
                                     </li>
                                 ))}
                             </ul>
-                            <div className="md:hidden items-start justify-start content-start flex self-end relative">
+                            <div className="md:hidden items-start justify-start content-start flex relative">
                                 <AnimatePresence>
                                     {!!errors.events &&
                                         <motion.span variants={fadeVariants} animate="show" initial="hide" exit="hide" >
