@@ -76,7 +76,7 @@ function Embed({ embed }: { embed: EmbedFormikInitialValue, }) {
 
 
     return (
-        <div className="flex mb-5 flex-col max-w-[432px] bg-[#2b2d31] px-4 py-3 rounded-sm border-l-4 " style={{ borderColor: embed.color }}>
+        <div className="flex mb-5 flex-col max-w-[432px] bg-[#2b2d31] px-4 py-3 rounded-sm border-l-4" style={{ borderColor: embed.color || '#202225' }}>
             {/* Top */}
             <div className="flex">
                 {/* Author, title, description, image */}

@@ -2,7 +2,7 @@ import { Field, FieldArrayRenderProps, FieldProps, FormikErrors, useFormikContex
 import EmbedFieldsBuilder from "./embed-field-form";
 import MultiExpansionField from "../../components/multi-expansion-field";
 import ExpansionPanel from "../../components/expansion-panel";
-import { CheckBox, Input, TextArea } from "../../components/input";
+import { CheckBox, ColorPicker, Input, TextArea } from "../../components/input";
 import type { EmbedAuthorFormikInitialValue, EmbedFooterFormikInitialValue, EmbedFormikInitialValue, EmbedTitleFormikInitialValue, EventFormikInitialValue, FormikInitialValue, MessageFormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
 import { generateNewEmbed } from "../../util/util";
@@ -43,7 +43,7 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
                                             <div className="p-2 space-y-2">
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.author.text`}>
                                                     {(props: FieldProps) =>
-                                                        <Input  error={authorErrors(embedIndex)?.text} {...props} label="Author" limit={256} />
+                                                        <Input error={authorErrors(embedIndex)?.text} {...props} label="Author" limit={256} />
                                                     }
                                                 </Field>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.author.url`}>
@@ -60,11 +60,20 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
                                         </ExpansionPanel>
                                         <ExpansionPanel invalid={!!titleErrors(embedIndex)} label="Body">
                                             <div className="p-2 space-y-2">
-                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.title.text`}>
-                                                    {(props: FieldProps) =>
-                                                        <Input error={titleErrors(embedIndex)?.text} {...props} label="Title" limit={256} />
-                                                    }
-                                                </Field>
+                                                <div className="flex">
+                                                    <Field name={`events.${eventType}.message.embeds.${embedIndex}.title.text`}>
+                                                        {(props: FieldProps) =>
+                                                            <Input error={titleErrors(embedIndex)?.text} {...props} label="Title" limit={256} />
+                                                        }
+                                                    </Field>
+                                                    <div className="ml-2 flex items-center">
+                                                        <Field name={`events.${eventType}.message.embeds.${embedIndex}.color`}>
+                                                            {(props: FieldProps) =>
+                                                                <ColorPicker {...props} label="Color" />
+                                                            }
+                                                        </Field>
+                                                    </div>
+                                                </div>
                                                 <Field name={`events.${eventType}.message.embeds.${embedIndex}.title.url`}>
                                                     {(props: FieldProps) =>
                                                         // TODO: fix
@@ -76,12 +85,7 @@ export default function EmbedForm({ helpers, values, eventType }: Props) {
                                                         <TextArea {...props} label="Description" limit={4096} />
                                                     }
                                                 </Field>
-                                                <Field name={`events.${eventType}.message.embeds.${embedIndex}.color`}>
-                                                    {(props: FieldProps) =>
-                                                        // TODO: color wheel
-                                                        <Input {...props} label="Color" />
-                                                    }
-                                                </Field>
+
                                             </div>
                                         </ExpansionPanel>
                                         <EmbedFieldsBuilder eventType={eventType} embed={embed} embedIndex={embedIndex} />

@@ -11,8 +11,6 @@ export interface Props extends FieldProps {
     limit?: number;
 }
 
-
-
 export function Input({
     field, // { name, value, onChange, onBlur }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -88,13 +86,68 @@ export function CheckBox({
     return (
         <div className="relative w-fit">
             <div className="flex space-x-1 items-center mt-8">
-                <input id={field.name} type="checkbox"{...field} {...props} className="peer relative appearance-none outline-none shrink-0 w-5 h-5 border border-neutral-900 rounded-sm bg-zinc-700 hover:bg-gray-400 focus:border-teal-400" />
+                <input id={field.name} type="checkbox" {...field} {...props} className="peer relative appearance-none outline-none shrink-0 w-5 h-5 border border-neutral-900 rounded-sm bg-zinc-700 hover:bg-gray-400 focus:border-teal-400" />
                 <label className="block text-white text-sm font-bold" htmlFor={field.name}>{label}</label>
                 <HiOutlineXMark className="right-[2.7rem] stroke-[3] absolute w-4 h-4 hidden peer-checked:block pointer-events-none" />
             </div>
         </div>
     )
 }
+
+// export function ({
+//     field, // { name, value, onChange, onBlur }
+//     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//     form, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+//     label,
+//     ...props
+// }: Props) {
+//     return (
+//         <div className="flex w-fit">
+//             <div className="flex flex-col space-x-2">
+//                 <label className="block text-white text-sm font-bold mb-1 ml-2" htmlFor={field.name}>{label}</label>
+//                 <div className="flex space-x-2">
+//                     <input
+//                         id={field.name}
+//                         className={`shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-700 focus:border-teal-400`}
+//                         {...field}
+//                         {...props} />
+//                     <input type="color" aria-labelledby={field.name} {...field} {...props} className="h-10 w-14" />
+//                 </div>
+//             </div>
+//         </div>
+//     )
+// }
+
+
+export function ColorPicker({
+    field, // { name, value, onChange, onBlur }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    form, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+    label,
+    limit,
+    ...props
+}: Props) {
+    return (
+        <div className="w-full">
+            <div className="flex space-x-2 items-center mb-1">
+                <label className="block text-white text-sm font-bold" htmlFor={field.name}>{label}</label>
+                <span className="flex-1"></span>
+                <Limit limit={limit} length={field.value?.length} />
+            </div>
+            <div className="flex space-x-2">
+                <input
+                    id={field.name}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-700 focus:border-teal-400"
+                    {...field}
+                    {...props}
+                    {...(limit && { maxLength: limit })}
+                />
+                <input type="color" aria-labelledby={field.name} {...field} {...props} className="h-9 w-14" />
+            </div>
+        </div>
+    )
+}
+
 
 function Limit({ limit, length }: { limit?: number, length: number }) {
     return limit ? <p className="text-gray-300 text-sm">{length}/{limit}</p> : <></>
