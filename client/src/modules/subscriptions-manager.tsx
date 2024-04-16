@@ -24,7 +24,9 @@ function InternalSubscriptionManager() {
     const onClick = (id?: number) => navigate(id?.toString() || "new");
 
     useEffect(() => {
-        if ('status' in data && (data as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true })
+        // TODO: handle 429 from the API, just in case, generally it should not happen
+        if ('error' in data) return navigate(`/servers/${params['serverId']}`, { replace: true });
+        if ('status' in data && (data as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true });
     })
 
     return (
@@ -52,7 +54,7 @@ function InternalSubscriptionManager() {
 
                 {/* Create subscription button */}
                 {/* If there are any subs, move to the bottom left */}
-                <div className={data.subscriptions.length ? "flex justify-center md:justify-end w-full" : "flex"}>
+                <div className={data?.subscriptions?.length ? "flex justify-center md:justify-end w-full" : "flex"}>
                     {/* TODO: make tooltip and button behavior depending on the user's premium tier */}
                     <div className="relative">
                         <button className={`peer border border-white rounded py-2 px-4 duration-75 ${(data?.count || 0) >= 2 ? 'opacity-70 cursor-default' : 'hover:bg-gray-400 hover:bg-opacity-60'}`} onClick={() => (data.count || 0) < 2 ? onClick() : null}>

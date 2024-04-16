@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
@@ -8,9 +9,11 @@ using Hookio.Extensions;
 using Hookio.Youtube;
 using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 
 var root = Directory.GetCurrentDirectory();
@@ -31,6 +34,22 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(policyName: "subscriptions", options =>
+    {
+        options.PermitLimit = 3;
+        options.Window = TimeSpan.FromSeconds(10);
+        options.QueueLimit = 0;
+    });
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new { error = "Too many requests, please try again later..." }), cancellationToken: token);
+    };
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,24 +57,6 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    //options.Events = new JwtBearerEvents()
-    //{
-    //    OnMessageReceived = context =>
-    //    {
-    //        context.Token = context.Request.Cookies["Authorization"];
-    //        return Task.CompletedTask;
-    //    },
-    //    OnTokenValidated = context =>
-    //    {
-    //        if (DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes > 10)
-    //        {
-
-    //        }
-
-    //        return Task.CompletedTask;
-    //    }
-    //};
-
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ClockSkew = TimeSpan.FromMinutes(5), // Set a reasonable clock skew
@@ -84,6 +85,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 Console.WriteLine("Migrating database");
 using var context = app.Services.GetRequiredService<IDbContextFactory<HookioContext>>().CreateDbContext();

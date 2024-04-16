@@ -5,12 +5,14 @@ using Hookio.Exceptions;
 using Hookio.ModelBindings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Hookio.Controllers
 {
     [Authorize]
     [Route("/api/subscriptions")]
     [ApiController]
+    [EnableRateLimiting("subscriptions")]
     public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
     {
         [HttpGet("{guildId}")]
