@@ -1,4 +1,5 @@
-﻿using Discord.Rest;
+﻿using Discord;
+using Discord.Rest;
 using Hookio.Contracts;
 using Hookio.Database.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -73,7 +74,7 @@ namespace Hookio.Controllers
                 }
 
                 var client = new DiscordRestClient();
-                await client.LoginAsync(Discord.TokenType.Bearer, result.AccessToken);
+                await client.LoginAsync(TokenType.Bearer, result.AccessToken);
 
                 var user = client.CurrentUser;
                 user ??= await client.GetCurrentUserAsync();

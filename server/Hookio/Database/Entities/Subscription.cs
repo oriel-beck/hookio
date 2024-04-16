@@ -8,6 +8,7 @@ namespace Hookio.Database.Entities
     [PrimaryKey("Id")]
     [Index("GuildId")]
     [Index("SubscriptionType")]
+    [Index("Url")]
     public class Subscription
     {
         [Key]

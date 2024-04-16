@@ -5,6 +5,7 @@ using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
+using Hookio.Youtube.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hookio.Database
@@ -29,6 +30,7 @@ namespace Hookio.Database
             var accessToken = await GetAccessToken(userId);
             var client = new DiscordRestClient();
             await client.LoginAsync(TokenType.Bearer, accessToken);
+            client.Dispose();
             return await ToContract(client);
         }
 
@@ -96,7 +98,7 @@ namespace Hookio.Database
             var ctx = await contextFactory.CreateDbContextAsync();
 
             var subscription = await ctx.Subscriptions
-                .Where(x => 
+                .Where(x =>
                     (x.GuildId == guildId) &&
                     (x.Id == id))
                 .Include(s => s.Events)
@@ -118,6 +120,26 @@ namespace Hookio.Database
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
                 GuildId = subscription.GuildId,
             };
+        }
+
+        public async Task<Subscription?> GetSubscription(int id)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+
+            var subscription = await ctx.Subscriptions
+                .Where(x => x.Id == id)
+                .Include(s => s.Events)
+                    .ThenInclude(e => e.Message)
+                        .ThenInclude(m => m!.Embeds.OrderBy(e => e.Index))
+                            .ThenInclude(e => e.Fields.OrderBy(f => f.Index))
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (subscription == null)
+            {
+                return null; // Subscription not found
+            }
+
+            return subscription;
         }
 
         // TODO: Maybe add buttons at some point
@@ -243,7 +265,7 @@ namespace Hookio.Database
             try
             {
                 // Get current subscription
-                var subscription = await context.Subscriptions.Where(x => 
+                var subscription = await context.Subscriptions.Where(x =>
                         (x.Id == id) &&
                         (x.GuildId == guildId))
                     .FirstOrDefaultAsync();
@@ -274,8 +296,8 @@ namespace Hookio.Database
                 {
                     // Get the current event of this event type
                     var _ = events.TryGetValue((int)eventRequest.Value.Id!, out var currentEvent);
-                    
-                    if (currentEvent == null) 
+
+                    if (currentEvent == null)
                     {
                         var newEvent = new Event
                         {
@@ -452,6 +474,17 @@ namespace Hookio.Database
                 Count = await ctx.Subscriptions.Where(s => s.GuildId == guildId).CountAsync(),
                 Subscriptions = subscriptions.ToList()
             };
+        }
+
+        public async Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification)
+        {
+            var context = await contextFactory.CreateDbContextAsync();
+            return await context.Subscriptions.Where(s => s.Url == $"https://youtube.com/channel/{notification.ChannelId}")
+                .Include(x => x.Events)
+                .ThenInclude(ev => ev.Message)
+                .ThenInclude(m => m.Embeds)
+                .ThenInclude(em => em.Fields)
+                .ToListAsync();
         }
 
         // TODO: DeleteSubscription

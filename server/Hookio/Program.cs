@@ -2,9 +2,14 @@ using System.Text;
 using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
+using Hookio.Discord;
+using Hookio.Discord.Interfaces;
+using Hookio.Youtube;
+using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var root = Directory.GetCurrentDirectory();
 DotEnv.Load(Path.Combine(root, ".env"));
@@ -14,7 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
+builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("DRAGONFLY_CONNECTION_STRING")!));
 builder.Services.AddSingleton<IDataManager, DataManager>();
+builder.Services.AddSingleton<IDiscordClientManager, DiscordClientManager>();
+builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
