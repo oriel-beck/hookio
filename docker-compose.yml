@@ -21,12 +21,12 @@ services:
       - 5432
   
   # Ratelimit and cache
-  redis:
-    image: redis:7.2.4
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
     networks:
       - hookio
     volumes:
-      - redis_data:/data
+      - dragonfly_data:/data
     # add custom redis.conf
     ports:
       - 6379

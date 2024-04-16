@@ -47,7 +47,7 @@ builder.Services.AddAuthentication(options =>
         {
             if (DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes > 10)
             {
-                // TODO: renew token (implement redis cache first)
+
             }
 
             return Task.CompletedTask;

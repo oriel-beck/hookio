@@ -3,15 +3,18 @@ using Discord.Rest;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
+using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.Youtube.Contracts;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace Hookio.Database
 {
-    public class DataManager(IDbContextFactory<HookioContext> contextFactory) : IDataManager
+    public class DataManager(IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager) : IDataManager
     {
+        private IDatabase _database = connectionMultiplexer.GetDatabase();
         private readonly HttpClient _http = new()
         {
             BaseAddress = new Uri("https://discord.com")
@@ -28,10 +31,10 @@ namespace Hookio.Database
         {
             // TODO: change this to use the database for getting the user data, save user data on login (avatar, id, etc)
             var accessToken = await GetAccessToken(userId);
-            var client = new DiscordRestClient();
-            await client.LoginAsync(TokenType.Bearer, accessToken);
+            var client = await clientManager.GetBearerClientAsync(accessToken!);
+            var result = await ToContract(client);
             client.Dispose();
-            return await ToContract(client);
+            return result;
         }
 
         public async Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token)
