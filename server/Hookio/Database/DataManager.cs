@@ -7,14 +7,21 @@ using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.Youtube.Contracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using StackExchange.Redis;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Hookio.Database
 {
-    public class DataManager(IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager) : IDataManager
+    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager) : IDataManager
     {
-        private IDatabase _database = connectionMultiplexer.GetDatabase();
+        private readonly JwtSecurityTokenHandler _tokenHandler = new();
+        private readonly IDatabase _database = connectionMultiplexer.GetDatabase();
         private readonly HttpClient _http = new()
         {
             BaseAddress = new Uri("https://discord.com")
@@ -29,7 +36,6 @@ namespace Hookio.Database
 
         public async Task<CurrentUserResponse?> GetUser(ulong userId)
         {
-            // TODO: change this to use the database for getting the user data, save user data on login (avatar, id, etc)
             var accessToken = await GetAccessToken(userId);
             var client = await clientManager.GetBearerClientAsync(accessToken!);
             var result = await ToContract(client);
@@ -40,28 +46,77 @@ namespace Hookio.Database
         public async Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token)
         {
             var ctx = contextFactory.CreateDbContext();
-            var newUser = new User
-            {
-                AccessToken = token.AccessToken,
-                ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
-                Id = client.CurrentUser.Id,
-                RefreshToken = token.RefreshToken,
-                Email = client.CurrentUser.Email,
-            };
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == client.CurrentUser.Id);
             if (currentUser == null)
             {
+                var newUser = new User
+                {
+                    AccessToken = token.AccessToken,
+                    ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
+                    Id = client.CurrentUser.Id,
+                    RefreshToken = token.RefreshToken,
+                    Email = client.CurrentUser.Email,
+                };
                 await ctx.Users.AddAsync(newUser);
+                return newUser;
             }
             else
             {
-                currentUser.RefreshToken = newUser.RefreshToken;
-                currentUser.AccessToken = newUser.AccessToken;
-                currentUser.ExpireAt = newUser.ExpireAt;
+                currentUser.RefreshToken = token.RefreshToken;
+                currentUser.AccessToken = token.AccessToken;
+                currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn);
+                await ctx.SaveChangesAsync();
+                return currentUser;
             }
-            await ctx.SaveChangesAsync();
-            return newUser;
+        }
 
+        public async Task<CurrentUserResponse?> Authenticate(HttpContext httpContext, string code)
+        {
+            var context = await contextFactory.CreateDbContextAsync();
+            try
+            {
+                var discordResponse = await _http.PostAsync($"/api/v10/oauth2/token",
+                new FormUrlEncodedContent(new Dictionary<string, string?>()
+                {
+                    { "code", code },
+                    { "redirect_uri", Environment.GetEnvironmentVariable("DISCORD_REDIRECT_URI") },
+                    { "grant_type", "authorization_code" },
+                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
+                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
+                    { "scopes", "identify guilds email" }
+                }
+                ));
+                var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
+                if (result == null)
+                {
+                    logger.LogInformation("[{FunctionName}]: Failed to code exchange with code '{Scopes}'", nameof(Authenticate), code);
+                    return null;
+                }
+
+                if (!result.Scope.Contains("email") || !result.Scope.Contains("identify") || !result.Scope.Contains("guilds"))
+                {
+                    logger.LogInformation("[{FunctionName}]: Did not get all required scopes, cancelled login, got scopes '{Scopes}'", nameof(Authenticate), result.Scope);
+                    return null;
+                }
+
+                var client = new DiscordRestClient();
+                await client.LoginAsync(TokenType.Bearer, result.AccessToken);
+
+                var user = client.CurrentUser;
+                user ??= await client.GetCurrentUserAsync();
+
+                await CreateUser(client, result);
+                var currentUser = await GetUser(user.Id);
+
+                CreateTokenAndSetCookie(httpContext, user, currentUser?.Guilds.Select(g => g.Id));
+
+                return currentUser;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("[{FunctionName}]: '{Message}'", nameof(Authenticate), ex.Message);
+                return null;
+            }
         }
 
         public async Task<string?> GetAccessToken(ulong userId)
@@ -92,6 +147,71 @@ namespace Hookio.Database
             {
                 return currentUser.AccessToken;
             }
+        }
+
+        public async Task RefreshUserAuthentication(TokenValidatedContext context, SecurityToken token)
+        {
+            var parsedToken = _tokenHandler.ReadJwtToken(token.UnsafeToString());
+            var claim = parsedToken.Claims.First(claim => claim.Type == "id").Value;
+            _ = ulong.TryParse(claim, out var userId);
+            var accessToken = await GetAccessToken(userId);
+            var client = await clientManager.GetBearerClientAsync(accessToken!);
+            var userContract = await ToContract(client);
+            CreateTokenAndSetCookie(context, await client.GetCurrentUserAsync(), userContract!.Guilds.Select(g => g.Id));
+        }
+
+        public void CreateTokenAndSetCookie(TokenValidatedContext context, RestSelfUser user, IEnumerable<string>? guildIds)
+        {
+            var claims = new Claim[]
+            {
+                new("id", user.Id.ToString()),
+                new("guilds", JsonConvert.SerializeObject(guildIds))
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(3),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = _tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = _tokenHandler.WriteToken(token);
+            context.Response.Cookies.Append("Authorization", tokenString, new()
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddHours(3),
+                SameSite = SameSiteMode.Strict
+            });
+        }
+
+        public void CreateTokenAndSetCookie(HttpContext context, RestSelfUser user, IEnumerable<string>? guildIds)
+        {
+            var claims = new Claim[]
+            {
+                new("id", user.Id.ToString()),
+                new("guilds", JsonConvert.SerializeObject(guildIds))
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(3),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = _tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = _tokenHandler.WriteToken(token);
+            context.Response.Cookies.Append("Authorization", tokenString, new()
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddHours(3),
+                SameSite = SameSiteMode.Strict
+            });
         }
         #endregion
 

@@ -3,6 +3,9 @@ using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Enunms;
 using Hookio.Youtube.Contracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Hookio.Database.Interfaces
 {
@@ -13,6 +16,10 @@ namespace Hookio.Database.Interfaces
         public Task<CurrentUserResponse?> GetUser(ulong userId);
         public Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token);
         public Task<string?> GetAccessToken(ulong userId);
+        public Task<CurrentUserResponse?> Authenticate(HttpContext httpContext, string code);
+        public void CreateTokenAndSetCookie(HttpContext context, RestSelfUser user, IEnumerable<string>? guildIds);
+        public void CreateTokenAndSetCookie(TokenValidatedContext context, RestSelfUser user, IEnumerable<string>? guildIds);
+        public Task RefreshUserAuthentication(TokenValidatedContext context, SecurityToken token);
         #endregion
 
         #region subscriptions

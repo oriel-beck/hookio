@@ -4,10 +4,12 @@ using Hookio.Database;
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
 using Hookio.Discord.Interfaces;
+using Hookio.Extensions;
 using Hookio.Youtube;
 using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
@@ -36,23 +38,23 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.Events = new JwtBearerEvents()
-    {
-        OnMessageReceived = context =>
-        {
-            context.Token = context.Request.Cookies["Authorization"];
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            if (DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes > 10)
-            {
+    //options.Events = new JwtBearerEvents()
+    //{
+    //    OnMessageReceived = context =>
+    //    {
+    //        context.Token = context.Request.Cookies["Authorization"];
+    //        return Task.CompletedTask;
+    //    },
+    //    OnTokenValidated = context =>
+    //    {
+    //        if (DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes > 10)
+    //        {
 
-            }
+    //        }
 
-            return Task.CompletedTask;
-        }
-    };
+    //        return Task.CompletedTask;
+    //    }
+    //};
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -67,6 +69,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 
 var app = builder.Build();
 
