@@ -33,8 +33,7 @@ namespace Hookio.Youtube
         const string YT_MSGS_SENT = "youtube_messages_sent";
         // Set of videoId : score (timestamp)
         const string YT_SENT_VIDEOS = "youtube_videos_sent";
-        // Define the regex pattern
-        const string pattern = @"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})";
+        const int ONE_HOUR_MS = 3600000;
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
         private readonly IDataManager _dataManager;
@@ -144,7 +143,7 @@ namespace Hookio.Youtube
             {
                 while (true)
                 {
-                    await Task.Delay(3600000);
+                    await Task.Delay(ONE_HOUR_MS);
                     var results = await _redisDatabase.SortedSetRangeByScoreAsync(YT_SUBS_EXPIRED, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     foreach (var result in results)
                     {
@@ -167,7 +166,7 @@ namespace Hookio.Youtube
             {
                 while (true)
                 {
-                    await Task.Delay(3600000);
+                    await Task.Delay(ONE_HOUR_MS);
                     var expiredSets = await _redisDatabase.SortedSetRangeByScoreAsync(YT_SENT_VIDEOS, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     foreach (var expiredSet in expiredSets)
                     {
@@ -180,7 +179,7 @@ namespace Hookio.Youtube
             });
         }
 
-        [GeneratedRegex(pattern)]
+        [GeneratedRegex(@"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})")]
         private static partial Regex YoutubeChannelRegex();
     }
 }
