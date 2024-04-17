@@ -6,7 +6,9 @@ using Hookio.Database.Interfaces;
 using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
+using Hookio.Youtube;
 using Hookio.Youtube.Contracts;
+using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,10 +20,10 @@ using System.Text;
 
 namespace Hookio.Database
 {
-    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager) : IDataManager
+    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager, IYoutubeService youtubeService) : IDataManager
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
-        private readonly IDatabase _database = connectionMultiplexer.GetDatabase();
+        private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
         private readonly HttpClient _http = new()
         {
             BaseAddress = new Uri("https://discord.com")
@@ -268,6 +270,11 @@ namespace Hookio.Database
         // TODO: Maybe add buttons at some point
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
+            string? channelId = null;
+            if (request.SubscriptionType == SubscriptionType.Youtube)
+            {
+                channelId = youtubeService.GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+            }
             using var context = await contextFactory.CreateDbContextAsync();
             var subscriptionsCount = await context.Subscriptions.Where(x => x.GuildId == guildId).CountAsync();
             if (subscriptionsCount >= 2)
@@ -363,6 +370,12 @@ namespace Hookio.Database
 
                 await transaction.CommitAsync();
 
+                if (request.SubscriptionType == SubscriptionType.Youtube)
+                {
+                    var success = await youtubeService.Subscribe(channelId!);
+                    if (!(bool)success) throw new Exception("Failed to subscribe to the channel ID");
+                }
+
                 var newSubscription = await context.Subscriptions
                     .Where(x => x.Id == subscription.Id)
                     .Include(x => x.Events)
@@ -382,6 +395,11 @@ namespace Hookio.Database
 
         public async Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request)
         {
+            string? channelId = null;
+            if (request.SubscriptionType == SubscriptionType.Youtube)
+            {
+                channelId = youtubeService.GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+            }
             using var context = await contextFactory.CreateDbContextAsync();
             using var transaction = await context.Database.BeginTransactionAsync();
             int length = 0;
@@ -401,6 +419,10 @@ namespace Hookio.Database
                 if (subscription.Url != request.Url)
                 {
                     // TODO: unsubscribe from old, subscribe to new
+                    if (subscription.SubscriptionType == SubscriptionType.Youtube)
+                    {
+                        await youtubeService.Subscribe(channelId!, false);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(request.WebhookUrl))
@@ -553,6 +575,12 @@ namespace Hookio.Database
                 await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
 
                 await transaction.CommitAsync();
+
+                if (request.SubscriptionType == SubscriptionType.Youtube)
+                {
+                    var success = await youtubeService.Subscribe(channelId!);
+                    if (!(bool)success) throw new Exception("Failed to subscribe to the channel ID");
+                }
 
                 return new SubscriptionResponse
                 {

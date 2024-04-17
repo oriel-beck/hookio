@@ -9,7 +9,7 @@ namespace Hookio.Discord
 {
     public class DiscordClientManager(ILogger<DiscordClientManager> logger, IConnectionMultiplexer connectionMultiplexer) : IDiscordClientManager
     {
-        private readonly IDatabase _database = connectionMultiplexer.GetDatabase();
+        private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
         private readonly RequestQueue requestQueue = new(30);
         // Set of `{YT_SENT_VIDEOS}-videoId` : dbMessageId-messageId
         const string YT_MSGS_SENT = "youtube_messages_sent";
@@ -37,7 +37,7 @@ namespace Hookio.Discord
                 {
                     var resMessage = await client.SendMessageAsync(text: message.Content, embeds: embeds, username: message.WebhookUsername, avatarUrl: message.WebhookAvatar);
                     // Create a set for this videoId in case of editing
-                    await _database.SetAddAsync($"{YT_MSGS_SENT}-{videoId}", $"{message.Id}-{resMessage}");
+                    await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{videoId}", $"{message.Id}-{resMessage}");
                 }
                 catch (Exception ex)
                 {

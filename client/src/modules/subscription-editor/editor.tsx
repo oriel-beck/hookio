@@ -21,6 +21,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 const webhookRegex = new RegExp("https:\\/\\/(?:canary\\.)?discord(?:app)?\\.com\\/api\\/webhooks\\/\\d+\\/[a-zA-Z0-9_-]+", "s");
 const twitchRegex = new RegExp("https?:\\/\\/(?:www\\.)?twitch\\.tv\\/([a-zA-Z0-9_]{4,25})", "s");
 const youtubeRegex = new RegExp("https?:\\/\\/(?:www\\.)?youtube\\.com\\/channel\\/[a-zA-Z0-9_-]{22}", "s");
+
 const imageExtensionRegex = new RegExp("\\.(png|jpe?g|gif|bmp|webp)$");
 
 const invalidUrlError = "This is not a valid URL";
@@ -219,6 +220,8 @@ function FormikForm() {
     }
 
     useEffect(() => {
+        // TODO: handle erorrs properly (popup? error screen? message in the corner?)
+        if ('message' in subscription) return navigate(`/servers`);
         if (params['subscriptionId'] && 'status' in subscription) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
     });
 

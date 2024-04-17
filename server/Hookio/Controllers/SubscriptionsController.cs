@@ -3,6 +3,7 @@ using Hookio.Database.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.ModelBindings;
+using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -13,7 +14,7 @@ namespace Hookio.Controllers
     [Route("/api/subscriptions")]
     [ApiController]
     [EnableRateLimiting("subscriptions")]
-    public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
+    public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager, IYoutubeService youtubeService) : ControllerBase
     {
         [HttpGet("{guildId}")]
         public async Task<ActionResult<GuildSubscriptionsResponse>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? subscriptionType, bool withCounts = false)
@@ -34,23 +35,21 @@ namespace Hookio.Controllers
                 var subscriptionResult = await dataManager.CreateSubscription(guildId, subscription);
                 return Ok(subscriptionResult);
             }
-            catch(EmbedTooLongException ex)
+            catch (Exception ex)
             {
-                return BadRequest(new
+                if (ex is EmbedTooLongException || ex is RequiresPremiumException || ex is InvalidChannelURLException)
                 {
-                    ex.Message
-                });
-            }
-            catch(RequiresPremiumException ex)
-            {
-                return BadRequest(new
-                {
-                    ex.Message
-                });
-            }
-            catch (Exception)
-            {
+                    return BadRequest(new
+                    {
+                        ex.Message
+                    });
+                }
+
                 // fallback
+                await HttpContext.Response.WriteAsJsonAsync(new
+                {
+                    Message = "Internal error, please try again later..."
+                });
                 return StatusCode(500);
             }
         }

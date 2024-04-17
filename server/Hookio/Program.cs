@@ -45,8 +45,7 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.StatusCode = 429;
-        context.HttpContext.Response.ContentType = "application/json";
-        await context.HttpContext.Response.WriteAsync(JsonConvert.SerializeObject(new { error = "Too many requests, please try again later..." }), cancellationToken: token);
+        await context.HttpContext.Response.WriteAsJsonAsync(new { Message = "Too many requests, please try again later..." }, cancellationToken: token);
     };
 });
 

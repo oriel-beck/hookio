@@ -5,12 +5,24 @@ using Hookio.Youtube.Contracts;
 using Hookio.Youtube.Interfaces;
 using StackExchange.Redis;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace Hookio.Youtube
 {
+    /// <summary>
+    /// This is how this works
+    /// When a subscription is created, it is saved in a sorted set YT_SUBS_EXPIRED, with the score being TIMESTAMP + 10d,
+    /// every hour, that sorted set is fetched based on the current timestamp, any subscriptions that have passed will resubscribe.
+    /// 
+    /// When a message is sent, the video ID is set in a sorted set YT_SENT_VIDEOS, with the score being TIMESTAMP + 12h
+    /// every hour, that sorted set is fetched based on the current timestamp, any video that passed that will be fetched.
+    /// 
+    /// Alongside the video being saved, messages will be sent, then saved as `dbMessageId-messageId` in a set YT_MSGS_SENT-{videoId}, 
+    /// when a video is sent, the message sent is saved alongside the ID of the db message, when a video is edited, the db message for the update event is fetched and the message is updated.
+    /// </summary>
     public class YoutubeService : IYoutubeService
     {
         private readonly string? IDENTIFIER = Environment.GetEnvironmentVariable("YT_IDENTIFIER");
@@ -22,13 +34,13 @@ namespace Hookio.Youtube
         // Set of videoId : score (timestamp)
         const string YT_SENT_VIDEOS = "youtube_videos_sent";
         private readonly HttpClient _httpClient = new();
-        private readonly IDatabase _database;
+        private readonly IDatabase _redisDatabase;
         private readonly IDataManager _dataManager;
         private readonly IDiscordClientManager _discordClientManager;
 
         public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDataManager dataManager, IDiscordClientManager discordClientManager) 
         {
-            _database = connectionMultiplexer.GetDatabase();
+            _redisDatabase = connectionMultiplexer.GetDatabase();
             _dataManager = dataManager;
             _discordClientManager = discordClientManager;
             ResubTask();
@@ -48,7 +60,7 @@ namespace Hookio.Youtube
 
             var res = await _httpClient.PostAsync("https://pubsubhubbub.appspot.com/subscribe", content);
             if (res.IsSuccessStatusCode) return null;
-            await _database.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddDays(10).ToUnixTimeMilliseconds());
+            await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddDays(10).ToUnixTimeMilliseconds());
             return true;
         }
         public async void PublishVideo(YoutubeNotification notification)
@@ -62,13 +74,13 @@ namespace Hookio.Youtube
                 _discordClientManager.SendWebhookAsync(ev.Message, subscription.WebhookUrl, notification.VideoId);
             }
             // add the video ID to the sorted set to be deleted in 12h
-            await _database.SortedSetAddAsync(YT_SENT_VIDEOS, notification.VideoId, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
+            await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, notification.VideoId, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
         }
 
         public async void UpdateVideo(YoutubeNotification notification)
         {
             // get all messages that were published
-            var allSentMessages = await _database.SetMembersAsync($"{YT_MSGS_SENT}-{notification.VideoId}");
+            var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{notification.VideoId}");
             foreach (var messageSent in allSentMessages)
             {
                 var subscriptionId = messageSent.ToString().Split('-').GetValue(0);
@@ -105,6 +117,28 @@ namespace Hookio.Youtube
             return item.ElementExtensions.Single(x => x.OuterName == outerName).GetObject<XElement>().Value;
         }
 
+        public string GetYoutubeChannelId(string url)
+        {
+            // Define the regex pattern
+            string pattern = @"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})";
+
+            // Create regex object
+            Regex regex = new Regex(pattern);
+
+            // Match the URL
+            Match match = regex.Match(url);
+
+            // Extract the channel ID
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null; // Return null if no match found
+            }
+        }
+
         /// <summary>
         /// Resubscribe to subscriptions that expired, subscription expire after 10d
         /// </summary>
@@ -115,11 +149,11 @@ namespace Hookio.Youtube
                 while (true)
                 {
                     await Task.Delay(3600000);
-                    var results = await _database.SortedSetRangeByScoreAsync(YT_SUBS_EXPIRED, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                    var results = await _redisDatabase.SortedSetRangeByScoreAsync(YT_SUBS_EXPIRED, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     foreach (var result in results)
                     {
                         var channelId = result.ToString();
-                        await _database.SortedSetRemoveAsync(YT_SUBS_EXPIRED, channelId);
+                        await _redisDatabase.SortedSetRemoveAsync(YT_SUBS_EXPIRED, channelId);
                         await Subscribe(channelId);
                         // wait 10s before trying to resub to not spam the hub and me
                         await Task.Delay(10000);
@@ -129,7 +163,7 @@ namespace Hookio.Youtube
         }
 
         /// <summary>
-        /// Delete all 
+        /// Delete all cached messages and sent videos that were cached more than 12h ago
         /// </summary>
         private void CleanupTask()
         {
@@ -138,13 +172,13 @@ namespace Hookio.Youtube
                 while (true)
                 {
                     await Task.Delay(3600000);
-                    var expiredSets = await _database.SortedSetRangeByScoreAsync(YT_SENT_VIDEOS, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                    var expiredSets = await _redisDatabase.SortedSetRangeByScoreAsync(YT_SENT_VIDEOS, 0, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     foreach (var expiredSet in expiredSets)
                     {
                         // delete the list storing the `subscriptionId-messageId` pairs for editing
-                        await _database.KeyDeleteAsync($"{YT_MSGS_SENT}-{expiredSet}");
+                        await _redisDatabase.KeyDeleteAsync($"{YT_MSGS_SENT}-{expiredSet}");
                         // remove the videoId that expired (12h passed)
-                        await _database.SortedSetRemoveAsync(YT_SENT_VIDEOS, expiredSet.ToString());
+                        await _redisDatabase.SortedSetRemoveAsync(YT_SENT_VIDEOS, expiredSet.ToString());
                     }
                 }
             });

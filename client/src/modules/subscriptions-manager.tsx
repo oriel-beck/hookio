@@ -25,7 +25,7 @@ function InternalSubscriptionManager() {
 
     useEffect(() => {
         // TODO: handle 429 from the API, just in case, generally it should not happen
-        if ('error' in data) return navigate(`/servers/${params['serverId']}`, { replace: true });
+        if ('message' in data) return navigate(`/servers/${params['serverId']}`, { replace: true });
         if ('status' in data && (data as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true });
     })
 
