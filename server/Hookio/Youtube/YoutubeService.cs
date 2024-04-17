@@ -23,7 +23,7 @@ namespace Hookio.Youtube
     /// Alongside the video being saved, messages will be sent, then saved as `dbMessageId-messageId` in a set YT_MSGS_SENT-{videoId}, 
     /// when a video is sent, the message sent is saved alongside the ID of the db message, when a video is edited, the db message for the update event is fetched and the message is updated.
     /// </summary>
-    public class YoutubeService : IYoutubeService
+    public partial class YoutubeService : IYoutubeService
     {
         private readonly string? IDENTIFIER = Environment.GetEnvironmentVariable("YT_IDENTIFIER");
         const string YT_CALLBACK_URL = "https://hookio.gg/api/youtube/callback";
@@ -33,6 +33,8 @@ namespace Hookio.Youtube
         const string YT_MSGS_SENT = "youtube_messages_sent";
         // Set of videoId : score (timestamp)
         const string YT_SENT_VIDEOS = "youtube_videos_sent";
+        // Define the regex pattern
+        const string pattern = @"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})";
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
         private readonly IDataManager _dataManager;
@@ -117,16 +119,10 @@ namespace Hookio.Youtube
             return item.ElementExtensions.Single(x => x.OuterName == outerName).GetObject<XElement>().Value;
         }
 
-        public string GetYoutubeChannelId(string url)
+        public string? GetYoutubeChannelId(string url)
         {
-            // Define the regex pattern
-            string pattern = @"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})";
-
-            // Create regex object
-            Regex regex = new Regex(pattern);
-
             // Match the URL
-            Match match = regex.Match(url);
+            Match match = YoutubeChannelRegex().Match(url);
 
             // Extract the channel ID
             if (match.Success)
@@ -183,5 +179,8 @@ namespace Hookio.Youtube
                 }
             });
         }
+
+        [GeneratedRegex(pattern)]
+        private static partial Regex YoutubeChannelRegex();
     }
 }
