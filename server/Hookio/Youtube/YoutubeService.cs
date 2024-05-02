@@ -36,13 +36,11 @@ namespace Hookio.Youtube
         const int ONE_HOUR_MS = 3600000;
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
-        private readonly IDataManager _dataManager;
         private readonly IDiscordClientManager _discordClientManager;
 
-        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDataManager dataManager, IDiscordClientManager discordClientManager) 
+        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager discordClientManager) 
         {
             _redisDatabase = connectionMultiplexer.GetDatabase();
-            _dataManager = dataManager;
             _discordClientManager = discordClientManager;
             ResubTask();
             CleanupTask();
@@ -64,7 +62,7 @@ namespace Hookio.Youtube
             await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddDays(10).ToUnixTimeMilliseconds());
             return true;
         }
-        public async void PublishVideo(YoutubeNotification notification)
+        public async void PublishVideo(YoutubeNotification notification, IDataManager _dataManager)
         {
             // get all subscriptions for this channel
             var subscriptions = await _dataManager.GetSubscriptions(notification);
@@ -78,7 +76,7 @@ namespace Hookio.Youtube
             await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, notification.VideoId, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
         }
 
-        public async void UpdateVideo(YoutubeNotification notification)
+        public async void UpdateVideo(YoutubeNotification notification, IDataManager _dataManager)
         {
             // get all messages that were published
             var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{notification.VideoId}");
@@ -179,7 +177,7 @@ namespace Hookio.Youtube
             });
         }
 
-        [GeneratedRegex(@"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]{22})")]
+        [GeneratedRegex(@"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]+)")]
         private static partial Regex YoutubeChannelRegex();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Hookio.Youtube.Contracts;
+﻿using Hookio.Database.Interfaces;
+using Hookio.Youtube.Contracts;
 
 namespace Hookio.Youtube.Interfaces
 {
@@ -7,8 +8,8 @@ namespace Hookio.Youtube.Interfaces
         public Task<bool?> Subscribe(string channelId, bool subscribe = true);
         public bool VerifyToken(string verifyToken);
         public YoutubeNotification ConvertAtomToSyndication(Stream stream);
-        public void PublishVideo(YoutubeNotification notification);
-        public void UpdateVideo(YoutubeNotification notification);
+        public void PublishVideo(YoutubeNotification notification, IDataManager dataManager);
+        public void UpdateVideo(YoutubeNotification notification, IDataManager dataManager);
         public string? GetYoutubeChannelId(string url);
     }
 }
