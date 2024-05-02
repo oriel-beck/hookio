@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Hookio.Contracts
+namespace Hookio.Discord.Contracts
 {
     public class OAuth2ExchangeResponse
     {

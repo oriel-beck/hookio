@@ -1,5 +1,4 @@
-﻿using Discord;
-using Discord.Rest;
+﻿using Discord.Rest;
 using Discord.Webhook;
 
 namespace Hookio.Discord.Interfaces

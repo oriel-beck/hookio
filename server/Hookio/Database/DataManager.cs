@@ -3,10 +3,11 @@ using Discord.Rest;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
+using Hookio.Discord;
+using Hookio.Discord.Contracts;
 using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
-using Hookio.Youtube;
 using Hookio.Youtube.Contracts;
 using Hookio.Youtube.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,49 +16,49 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security;
 using System.Security.Claims;
 using System.Text;
 
 namespace Hookio.Database
 {
-    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager clientManager, IYoutubeService youtubeService) : IDataManager
+    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IYoutubeService youtubeService, DiscordRequestManager discordRequestManager) : IDataManager
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
-        private readonly HttpClient _http = new()
-        {
-            BaseAddress = new Uri("https://discord.com")
-        };
-
+        
         #region users
-        public async Task<IEnumerable<RestUserGuild>> GetUserServers(DiscordRestClient client)
-        {
-            var servers = await client.GetGuildSummariesAsync().FlattenAsync();
-            return servers;
-        }
+        public async Task<IEnumerable<DiscordPartialGuild>?> GetUserGuilds(User user) =>
+            await discordRequestManager.GetDiscordUserGuilds(user.AccessToken);
 
         public async Task<CurrentUserResponse?> GetUser(ulong userId)
         {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            if (dbUser == null) return null;
+
             var accessToken = await GetAccessToken(userId);
-            var client = await clientManager.GetBearerClientAsync(accessToken!);
-            var result = await ToContract(client);
-            client.Dispose();
-            return result;
+            if (accessToken == null) return null;
+
+            var discordUser = await discordRequestManager.GetDiscordUser(accessToken);
+            if (discordUser == null) return null;
+
+            return await ToContract(dbUser, discordUser);
         }
 
-        public async Task<User?> CreateUser(DiscordRestClient client, OAuth2ExchangeResponse token)
+        public async Task<User> CreateUser(DiscordSelfUser user, OAuth2ExchangeResponse token)
         {
             var ctx = contextFactory.CreateDbContext();
-            var currentUser = ctx.Users.SingleOrDefault(u => u.Id == client.CurrentUser.Id);
+            var currentUser = ctx.Users.SingleOrDefault(u => u.Id == user.Id);
             if (currentUser == null)
             {
                 var newUser = new User
                 {
                     AccessToken = token.AccessToken,
                     ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
-                    Id = client.CurrentUser.Id,
+                    Id = user.Id,
                     RefreshToken = token.RefreshToken,
-                    Email = client.CurrentUser.Email,
+                    Email = user.Email,
                 };
                 await ctx.Users.AddAsync(newUser);
                 return newUser;
@@ -77,40 +78,17 @@ namespace Hookio.Database
             var context = await contextFactory.CreateDbContextAsync();
             try
             {
-                var discordResponse = await _http.PostAsync($"/api/v10/oauth2/token",
-                new FormUrlEncodedContent(new Dictionary<string, string?>()
-                {
-                    { "code", code },
-                    { "redirect_uri", Environment.GetEnvironmentVariable("DISCORD_REDIRECT_URI") },
-                    { "grant_type", "authorization_code" },
-                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
-                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
-                    { "scopes", "identify guilds email" }
-                }
-                ));
-                var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
-                if (result == null)
-                {
-                    logger.LogInformation("[{FunctionName}]: Failed to code exchange with code '{Scopes}'", nameof(Authenticate), code);
-                    return null;
-                }
+                var result = await discordRequestManager.ExchangeOAuth2Code(code);
+                if (result == null) return null;
 
-                if (!result.Scope.Contains("email") || !result.Scope.Contains("identify") || !result.Scope.Contains("guilds"))
-                {
-                    logger.LogInformation("[{FunctionName}]: Did not get all required scopes, cancelled login, got scopes '{Scopes}'", nameof(Authenticate), result.Scope);
-                    return null;
-                }
 
-                var client = new DiscordRestClient();
-                await client.LoginAsync(TokenType.Bearer, result.AccessToken);
+                var discordUser = await discordRequestManager.GetDiscordUser(result.AccessToken);
+                if (discordUser == null) return null;
 
-                var user = client.CurrentUser;
-                user ??= await client.GetCurrentUserAsync();
+                var dbUser = await CreateUser(discordUser, result);
+                var currentUser = await ToContract(dbUser, discordUser);
 
-                await CreateUser(client, result);
-                var currentUser = await GetUser(user.Id);
-
-                CreateTokenAndSetCookie(httpContext, user, currentUser?.Guilds.Select(g => g.Id));
+                CreateTokenAndSetCookie(httpContext, discordUser, currentUser?.Guilds.Select(g => g.Id));
 
                 return currentUser;
             }
@@ -125,44 +103,37 @@ namespace Hookio.Database
         {
             var ctx = contextFactory.CreateDbContext();
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == userId);
-            if (currentUser is null) return null;
-            if (currentUser.ExpireAt < DateTimeOffset.UtcNow)
-            {
-                // generate a new access token and update the db
-                var discordResponse = await _http.PostAsync($"/api/v10/oauth2/token",
-                new FormUrlEncodedContent(new Dictionary<string, string?>()
-                {
-                    { "grant_type", "refresh_token" },
-                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
-                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
-                    { "refresh_token", currentUser.RefreshToken }
-                }
-                ));
-                var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
-                currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
-                currentUser.AccessToken = result.AccessToken;
-                currentUser.RefreshToken = result.RefreshToken;
-                await ctx.SaveChangesAsync();
-                return result.AccessToken;
-            }
-            else
-            {
-                return currentUser.AccessToken;
-            }
+            if (currentUser == null) return null;
+            if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return currentUser.AccessToken;
+            // generate a new access token and update the db
+            var result = await discordRequestManager.RefreshOAuth2(currentUser.RefreshToken);
+            currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
+            currentUser.AccessToken = result.AccessToken;
+            currentUser.RefreshToken = result.RefreshToken;
+            await ctx.SaveChangesAsync();
+            return result.AccessToken;
         }
 
         public async Task RefreshUserAuthentication(TokenValidatedContext context, SecurityToken token)
         {
             var parsedToken = _tokenHandler.ReadJwtToken(token.UnsafeToString());
+            var ctx = await contextFactory.CreateDbContextAsync();
             var claim = parsedToken.Claims.First(claim => claim.Type == "id").Value;
             _ = ulong.TryParse(claim, out var userId);
             var accessToken = await GetAccessToken(userId);
-            var client = await clientManager.GetBearerClientAsync(accessToken!);
-            var userContract = await ToContract(client);
-            CreateTokenAndSetCookie(context, await client.GetCurrentUserAsync(), userContract!.Guilds.Select(g => g.Id));
+            if (accessToken == null) return;
+
+            var discordUser = await discordRequestManager.GetDiscordUser(accessToken);
+            if (discordUser == null) return;
+
+            var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            if (dbUser == null) return;
+
+            var userContract = await ToContract(dbUser, discordUser);
+            CreateTokenAndSetCookie(context, discordUser, userContract!.Guilds.Select(g => g.Id));
         }
 
-        public void CreateTokenAndSetCookie(TokenValidatedContext context, RestSelfUser user, IEnumerable<string>? guildIds)
+        public void CreateTokenAndSetCookie(TokenValidatedContext context, DiscordSelfUser user, IEnumerable<string>? guildIds)
         {
             var claims = new Claim[]
             {
@@ -189,7 +160,7 @@ namespace Hookio.Database
             });
         }
 
-        public void CreateTokenAndSetCookie(HttpContext context, RestSelfUser user, IEnumerable<string>? guildIds)
+        public void CreateTokenAndSetCookie(HttpContext context, DiscordSelfUser user, IEnumerable<string>? guildIds)
         {
             var claims = new Claim[]
             {
@@ -642,25 +613,25 @@ namespace Hookio.Database
         #endregion
 
         #region contracts
-        private async Task<CurrentUserResponse?> ToContract(DiscordRestClient client)
+        private async Task<CurrentUserResponse> ToContract(User dbUser, DiscordSelfUser discordUser)
         {
-            var user = client.CurrentUser;
-            user ??= await client.GetCurrentUserAsync();
-            if (user == null) return null;
+            var res = await GetUserGuilds(dbUser);
+            var guilds = res!.Where(guild => (guild!.Permissions & 0x0000000000000020) != 0).Select(guild => new GuildResponse()
+            {
+                Id = guild!.Id.ToString(),
+                Name = guild.Name,
+                Icon = guild.IconUrl,
+            });
+
             var currentUser = new CurrentUserResponse()
             {
-                Discriminator = user.Discriminator,
-                Id = user.Id,
-                Username = user.GlobalName is null ? user.Username : user.GlobalName,
+                Discriminator = discordUser.Discriminator,
+                Id = discordUser.Id,
+                Username = discordUser.GlobalName is null ? discordUser.Username : discordUser.GlobalName,
                 // TODO: implement premium in the DB, patreon tiers = guild amounts, the Guild itself will contain the unlocked features for each tier
                 Premium = 0,
-                Avatar = user.GetAvatarUrl(),
-                Guilds = (await GetUserServers(client)).Where(guild => guild.Permissions.ManageGuild).Select(guild => new GuildResponse()
-                {
-                    Id = guild.Id.ToString(),
-                    Name = guild.Name,
-                    Icon = guild.IconUrl,
-                }).ToList()
+                Avatar = discordUser.GetAvatarUrl(),
+                Guilds = guilds
             };
             return currentUser;
         }
