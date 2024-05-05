@@ -10,33 +10,34 @@ namespace Hookio.Utils
         public string? Parse(string? template)
         {
             if (template == null) return null;
-            string result = template;
 
-            // Find all matches of placeholders in the template
-            MatchCollection matches = TemplateString().Matches(template);
-
-            // Iterate over matches and replace placeholders
-            foreach (Match match in matches)
-            {
-                string key = match.Groups[1].Value;
-                string property = match.Groups[2].Value;
-
-                if (data.TryGetValue(key, out var innerData))
-                {
-                    if (innerData.TryGetValue(property, out var value))
-                    {
-                        result = result.Replace(match.Value, value);
-                    }
-                    else if (property == "" && innerData.TryGetValue("default", out var defaultValue))
-                    {
-                        result = result.Replace(match.Value, defaultValue);
-                    }
-                }
-            }
+            // Use the provided regular expression to find placeholders
+            string result = TemplateRegex().Replace(template, ReplacePlaceholder);
 
             return result;
         }
-        
+
+        private string ReplacePlaceholder(Match match)
+        {
+            string key = match.Groups[1].Value;
+            string property = match.Groups[2].Value;
+
+            if (data.TryGetValue(key, out var innerData))
+            {
+                if (innerData.TryGetValue(property, out var value))
+                {
+                    return value;
+                }
+                else if (property == "" && innerData.TryGetValue("default", out var defaultValue))
+                {
+                    return defaultValue;
+                }
+            }
+
+            // Return the original placeholder if no replacement found
+            return match.Value;
+        }
+
         public static TemplateHandler InitiateYoutubeTemplateHandler(Video video, Channel channel)
         {
             return new TemplateHandler(new Dictionary<string, Dictionary<string, string>>
@@ -71,7 +72,6 @@ namespace Hookio.Utils
         }
 
         [GeneratedRegex(@"\{([A-Za-z]+)(?:\(([A-Za-z]+)\))?\}")]
-        private static partial Regex TemplateString();
+        private static partial Regex TemplateRegex();
     }
-
 }
