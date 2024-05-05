@@ -5,7 +5,6 @@ using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
 using Hookio.Discord.Contracts;
-using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.Youtube.Contracts;
@@ -58,7 +57,7 @@ namespace Hookio.Database
                     ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn),
                     Id = user.Id,
                     RefreshToken = token.RefreshToken,
-                    Email = user.Email,
+                    Email = user.Email!,
                 };
                 await ctx.Users.AddAsync(newUser);
                 return newUser;

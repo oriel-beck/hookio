@@ -1,8 +1,5 @@
-﻿using Discord.Rest;
-using Hookio.Database.Entities;
-using Hookio.Database.Interfaces;
+﻿using Hookio.Database.Interfaces;
 using Hookio.Discord;
-using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Youtube.Contracts;
 using Hookio.Youtube.Interfaces;
@@ -39,13 +36,11 @@ namespace Hookio.Youtube
         const int ONE_HOUR_MS = 3600000;
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
-        private readonly IDiscordClientManager _discordClientManager;
         private readonly DiscordRequestManager _discordRequestManager;
 
-        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager discordClientManager, DiscordRequestManager discordRequestManager)
+        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, DiscordRequestManager discordRequestManager)
         {
             _redisDatabase = connectionMultiplexer.GetDatabase();
-            _discordClientManager = discordClientManager;
             _discordRequestManager = discordRequestManager;
             ResubTask();
             CleanupTask();
@@ -106,7 +101,8 @@ namespace Hookio.Youtube
                 var subscriptionEvent = subscription.Events.FirstOrDefault();
                 if (subscriptionEvent == null) continue;
 
-                _discordClientManager.EditWebhookAsync(subscriptionEvent.Message, discordMessageId, subscription.WebhookUrl);
+                // TODO: await this, if it throws an error (only on 400/404) then disable the subscription
+                _discordRequestManager.UpdateWebhookMessage(subscriptionEvent.Message, discordMessageId, subscription.WebhookUrl);
             }
         }
 

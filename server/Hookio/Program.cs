@@ -3,7 +3,6 @@ using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
-using Hookio.Discord.Interfaces;
 using Hookio.Extensions;
 using Hookio.Youtube;
 using Hookio.Youtube.Interfaces;
@@ -14,37 +13,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Polly;
 using StackExchange.Redis;
-using System.Threading.RateLimiting;
-using Polly.Retry;
 
 var root = Directory.GetCurrentDirectory();
 DotEnv.Load(Path.Combine(root, ".env"));
-
-//var retryOptions = new RetryStrategyOptions
-//{
-//    MaxRetryAttempts = 1,
-//    DelayGenerator = static args =>
-//    {
-//        if (args.Outcome.Result is HttpResponseMessage responseMessage &&
-//            (int)responseMessage.StatusCode == 429)
-//        {
-//            var retryAt = long.TryParse(responseMessage.Headers.GetValues("x-ratelimit-reset").FirstOrDefault(), out var ms);
-//            if (!retryAt) return new ValueTask<TimeSpan?>((TimeSpan?)null);
-//            return new ValueTask<TimeSpan?>(TimeSpan.FromMilliseconds(ms));
-//        }
-
-//        // Returning null means the retry strategy will use its internal delay for this attempt.
-//        return new ValueTask<TimeSpan?>((TimeSpan?)null);
-//    }
-//};
-
-//var ratelimitPipeline = new ResiliencePipelineBuilder()
-//    .AddRateLimiter(new SlidingWindowRateLimiter(
-//        new SlidingWindowRateLimiterOptions
-//        {
-//            PermitLimit = 50,
-//            Window = TimeSpan.FromSeconds(1)
-//        })).AddRetry(retryOptions).Build();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,16 +23,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
 builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("DRAGONFLY_CONNECTION_STRING")!));
-builder.Services.AddSingleton<IDiscordClientManager, DiscordClientManager>();
 builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
 builder.Services.AddSingleton<TaskQueue>();
 builder.Services.AddSingleton<DiscordRequestManager>();
-//builder.Services.AddHttpClient("discord-api").ConfigureHttpClient(
-//    (serviceProvider, httpClient) =>
-//    {
-
-//    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

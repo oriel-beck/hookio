@@ -5,18 +5,14 @@ using System.Globalization;
 
 namespace Hookio.Discord
 {
-    public class DiscordRequestManager(ILogger<DiscordRequestManager> logger, TaskQueue _queue, ConnectionMultiplexer redis)
+    public class DiscordRequestManager(ILogger<DiscordRequestManager> logger, TaskQueue _queue, ConnectionMultiplexer redis, IHttpClientFactory _httpClientFactory)
     {
         private readonly IDatabase _redisDatabase = redis.GetDatabase();
-        private readonly HttpClient _httpClient = new()
-        {
-            BaseAddress = new Uri("https://discord.com")
-        };
 
         public async Task<OAuth2ExchangeResponse?> ExchangeOAuth2Code(string code)
         {
 
-            var discordResponse = await _queue.Enqueue(0, () => _httpClient.PostAsync($"/api/v10/oauth2/token",
+            var discordResponse = await _queue.Enqueue(0, () => _httpClientFactory.CreateClient().PostAsync($"https://discord.com/api/v10/oauth2/token",
                 new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "code", code },
@@ -46,7 +42,7 @@ namespace Hookio.Discord
         public async Task<OAuth2ExchangeResponse?> RefreshOAuth2(string refreshToken)
         {
 
-            var discordResponse = await _httpClient.PostAsync($"/api/v10/oauth2/token",
+            var discordResponse = await _httpClientFactory.CreateClient().PostAsync($"https://discord.com/api/v10/oauth2/token",
             new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "grant_type", "refresh_token" },
@@ -69,7 +65,7 @@ namespace Hookio.Discord
                 };
                 httpRequestMessage.Headers.Add("Authorization", $"Bearer {accessToken}");
                 httpRequestMessage.RequestUri = new Uri("https://discord.com/api/v10/users/@me");
-                return _httpClient.SendAsync(httpRequestMessage);
+                return _httpClientFactory.CreateClient().SendAsync(httpRequestMessage);
             });
 
             var res = await discordResponse.Content.ReadFromJsonAsync<DiscordSelfUser>();
@@ -86,7 +82,7 @@ namespace Hookio.Discord
                 };
                 httpRequestMessage.Headers.Add("Authorization", $"Bearer {accessToken}");
                 httpRequestMessage.RequestUri = new Uri("https://discord.com/api/v10/users/@me/guilds");
-                return _httpClient.SendAsync(httpRequestMessage);
+                return _httpClientFactory.CreateClient().SendAsync(httpRequestMessage);
             });
 
             var res = await discordResponse.Content.ReadFromJsonAsync<IEnumerable<DiscordPartialGuild>>();
@@ -98,7 +94,7 @@ namespace Hookio.Discord
             var embeds = ConvertEntityEmbedToDiscordEmbed(message.Embeds);
             try
             {
-                var response = await _queue.Enqueue(3, () => _httpClient.PostAsJsonAsync($"{webhookUrl}?wait=true", embeds));
+                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PostAsJsonAsync($"{webhookUrl}?wait=true", embeds));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)
@@ -113,7 +109,7 @@ namespace Hookio.Discord
             var embeds = ConvertEntityEmbedToDiscordEmbed(message.Embeds);
             try
             {
-                var response = await _queue.Enqueue(3, () => _httpClient.PatchAsJsonAsync(webhookUrl, embeds));
+                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PatchAsJsonAsync(webhookUrl, embeds));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)
