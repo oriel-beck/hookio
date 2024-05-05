@@ -28,7 +28,7 @@ namespace Hookio.Database.Interfaces
         public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request);
         public Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request);
         public Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false);
-        public Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification);
+        public Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification, EventType eventType);
         #endregion
     }
 }

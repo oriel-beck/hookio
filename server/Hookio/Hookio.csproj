@@ -39,4 +39,8 @@
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="8.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Discord\Interfaces\" />
+  </ItemGroup>
 </Project>

@@ -3,13 +3,14 @@ using Newtonsoft.Json;
 
 namespace Hookio.Discord.Contracts
 {
-    public class DiscordPartialGuild
+    [method: JsonConstructor]
+    public class DiscordPartialGuild(ulong id, string? name, string? icon, bool owner, ulong permissions)
     {
-        public ulong Id { get; set; }
-        public string? Name { get; set; }
-        public string? Icon { get; set; }
-        public bool Owner { get; set; }
-        public ulong Permissions { get; set; }
+        public ulong Id { get; } = id;
+        public string? Name { get; } = name;
+        public string? Icon { get; } = icon;
+        public bool Owner { get; } = owner;
+        public ulong Permissions { get; } = permissions;
         public string? IconUrl
         {
             get
@@ -17,16 +18,6 @@ namespace Hookio.Discord.Contracts
                 if (string.IsNullOrWhiteSpace(Icon)) return null; // Return null if no icon is set
                 return $"https://cdn.discordapp.com/icons/{Id}/{Icon}.png";
             }
-        }
-
-        [JsonConstructor]
-        public DiscordPartialGuild(ulong id, string? name, string? icon, bool owner, ulong permissions)
-        {
-            Id = id;
-            Name = name;
-            Icon = icon;
-            Owner = owner;
-            Permissions = permissions;
         }
     }
 }

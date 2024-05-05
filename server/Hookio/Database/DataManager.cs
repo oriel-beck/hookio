@@ -598,11 +598,11 @@ namespace Hookio.Database
             };
         }
 
-        public async Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification)
+        public async Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification, EventType eventType)
         {
             var context = await contextFactory.CreateDbContextAsync();
             return await context.Subscriptions.Where(s => s.Url == $"https://youtube.com/channel/{notification.ChannelId}")
-                .Include(x => x.Events)
+                .Include(x => x.Events.Where(e => e.Type == eventType))
                 .ThenInclude(ev => ev.Message)
                 .ThenInclude(m => m.Embeds)
                 .ThenInclude(em => em.Fields)

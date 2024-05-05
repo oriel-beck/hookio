@@ -1,4 +1,7 @@
-﻿using Hookio.Database.Interfaces;
+﻿using Discord.Rest;
+using Hookio.Database.Entities;
+using Hookio.Database.Interfaces;
+using Hookio.Discord;
 using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Youtube.Contracts;
@@ -29,7 +32,7 @@ namespace Hookio.Youtube
         const string YT_CALLBACK_URL = "https://hookio.gg/api/youtube/callback";
         // Set of channelId : score (timestamp)
         const string YT_SUBS_EXPIRED = "youtube_subscriptions_expiration";
-        // Set of `{YT_SENT_VIDEOS}-videoId` : dbMessageId-messageId
+        // Set of `{YT_SENT_VIDEOS}-videoId` : dbMessageId-DiscordMessageId
         const string YT_MSGS_SENT = "youtube_messages_sent";
         // Set of videoId : score (timestamp)
         const string YT_SENT_VIDEOS = "youtube_videos_sent";
@@ -37,11 +40,13 @@ namespace Hookio.Youtube
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
         private readonly IDiscordClientManager _discordClientManager;
+        private readonly DiscordRequestManager _discordRequestManager;
 
-        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager discordClientManager) 
+        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDiscordClientManager discordClientManager, DiscordRequestManager discordRequestManager)
         {
             _redisDatabase = connectionMultiplexer.GetDatabase();
             _discordClientManager = discordClientManager;
+            _discordRequestManager = discordRequestManager;
             ResubTask();
             CleanupTask();
         }
@@ -65,12 +70,16 @@ namespace Hookio.Youtube
         public async void PublishVideo(YoutubeNotification notification, IDataManager _dataManager)
         {
             // get all subscriptions for this channel
-            var subscriptions = await _dataManager.GetSubscriptions(notification);
+            var subscriptions = await _dataManager.GetSubscriptions(notification, EventType.YoutubeVideoUploaded);
             foreach (var subscription in subscriptions)
             {
-                var ev = subscription.Events.Find(ev => ev.Type == EventType.YoutubeVideoUploaded);
+                // first event will always be the correct one due to the restriction of EventType above
+                var ev = subscription.Events.FirstOrDefault();
                 if (ev == null) continue;
-                _discordClientManager.SendWebhookAsync(ev.Message, subscription.WebhookUrl, notification.VideoId);
+                var res = await _discordRequestManager.SendWebhookMessage(ev.Message, subscription.WebhookUrl);
+                if (res == null) continue;
+                // Create a set for this videoId in case of editing // TODO: res should be a class of WebhookResponse
+                await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{notification.VideoId}", $"{ev.Message.Id}-{res.Id}");
             }
             // add the video ID to the sorted set to be deleted in 12h
             await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, notification.VideoId, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
@@ -80,15 +89,24 @@ namespace Hookio.Youtube
         {
             // get all messages that were published
             var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{notification.VideoId}");
+            var subscriptions = await _dataManager.GetSubscriptions(notification, EventType.YoutubeVideoEdited);
+            var subscriptionsDictionary = subscriptions.ToDictionary(k => k.Events.FirstOrDefault()!.Message.Id, k => k);
+
             foreach (var messageSent in allSentMessages)
             {
-                var subscriptionId = messageSent.ToString().Split('-').GetValue(0);
-                var messageId = messageSent.ToString().Split('-').GetValue(1);
-                var subscription = await _dataManager.GetSubscription((int)subscriptionId!);
+                var dbMessageIdString = int.TryParse(messageSent.ToString().Split('-').ElementAt(0), out var dbMessageId);
+                if (!dbMessageIdString) continue;
+
+                var discordMessageIdString = ulong.TryParse(messageSent.ToString().Split('-').ElementAt(1), out var discordMessageId);
+                if (!discordMessageIdString) continue;
+
+                var subscription = subscriptionsDictionary[dbMessageId];
                 if (subscription == null) continue;
-                var ev = subscription.Events.Find(ev => ev.Type == EventType.YoutubeVideoEdited);
-                if (ev == null) continue;
-                _discordClientManager.EditWebhookAsync(ev.Message, (ulong)messageId!, subscription.WebhookUrl);
+
+                var subscriptionEvent = subscription.Events.FirstOrDefault();
+                if (subscriptionEvent == null) continue;
+
+                _discordClientManager.EditWebhookAsync(subscriptionEvent.Message, discordMessageId, subscription.WebhookUrl);
             }
         }
 

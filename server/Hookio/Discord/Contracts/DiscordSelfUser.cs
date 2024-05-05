@@ -3,24 +3,15 @@ using Newtonsoft.Json;
 
 namespace Hookio.Discord.Contracts
 {
-    public class DiscordSelfUser
+    [method: JsonConstructor]
+    public class DiscordSelfUser(ulong id, string discriminator, string? username, string? avatar, string? globalName, string? email)
     {
-        public ulong Id { get; set; }
-        public string Discriminator { get; set; } = "0";
-        public string? Username { get; set; }
-        public string? Avatar { get; set; }
-        public string? GlobalName { get; set; }
-        public string? Email { get; set; }
-        [JsonConstructor]
-        public DiscordSelfUser(ulong id, string discriminator, string? username, string? avatar, string? globalName, string? email)
-        {
-            Id = id;
-            Discriminator = discriminator;
-            Username = username;
-            Avatar = avatar;
-            GlobalName = globalName;
-            Email = email;
-        }
+        public ulong Id { get; } = id;
+        public string Discriminator { get; } = discriminator;
+        public string? Username { get; } = username;
+        public string? Avatar { get; } = avatar;
+        public string? GlobalName { get; } = globalName;
+        public string? Email { get; } = email;
 
         public string GetAvatarUrl()
         {
