@@ -6,6 +6,5 @@ namespace Hookio.Discord.Contracts
     public class DiscordPartialMessage(ulong id)
     {
         public ulong Id { get; } = id;
-        
     }
 }

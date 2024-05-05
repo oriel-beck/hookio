@@ -1,9 +1,8 @@
-﻿using Discord.Rest;
+﻿using Google.Apis.YouTube.v3.Data;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Discord.Contracts;
 using Hookio.Enunms;
-using Hookio.Youtube.Contracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,11 +23,11 @@ namespace Hookio.Database.Interfaces
 
         #region subscriptions
         public Task<SubscriptionResponse?> GetSubscription(ulong guildId, int id);
-        public Task<Subscription?> GetSubscription(int id);
+        public Task<Entities.Subscription?> GetSubscription(int id);
         public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request);
         public Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request);
         public Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false);
-        public Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification, EventType eventType);
+        public Task<List<Entities.Subscription>> GetSubscriptions(Video video, EventType eventType);
         #endregion
     }
 }

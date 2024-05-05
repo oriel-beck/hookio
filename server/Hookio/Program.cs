@@ -4,14 +4,13 @@ using Hookio.Database;
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
 using Hookio.Extensions;
-using Hookio.Youtube;
-using Hookio.Youtube.Interfaces;
+using Hookio.Utils;
+using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Polly;
 using StackExchange.Redis;
 
 var root = Directory.GetCurrentDirectory();
@@ -25,6 +24,7 @@ builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(E
 builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("DRAGONFLY_CONNECTION_STRING")!));
 builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
+// TODO: interfaces
 builder.Services.AddSingleton<TaskQueue>();
 builder.Services.AddSingleton<DiscordRequestManager>();
 

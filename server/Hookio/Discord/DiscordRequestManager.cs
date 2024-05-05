@@ -89,12 +89,11 @@ namespace Hookio.Discord
             return res;
         }
 
-        public async Task<DiscordPartialMessage?> SendWebhookMessage(Database.Entities.Message message, string webhookUrl)
+        public async Task<DiscordPartialMessage?> SendWebhookMessage(DiscordMessageCreatePayload payload, string webhookUrl)
         {
-            var embeds = ConvertEntityEmbedToDiscordEmbed(message.Embeds);
             try
             {
-                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PostAsJsonAsync($"{webhookUrl}?wait=true", embeds));
+                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PostAsJsonAsync($"{webhookUrl}?wait=true", payload));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)
@@ -104,12 +103,11 @@ namespace Hookio.Discord
             }
         }
 
-        public async Task<DiscordPartialMessage?> UpdateWebhookMessage(Database.Entities.Message message, ulong messageId, string webhookUrl)
+        public async Task<DiscordPartialMessage?> UpdateWebhookMessage(DiscordMessageCreatePayload payload, ulong messageId, string webhookUrl)
         {
-            var embeds = ConvertEntityEmbedToDiscordEmbed(message.Embeds);
             try
             {
-                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PatchAsJsonAsync(webhookUrl, embeds));
+                var response = await _queue.Enqueue(3, () => _httpClientFactory.CreateClient().PatchAsJsonAsync($"{webhookUrl}/messages/{messageId}", payload));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)
@@ -118,32 +116,6 @@ namespace Hookio.Discord
                 return null;
             }
         }
-        private static IEnumerable<Embed> ConvertEntityEmbedToDiscordEmbed(List<Database.Entities.Embed> embeds)
-        {
-            return embeds.Select((embed) =>
-            {
-                var embedBuilder = new EmbedBuilder()
-                    .WithTitle(embed.Title)
-                    .WithUrl(embed.TitleUrl)
-                    .WithDescription(embed.Description)
-                    .WithImageUrl(embed.Image)
-                    .WithThumbnailUrl(embed.Thumbnail)
-                    .WithFooter(builder => builder.WithText(embed.Footer).WithIconUrl(embed.FooterIcon))
-                    .WithAuthor(builder => builder.WithName(embed.Author).WithUrl(embed.AuthorUrl).WithIconUrl(embed.AuthorIcon))
-                    .WithFields(ConvertEntityEmbedFieldToEmbedField(embed.Fields));
-                if (embed.AddTimestamp) embedBuilder.WithCurrentTimestamp();
-                if (embed.Color is not null)
-                {
-                    uint decValue = uint.Parse(embed.Color[1..], NumberStyles.HexNumber);
-                    embedBuilder.Color = new Color(decValue);
-                }
-                return embedBuilder.Build();
-            });
-        }
-
-        private static IEnumerable<EmbedFieldBuilder> ConvertEntityEmbedFieldToEmbedField(List<Database.Entities.EmbedField> embedFields)
-        {
-            return embedFields.Select((field) => new EmbedFieldBuilder().WithName(field.Name).WithValue(field.Value).WithIsInline(field.Inline));
-        }
+        
     }
 }

@@ -3,7 +3,7 @@ using Hookio.Database.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.ModelBindings;
-using Hookio.Youtube.Interfaces;
+using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;

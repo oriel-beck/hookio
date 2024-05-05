@@ -1,5 +1,4 @@
-﻿using Discord;
-using Discord.Rest;
+﻿using Google.Apis.YouTube.v3.Data;
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
@@ -7,15 +6,13 @@ using Hookio.Discord;
 using Hookio.Discord.Contracts;
 using Hookio.Enunms;
 using Hookio.Exceptions;
-using Hookio.Youtube.Contracts;
-using Hookio.Youtube.Interfaces;
+using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security;
 using System.Security.Claims;
 using System.Text;
 
@@ -25,7 +22,7 @@ namespace Hookio.Database
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
-        
+
         #region users
         public async Task<IEnumerable<DiscordPartialGuild>?> GetUserGuilds(User user) =>
             await discordRequestManager.GetDiscordUserGuilds(user.AccessToken);
@@ -217,7 +214,7 @@ namespace Hookio.Database
             };
         }
 
-        public async Task<Subscription?> GetSubscription(int id)
+        public async Task<Entities.Subscription?> GetSubscription(int id)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
 
@@ -257,7 +254,7 @@ namespace Hookio.Database
             int length = 0;
             try
             {
-                var subscription = new Subscription
+                var subscription = new Entities.Subscription
                 {
                     GuildId = guildId,
                     WebhookUrl = request.WebhookUrl,
@@ -366,6 +363,7 @@ namespace Hookio.Database
         public async Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request)
         {
             string? channelId = null;
+            string? unsubUrl = null;
             if (request.SubscriptionType == SubscriptionType.Youtube)
             {
                 channelId = youtubeService.GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
@@ -388,11 +386,7 @@ namespace Hookio.Database
 
                 if (subscription.Url != request.Url)
                 {
-                    // TODO: unsubscribe from old, subscribe to new
-                    if (subscription.SubscriptionType == SubscriptionType.Youtube)
-                    {
-                        await youtubeService.Subscribe(channelId!, false);
-                    }
+                    unsubUrl = subscription.Url;
                 }
 
                 if (!string.IsNullOrEmpty(request.WebhookUrl))
@@ -548,8 +542,11 @@ namespace Hookio.Database
 
                 if (request.SubscriptionType == SubscriptionType.Youtube)
                 {
+                    // sub to new
                     var success = await youtubeService.Subscribe(channelId!);
                     if (!(bool)success) throw new Exception("Failed to subscribe to the channel ID");
+                    // unsub from old
+                    await youtubeService.Subscribe(channelId!, false);
                 }
 
                 return new SubscriptionResponse
@@ -569,7 +566,7 @@ namespace Hookio.Database
         public async Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
-            IQueryable<Subscription> query = ctx.Subscriptions;
+            IQueryable<Entities.Subscription> query = ctx.Subscriptions;
             if (provider is not null)
             {
                 query = query.Where(subscription => (subscription.GuildId == guildId) && (subscription.SubscriptionType == provider));
@@ -597,10 +594,10 @@ namespace Hookio.Database
             };
         }
 
-        public async Task<List<Subscription>> GetSubscriptions(YoutubeNotification notification, EventType eventType)
+        public async Task<List<Entities.Subscription>> GetSubscriptions(Video video, EventType eventType)
         {
             var context = await contextFactory.CreateDbContextAsync();
-            return await context.Subscriptions.Where(s => s.Url == $"https://youtube.com/channel/{notification.ChannelId}")
+            return await context.Subscriptions.Where(s => s.Url == $"https://youtube.com/channel/{video.Snippet.ChannelId}")
                 .Include(x => x.Events.Where(e => e.Type == eventType))
                 .ThenInclude(ev => ev.Message)
                 .ThenInclude(m => m.Embeds)
@@ -635,7 +632,7 @@ namespace Hookio.Database
             return currentUser;
         }
 
-        private SubscriptionResponse ToContract(Subscription subscription)
+        private SubscriptionResponse ToContract(Entities.Subscription subscription)
         {
             return new SubscriptionResponse
             {

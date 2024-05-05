@@ -1,4 +1,4 @@
-﻿namespace Hookio.Youtube.Contracts
+﻿namespace Hookio.Utils.Contracts
 {
     public class YoutubeNotification
     {

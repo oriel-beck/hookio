@@ -1,8 +1,10 @@
-﻿using Hookio.Database.Interfaces;
+﻿using Google.Apis.YouTube.v3.Data;
+using Hookio.Database.Interfaces;
 using Hookio.Discord;
+using Hookio.Discord.Contracts;
 using Hookio.Enunms;
-using Hookio.Youtube.Contracts;
-using Hookio.Youtube.Interfaces;
+using Hookio.Utils.Contracts;
+using Hookio.Utils.Interfaces;
 using StackExchange.Redis;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
@@ -10,7 +12,7 @@ using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Hookio.Youtube
+namespace Hookio.Utils
 {
     /// <summary>
     /// This is how this works
@@ -62,29 +64,39 @@ namespace Hookio.Youtube
             await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddDays(10).ToUnixTimeMilliseconds());
             return true;
         }
-        public async void PublishVideo(YoutubeNotification notification, IDataManager _dataManager)
+        public async void PublishVideo(Video video, Channel channel, IDataManager _dataManager)
         {
             // get all subscriptions for this channel
-            var subscriptions = await _dataManager.GetSubscriptions(notification, EventType.YoutubeVideoUploaded);
+            var subscriptions = await _dataManager.GetSubscriptions(video, EventType.YoutubeVideoUploaded);
             foreach (var subscription in subscriptions)
             {
                 // first event will always be the correct one due to the restriction of EventType above
-                var ev = subscription.Events.FirstOrDefault();
-                if (ev == null) continue;
-                var res = await _discordRequestManager.SendWebhookMessage(ev.Message, subscription.WebhookUrl);
+                var subscriptionEvent = subscription.Events.FirstOrDefault();
+                if (subscriptionEvent == null) continue;
+
+                var templateHandler = TemplateHandler.InitiateYoutubeTemplateHandler(video, channel);
+
+                var payload = new DiscordMessageCreatePayload
+                {
+                    Content = templateHandler.Parse(subscriptionEvent.Message.Content),
+                    embeds = DiscordUtils.ConvertEntityEmbedToDiscordEmbed(subscriptionEvent.Message.Embeds, templateHandler)
+                };
+
+                var res = await _discordRequestManager.SendWebhookMessage(payload, subscription.WebhookUrl);
                 if (res == null) continue;
+
                 // Create a set for this videoId in case of editing // TODO: res should be a class of WebhookResponse
-                await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{notification.VideoId}", $"{ev.Message.Id}-{res.Id}");
+                await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{video.Id}", $"{subscriptionEvent.Message.Id}-{res.Id}");
             }
             // add the video ID to the sorted set to be deleted in 12h
-            await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, notification.VideoId, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
+            await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, video.Id, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
         }
 
-        public async void UpdateVideo(YoutubeNotification notification, IDataManager _dataManager)
+        public async void UpdateVideo(Video video, Channel channel, IDataManager _dataManager)
         {
             // get all messages that were published
-            var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{notification.VideoId}");
-            var subscriptions = await _dataManager.GetSubscriptions(notification, EventType.YoutubeVideoEdited);
+            var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{video.Id}");
+            var subscriptions = await _dataManager.GetSubscriptions(video, EventType.YoutubeVideoEdited);
             var subscriptionsDictionary = subscriptions.ToDictionary(k => k.Events.FirstOrDefault()!.Message.Id, k => k);
 
             foreach (var messageSent in allSentMessages)
@@ -101,8 +113,16 @@ namespace Hookio.Youtube
                 var subscriptionEvent = subscription.Events.FirstOrDefault();
                 if (subscriptionEvent == null) continue;
 
+                var templateHandler = TemplateHandler.InitiateYoutubeTemplateHandler(video, channel);
+
+                var payload = new DiscordMessageCreatePayload
+                {
+                    Content = templateHandler.Parse(subscriptionEvent.Message.Content),
+                    embeds = DiscordUtils.ConvertEntityEmbedToDiscordEmbed(subscriptionEvent.Message.Embeds, templateHandler)
+                };
+
                 // TODO: await this, if it throws an error (only on 400/404) then disable the subscription
-                _discordRequestManager.UpdateWebhookMessage(subscriptionEvent.Message, discordMessageId, subscription.WebhookUrl);
+                _discordRequestManager.UpdateWebhookMessage(payload, discordMessageId, subscription.WebhookUrl);
             }
         }
 

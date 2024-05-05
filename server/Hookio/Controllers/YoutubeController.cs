@@ -1,5 +1,8 @@
-﻿using Hookio.Database.Interfaces;
-using Hookio.Youtube.Interfaces;
+﻿using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
+using Google.Apis.YouTube.v3.Data;
+using Hookio.Database.Interfaces;
+using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -9,31 +12,56 @@ namespace Hookio.Controllers
     [ApiController]
     public class YoutubeController(ILogger<YoutubeController> logger, IYoutubeService youtubeService, IDataManager dataManager) : ControllerBase
     {
+        private readonly YouTubeService ytService = new(new BaseClientService.Initializer()
+        {
+            ApiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY"),
+            ApplicationName = "yt-announcements"
+        });
+
         [HttpGet("callback")]
         [HttpPost("callback")]
-        public ActionResult NotificationsCallback()
+        public async Task<ActionResult> NotificationsCallback()
         {
             var request = HttpContext.Request;
             var token = request.Query.TryGetValue("hub.verify_token", out var verifyToken);
             if (!token || !youtubeService.VerifyToken(verifyToken!))
             {
-                logger.LogInformation("Unathorized request from {Url} detected", request.Path);
                 return Unauthorized(new
                 {
                     Error = "Invalid verify_token"
                 });
             }
 
-            logger.LogInformation("Recieved {Method} notification from youtube", request.Method);
             var challenge = request.Query.TryGetValue("hub.challenge", out var challengeResponse);
             if (!challenge)
             {
-                logger.LogInformation("Handling notification");
                 var stream = request.Body;
                 var data = youtubeService.ConvertAtomToSyndication(stream);
-                
-                // TODO: get subscription and appropriate event, send the message or edit, cache the message ID to update it in case of video update (for limited time, 12h maybe?)
-                Console.WriteLine(data);
+                var videoListRequest = ytService.Videos.List("snippet, contentDetails");
+                videoListRequest.Id = data.VideoId;
+                var videoList = await videoListRequest.ExecuteAsync();
+                var video = videoList.Items.FirstOrDefault();
+
+                if (video != null)
+                {
+                    var channelRequest = ytService.Channels.List("snippet, statistics");
+                    channelRequest.Id = video.Snippet.ChannelId;
+                    var channelList = await channelRequest.ExecuteAsync();
+                    var channel = channelList.Items.FirstOrDefault();
+
+                    if (channel != null)
+                    {
+                        if (data.IsNewVideo)
+                        {
+                            youtubeService.PublishVideo(video, channel, dataManager);
+                        }
+                        else
+                        {
+                            youtubeService.UpdateVideo(video, channel, dataManager);
+                        }
+                    }
+
+                }
                 return Ok();
             }
             else
