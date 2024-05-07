@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import react from '@vitejs/plugin-react-swc'
+import { compression } from 'vite-plugin-compression2'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -8,11 +8,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      react(), 
-      nodePolyfills({
-        include: ['crypto'],
-        protocolImports: true,
-      })
+      react(),
+      compression({ algorithm: "brotliCompress" })
     ],
     server: {
       proxy: {
@@ -22,7 +19,7 @@ export default defineConfig(({ mode }) => {
           secure: false
         }
       },
-    }
+    },
   }
 })
 
