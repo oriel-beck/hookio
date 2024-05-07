@@ -1,6 +1,5 @@
 ﻿using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
-using Google.Apis.YouTube.v3.Data;
 using Hookio.Database.Interfaces;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;

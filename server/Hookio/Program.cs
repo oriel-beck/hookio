@@ -3,6 +3,7 @@ using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
+using Hookio.Discord.Interfaces;
 using Hookio.Extensions;
 using Hookio.Utils;
 using Hookio.Utils.Interfaces;
@@ -20,13 +21,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("DRAGONFLY_CONNECTION_STRING")!));
+builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
+builder.Services.AddSingleton<ITaskQueue, TaskQueue>();
+builder.Services.AddSingleton<IDiscordRequestManager, DiscordRequestManager>();
 builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
-// TODO: interfaces
-builder.Services.AddSingleton<TaskQueue>();
-builder.Services.AddSingleton<DiscordRequestManager>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -69,7 +70,9 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
-
+/*
+ * System.AggregateException: 'Some services are not able to be constructed (Error while validating the service descriptor 'ServiceType: Hookio.Discord.Interfaces.IDiscordRequestManager Lifetime: Singleton ImplementationType: Hookio.Discord.DiscordRequestManager': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Hookio.Utils.Interfaces.IYoutubeService Lifetime: Singleton ImplementationType: Hookio.Utils.YoutubeService': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Hookio.Database.Interfaces.IDataManager Lifetime: Singleton ImplementationType: Hookio.Database.DataManager': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler Lifetime: Transient ImplementationType: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Microsoft.Extensions.Options.IConfigureOptions`1[Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions] Lifetime: Singleton ImplementationType: Hookio.Extensions.ConfigureJwtBearerOptions': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.)'
+ */
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

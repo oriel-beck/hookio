@@ -1,10 +1,9 @@
-﻿using Discord.Net;
+﻿using Hookio.Utils.Interfaces;
 using System.Collections.Concurrent;
-using System.Net;
 
-namespace Hookio.Discord
+namespace Hookio.Utils
 {
-    public class TaskQueue
+    public class TaskQueue : ITaskQueue
     {
         private readonly ConcurrentDictionary<int, ConcurrentQueue<DiscordTask>> _queue = new(new Dictionary<int, ConcurrentQueue<DiscordTask>>
         {
@@ -17,9 +16,11 @@ namespace Hookio.Discord
         private DateTime _lastTaskExecution = DateTime.MinValue;
         private int _tasksExecutedThisSecond = 0;
         private DateTimeOffset _globalRatelimitReset = DateTimeOffset.MinValue;
+        private IHttpClientFactory _httpClientFactory;
 
-        public TaskQueue()
+        public TaskQueue(IHttpClientFactory httpClientFactory)
         {
+            _httpClientFactory = httpClientFactory;
             ProcessQueueAsync();
             ResetTasksAsync();
         }
@@ -38,7 +39,7 @@ namespace Hookio.Discord
 
         private void ProcessQueueAsync()
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 while (true)
                 {
@@ -47,7 +48,10 @@ namespace Hookio.Discord
                     var (priority, taskToExecute) = task.Value;
                     try
                     {
-                        var response = taskToExecute._httpTask().GetAwaiter().GetResult();
+                        var client = _httpClientFactory.CreateClient();
+                        client.BaseAddress = new Uri("https://discord.com");
+                        var response = await taskToExecute._httpTask(client);
+                        response.EnsureSuccessStatusCode();
                         // if it succeeded, dequeue
                         taskToExecute._tcs.SetResult(response);
                         _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
@@ -107,23 +111,23 @@ namespace Hookio.Discord
                 ratelimitRemaining == 0 &&
                 headers.TryGetValues("x-ratelimit-reset", out var resetAfterValues) &&
                 resetAfterValues.FirstOrDefault() is string resetAfterString &&
-                long.TryParse(resetAfterString, out var resetAfter))
+                double.TryParse(resetAfterString, out var resetAfter))
             {
                 if ((int)response.StatusCode == 429 && headers.TryGetValues("x-ratelimit-scope", out var scopeValues))
                 {
                     if (scopeValues.FirstOrDefault() == "global")
                     {
-                        _globalRatelimitReset = DateTimeOffset.FromUnixTimeMilliseconds(resetAfter);
+                        _globalRatelimitReset = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(resetAfter));
                     }
                 }
                 else
                 {
-                    _ratelimits[priority] = DateTimeOffset.FromUnixTimeMilliseconds(resetAfter);
+                    _ratelimits[priority] = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(resetAfter));
                 }
             }
         }
 
-        public Task<HttpResponseMessage> Enqueue(int priority, Func<Task<HttpResponseMessage>> func)
+        public Task<HttpResponseMessage> Enqueue(int priority, Func<HttpClient, Task<HttpResponseMessage>> func)
         {
             DiscordTask task = new(priority, func);
             if (!_queue.ContainsKey(task._priority))

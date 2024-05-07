@@ -2,6 +2,7 @@
 using Hookio.Database.Interfaces;
 using Hookio.Discord;
 using Hookio.Discord.Contracts;
+using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Utils.Contracts;
 using Hookio.Utils.Interfaces;
@@ -38,9 +39,9 @@ namespace Hookio.Utils
         const int ONE_HOUR_MS = 3600000;
         private readonly HttpClient _httpClient = new();
         private readonly IDatabase _redisDatabase;
-        private readonly DiscordRequestManager _discordRequestManager;
+        private readonly IDiscordRequestManager _discordRequestManager;
 
-        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, DiscordRequestManager discordRequestManager)
+        public YoutubeService(IConnectionMultiplexer connectionMultiplexer, IDiscordRequestManager discordRequestManager)
         {
             _redisDatabase = connectionMultiplexer.GetDatabase();
             _discordRequestManager = discordRequestManager;

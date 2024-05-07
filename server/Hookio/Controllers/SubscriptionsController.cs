@@ -29,7 +29,6 @@ namespace Hookio.Controllers
         public async Task<ActionResult<SubscriptionResponse>> CreateSubscription([DiscordGuildId] ulong guildId, SubscriptionRequest subscription)
         {
             if (!Util.CanAccessGuild(HttpContext.User, guildId)) return Unauthorized();
-            // TODO: subscribe to selected provider
             try
             {
                 var subscriptionResult = await dataManager.CreateSubscription(guildId, subscription);

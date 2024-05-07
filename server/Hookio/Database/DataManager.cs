@@ -2,8 +2,8 @@
 using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
-using Hookio.Discord;
 using Hookio.Discord.Contracts;
+using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
 using Hookio.Utils.Interfaces;
@@ -18,7 +18,7 @@ using System.Text;
 
 namespace Hookio.Database
 {
-    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IYoutubeService youtubeService, DiscordRequestManager discordRequestManager) : IDataManager
+    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IYoutubeService youtubeService, IDiscordRequestManager discordRequestManager) : IDataManager
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
@@ -57,16 +57,16 @@ namespace Hookio.Database
                     Email = user.Email!,
                 };
                 await ctx.Users.AddAsync(newUser);
-                return newUser;
+                currentUser = newUser;
             }
             else
             {
                 currentUser.RefreshToken = token.RefreshToken;
                 currentUser.AccessToken = token.AccessToken;
                 currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(token.ExpiresIn);
-                await ctx.SaveChangesAsync();
-                return currentUser;
             }
+            await ctx.SaveChangesAsync();
+            return currentUser;
         }
 
         public async Task<CurrentUserResponse?> Authenticate(HttpContext httpContext, string code)
@@ -339,9 +339,9 @@ namespace Hookio.Database
 
                 if (request.SubscriptionType == SubscriptionType.Youtube)
                 {
-                    var success = await youtubeService.Subscribe(channelId!);
-                    if (!(bool)success) throw new Exception("Failed to subscribe to the channel ID");
+                    await youtubeService.Subscribe(channelId!);
                 }
+
 
                 var newSubscription = await context.Subscriptions
                     .Where(x => x.Id == subscription.Id)
@@ -543,8 +543,7 @@ namespace Hookio.Database
                 if (request.SubscriptionType == SubscriptionType.Youtube)
                 {
                     // sub to new
-                    var success = await youtubeService.Subscribe(channelId!);
-                    if (!(bool)success) throw new Exception("Failed to subscribe to the channel ID");
+                    await youtubeService.Subscribe(channelId!);
                     // unsub from old
                     await youtubeService.Subscribe(channelId!, false);
                 }

@@ -1,9 +1,10 @@
 ﻿using Google.Apis.YouTube.v3.Data;
+using Hookio.Utils.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace Hookio.Utils
 {
-    public partial class TemplateHandler(Dictionary<string, Dictionary<string, string>> data)
+    public partial class TemplateHandler(Dictionary<string, Dictionary<string, string>> data) : ITemplateHandler
     {
         private readonly Dictionary<string, Dictionary<string, string>> data = data;
 
