@@ -5,12 +5,12 @@ networks:
 
 volumes:
   postgres_data: {}
-  redis_data: {}
+  dragonfly_data: {}
 
 services:
   # Main database
   postgres:
-    image: postgres:16.1
+    image: postgres:16.2
     networks:
       - hookio
     volumes:
@@ -38,7 +38,7 @@ services:
       - hookio
     depends_on:
       - postgres
-      - redis
+      - dragonfly
       - server
     ports:
       - 80:80
@@ -53,7 +53,7 @@ services:
       - hookio
     depends_on:
       - postgres
-      - redis
+      - dragonfly
     environment:
       - ASPNETCORE_URLS=http://+:7109
     ports:
