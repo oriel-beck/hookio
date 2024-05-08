@@ -10,8 +10,10 @@ namespace Hookio.Database.Entities
         [Required]
         public int Index { get; set; }
         [Required]
+        [Column(TypeName = "varchar(256)")]
         public string Name { get; set; }
         [Required]
+        [Column(TypeName = "varchar(1024)")]
         public string Value { get; set; }
         [Required]
         public bool Inline { get; set; }

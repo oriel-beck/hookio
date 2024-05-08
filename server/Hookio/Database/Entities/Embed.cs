@@ -8,14 +8,18 @@ namespace Hookio.Database.Entities
         [Key]
         public int Id { get; set; }
         public int Index { get; set; }
+        [Column(TypeName = "varchar(4096)")]
         public string? Description { get; set; }
+        [Column(TypeName = "varchar(256)")]
         public string? Title { get; set; }
         public string? TitleUrl { get; set; }
         public string? Color { get; set; }
         public string? Image { get; set; }
+        [Column(TypeName = "varchar(256)")]
         public string? Author { get; set; }
         public string? AuthorUrl { get; set; }
         public string? AuthorIcon { get; set; }
+        [Column(TypeName = "varchar(2048)")]
         public string? Footer { get; set; }
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }
