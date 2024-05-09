@@ -12,10 +12,10 @@ namespace Hookio.Utils
             {2, new ConcurrentQueue<DiscordTask>() }
         });
 
-        private readonly Dictionary<int, DateTimeOffset> _ratelimits = [];
+        private readonly Dictionary<int, TimeSpan> _ratelimits = [];
         private DateTime _lastTaskExecution = DateTime.MinValue;
         private int _tasksExecutedThisSecond = 0;
-        private DateTimeOffset _globalRatelimitReset = DateTimeOffset.MinValue;
+        private TimeSpan _globalRatelimitReset = TimeSpan.Zero;
         private IHttpClientFactory _httpClientFactory;
 
         public TaskQueue(IHttpClientFactory httpClientFactory)
@@ -51,21 +51,26 @@ namespace Hookio.Utils
                         var client = _httpClientFactory.CreateClient();
                         client.BaseAddress = new Uri("https://discord.com");
                         var response = await taskToExecute._httpTask(client);
-                        response.EnsureSuccessStatusCode();
-                        // if it succeeded, dequeue
-                        taskToExecute._tcs.SetResult(response);
-                        _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
-                        UpdateRatelimit(response, priority);
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        Console.WriteLine(ex.ToString());
-                        // if status code is not 429, dequeue, otherwise, try to execute this again after the ratelimit ends
-                        if ((int)(ex.StatusCode is not null ? ex.StatusCode : 0) != 429)
+                        if ((int)response.StatusCode >= 400 && (int)response.StatusCode != 429)
                         {
                             _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
-                            taskToExecute._tcs.SetException(ex);
+                            taskToExecute._tcs.SetException(new HttpRequestException(message: "Encountered a non 429 or success status code", new Exception(), statusCode: response.StatusCode));
                         }
+
+                        if (response.IsSuccessStatusCode && (int)response.StatusCode != 429)
+                        {
+                            // if it succeeded, dequeue
+                            taskToExecute._tcs.SetResult(response);
+                            _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
+                        }
+
+                        Console.WriteLine((int)response.StatusCode);
+                        Console.WriteLine(response.IsSuccessStatusCode);
+                        UpdateRatelimit(response, priority);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: logging
                     }
                 }
             });
@@ -80,10 +85,10 @@ namespace Hookio.Utils
         private (int, DiscordTask)? GetHighestPriorityTask()
         {
             // stop all executions in case of a global ratelimit hit (should never happen, but can't be too careful)
-            if (_globalRatelimitReset >= DateTimeOffset.UtcNow) return null;
+            if (_globalRatelimitReset.TotalMilliseconds >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return null;
             foreach (var kvp in _queue)
             {
-                if (_ratelimits.TryGetValue(kvp.Key, out var priorityValue) && priorityValue >= DateTimeOffset.UtcNow)
+                if (_ratelimits.TryGetValue(kvp.Key, out var priorityValue) && priorityValue.TotalMilliseconds >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
                 {
                     continue; // Ratelimited, move to the next priority
                 }
@@ -113,16 +118,17 @@ namespace Hookio.Utils
                 resetAfterValues.FirstOrDefault() is string resetAfterString &&
                 double.TryParse(resetAfterString, out var resetAfter))
             {
+                // add +1 to handle the floating limit
                 if ((int)response.StatusCode == 429 && headers.TryGetValues("x-ratelimit-scope", out var scopeValues))
                 {
                     if (scopeValues.FirstOrDefault() == "global")
                     {
-                        _globalRatelimitReset = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(resetAfter));
+                        _globalRatelimitReset = TimeSpan.FromSeconds(resetAfter);
                     }
                 }
                 else
                 {
-                    _ratelimits[priority] = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(resetAfter));
+                    _ratelimits[priority] = TimeSpan.FromSeconds(resetAfter);
                 }
             }
         }
