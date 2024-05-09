@@ -163,7 +163,7 @@ function FormikForm() {
 
     const validationSchema: Yup.ObjectSchema<FormikInitialValue> = Yup.object({
         webhookUrl: getWebhookUrl(),
-        url: Yup.string().url().required().test({
+        url: Yup.string().url().required("URL is a required field").test({
             test(url, ctx) {
                 switch (params['provider']) {
                     // youtube
@@ -209,7 +209,7 @@ function FormikForm() {
         // If this is not a new subscription then make webhook optional since it will not return from the backend
         let schema = Yup.string()
         if (params['subscriptionId']) schema = schema.optional();
-        else schema = schema.required();
+        else schema = schema.required("Webhook URL is a required field");
         schema.url().test({
             test(url, ctx) {
                 if (!webhookRegex.test(url || "")) return ctx.createError({ message: "Invalid webhook URL" });
@@ -221,7 +221,7 @@ function FormikForm() {
 
     useEffect(() => {
         // TODO: handle erorrs properly (popup? error screen? message in the corner?)
-        if ('message' in subscription) return navigate(`/servers`);
+        // if ('message' in subscription) return navigate(`/servers`); // this line gets into an infinite loop for some reason
         if (params['subscriptionId'] && 'status' in subscription) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
     });
 
