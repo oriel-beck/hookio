@@ -50,7 +50,6 @@ namespace Hookio.Utils
                         { "name", video.Snippet.ChannelTitle },
                         { "url", channel.Snippet.CustomUrl },
                         { "description", channel.Snippet.Description },
-                        { "icon", channel.Snippet.Thumbnails.Standard.Url },
                         { "subscribersCount", channel.Statistics.SubscriberCount.ToString()! },
                         { "viewsCount", channel.Statistics.VideoCount.ToString()! },
                         { "videosCount", channel.Statistics.VideoCount.ToString()! },
