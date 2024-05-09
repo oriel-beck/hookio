@@ -54,6 +54,8 @@ namespace Hookio.Utils
                         if ((int)response.StatusCode >= 400 && (int)response.StatusCode != 429)
                         {
                             _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
+                            var data = await response.Content.ReadAsStringAsync();
+                            Console.WriteLine(data);
                             taskToExecute._tcs.SetException(new HttpRequestException(message: "Encountered a non 429 or success status code", new Exception(), statusCode: response.StatusCode));
                         }
 
@@ -63,9 +65,6 @@ namespace Hookio.Utils
                             taskToExecute._tcs.SetResult(response);
                             _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
                         }
-
-                        Console.WriteLine((int)response.StatusCode);
-                        Console.WriteLine(response.IsSuccessStatusCode);
                         UpdateRatelimit(response, priority);
                     }
                     catch (Exception)

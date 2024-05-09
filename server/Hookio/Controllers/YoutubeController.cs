@@ -3,7 +3,6 @@ using Google.Apis.YouTube.v3;
 using Hookio.Database.Interfaces;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace Hookio.Controllers
 {
@@ -31,9 +30,10 @@ namespace Hookio.Controllers
                 });
             }
 
-            var challenge = request.Query.TryGetValue("hub.challenge", out var challengeResponse);
-            if (!challenge)
+            var challengeResponse = request.Query["hub.challenge"].ToString();
+            if (challengeResponse == null)
             {
+                logger.LogInformation("handling new/updated video");
                 var stream = request.Body;
                 var data = youtubeService.ConvertAtomToSyndication(stream);
                 var videoListRequest = ytService.Videos.List("snippet, contentDetails");
@@ -52,10 +52,12 @@ namespace Hookio.Controllers
                     {
                         if (data.IsNewVideo)
                         {
+                            logger.LogInformation("publishing new video for {Channel}", channel.Snippet.CustomUrl);
                             youtubeService.PublishVideo(video, channel, dataManager);
                         }
                         else
                         {
+                            logger.LogInformation("updating video for {Channel}", channel.Snippet.CustomUrl);
                             youtubeService.UpdateVideo(video, channel, dataManager);
                         }
                     }
@@ -67,12 +69,27 @@ namespace Hookio.Controllers
             {
                 // this is a subscription confirmation
                 logger.LogInformation("handling subscription confirmation with challenge {Challenge}", challengeResponse!);
-                return Ok(new
+
+                var topicUri = request.Query.TryGetValue("hub.topic", out var uriString);
+                if (topicUri && Uri.TryCreate(uriString!, UriKind.Absolute, out Uri? uri))
                 {
-                    Content = new StringContent(challengeResponse!),
-                    ReasonPhrase = challenge,
-                    StatusCode = HttpStatusCode.OK
-                });
+                    var queryParams = uri.Query
+                        .TrimStart('?')
+                        .Split('&')
+                        .Select(param => param.Split('='))
+                        .ToDictionary(parts => parts[0], parts => parts[1]);
+                    queryParams.TryGetValue("channel_id", out var channelId);
+                    request.Query.TryGetValue("hub.lease_seconds", out var leaseSecondsString);
+                    _ = ulong.TryParse(leaseSecondsString, out var leaseSeconds);
+                    await youtubeService.AddResub(channelId!, leaseSeconds);
+                }
+                var contentResult = new ContentResult
+                {
+                    Content = challengeResponse,
+                    ContentType = "text/plain",
+                    StatusCode = 200 // OK status code
+                };
+                return contentResult;
             }
         }
     }

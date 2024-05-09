@@ -42,15 +42,20 @@ namespace Hookio.Discord
 
         public async Task<OAuth2ExchangeResponse?> RefreshOAuth2(string refreshToken)
         {
-            var discordResponse = await _queue.Enqueue(0, (_httpClient) => _httpClient.PostAsync($"/api/v10/oauth2/token",
-            new FormUrlEncodedContent(new Dictionary<string, string?>()
+            var discordResponse = await _queue.Enqueue(0, (_httpClient) =>
+            {
+                var clientId = Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")!;
+                var clientSecret = Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")!;
+                var form = new FormUrlEncodedContent(new Dictionary<string, string?>()
                 {
                     { "grant_type", "refresh_token" },
-                    { "client_id", Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")! },
-                    { "client_secret", Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")! },
+                    { "client_id", clientId },
+                    { "client_secret", clientSecret },
                     { "refresh_token", refreshToken }
-                }
-            )));
+                });
+
+                return _httpClient.PostAsync($"/api/v10/oauth2/token", form);
+            });
 
             var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
             return result;

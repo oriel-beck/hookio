@@ -1,6 +1,5 @@
 ﻿using Google.Apis.YouTube.v3.Data;
 using Hookio.Database.Interfaces;
-using Hookio.Discord;
 using Hookio.Discord.Contracts;
 using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
@@ -56,13 +55,14 @@ namespace Hookio.Utils
                 new("hub.mode", subscribe ? "subscribe" : "unsubscribe"),
                 new("hub.verify_token", IDENTIFIER!),
                 new("hub.verify", "async"),
-                new("hub.callback", HttpUtility.UrlEncode(YT_CALLBACK_URL)),
-                new("hub.topic", HttpUtility.UrlEncode($"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channelId}")),
+                new("hub.callback", YT_CALLBACK_URL),
+                new("hub.topic", $"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channelId}"),
             ]);
 
             var res = await _httpClient.PostAsync("https://pubsubhubbub.appspot.com/subscribe", content);
+            var data = await res.Content.ReadAsStringAsync();
+            Console.WriteLine(data);
             if (res.IsSuccessStatusCode) return null;
-            await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddDays(10).ToUnixTimeMilliseconds());
             return true;
         }
         public async void PublishVideo(Video video, Channel channel, IDataManager _dataManager)
@@ -129,7 +129,6 @@ namespace Hookio.Utils
             }
         }
 
-
         public YoutubeNotification ConvertAtomToSyndication(Stream stream)
         {
             using var xmlReader = XmlReader.Create(stream);
@@ -147,6 +146,11 @@ namespace Hookio.Utils
 
         public bool VerifyToken(string verifyToken) => verifyToken == IDENTIFIER!;
 
+        public async Task AddResub(string channelId, ulong time)
+        {
+            await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddSeconds(time).ToUnixTimeMilliseconds());
+
+        }
         private static string? GetElementExtensionValueByOuterName(SyndicationItem item, string outerName)
         {
             if (item.ElementExtensions.All(x => x.OuterName != outerName)) return null;

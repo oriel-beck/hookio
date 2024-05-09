@@ -39,6 +39,7 @@ namespace Hookio.Database
             var discordUser = await discordRequestManager.GetDiscordUser(accessToken);
             if (discordUser == null) return null;
 
+            dbUser.AccessToken = accessToken;
             return await ToContract(dbUser, discordUser);
         }
 
@@ -98,9 +99,9 @@ namespace Hookio.Database
         public async Task<string?> GetAccessToken(ulong userId)
         {
             var ctx = contextFactory.CreateDbContext();
-            var currentUser = ctx.Users.SingleOrDefault(u => u.Id == userId);
+            var currentUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (currentUser == null) return null;
-            if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return currentUser.AccessToken;
+            //if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return currentUser.AccessToken;
             // generate a new access token and update the db
             var result = await discordRequestManager.RefreshOAuth2(currentUser.RefreshToken);
             currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
@@ -540,12 +541,12 @@ namespace Hookio.Database
 
                 await transaction.CommitAsync();
 
-                if (request.SubscriptionType == SubscriptionType.Youtube)
+                if (request.SubscriptionType == SubscriptionType.Youtube && request.Url != subscription.Url)
                 {
-                    // sub to new
-                    await youtubeService.Subscribe(channelId!);
                     // unsub from old
                     await youtubeService.Subscribe(channelId!, false);
+                    // sub to new
+                    await youtubeService.Subscribe(channelId!);
                 }
 
                 return new SubscriptionResponse
