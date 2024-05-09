@@ -79,6 +79,8 @@ namespace Hookio.Utils
 
                 var payload = new DiscordMessageCreatePayload
                 {
+                    Username = templateHandler.Parse(subscriptionEvent.Message.WebhookUsername),
+                    Avatar = templateHandler.Parse(subscriptionEvent.Message.WebhookAvatar),
                     Content = templateHandler.Parse(subscriptionEvent.Message.Content),
                     embeds = DiscordUtils.ConvertEntityEmbedToDiscordEmbed(subscriptionEvent.Message.Embeds, templateHandler)
                 };
