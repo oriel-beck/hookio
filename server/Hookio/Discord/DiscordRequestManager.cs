@@ -1,11 +1,13 @@
-﻿using Hookio.Discord.Contracts;
+﻿using Hookio.Database;
+using Hookio.Discord.Contracts;
 using Hookio.Discord.Interfaces;
 using Hookio.Utils.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
 namespace Hookio.Discord
 {
-    public class DiscordRequestManager(ILogger<DiscordRequestManager> logger, ITaskQueue _queue, IConnectionMultiplexer redis) : IDiscordRequestManager
+    public class DiscordRequestManager(ILogger<DiscordRequestManager> logger, ITaskQueue _queue, IConnectionMultiplexer redis, IDbContextFactory<HookioContext> contextFactory) : IDiscordRequestManager
     {
         private readonly IDatabase _redisDatabase = redis.GetDatabase();
 
@@ -40,10 +42,12 @@ namespace Hookio.Discord
             return result;
         }
 
-        public async Task<OAuth2ExchangeResponse?> RefreshOAuth2(string refreshToken)
+        public async Task<OAuth2ExchangeResponse?> RefreshOAuth2(ulong userId)
         {
-            var discordResponse = await _queue.Enqueue(0, (_httpClient) =>
+            var discordResponse = await _queue.Enqueue(0, async (_httpClient) =>
             {
+                var ctx = await contextFactory.CreateDbContextAsync();
+                var user = await ctx.Users.Where(user => user.Id == userId).FirstOrDefaultAsync();
                 var clientId = Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID")!;
                 var clientSecret = Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET")!;
                 var form = new FormUrlEncodedContent(new Dictionary<string, string?>()
@@ -51,14 +55,33 @@ namespace Hookio.Discord
                     { "grant_type", "refresh_token" },
                     { "client_id", clientId },
                     { "client_secret", clientSecret },
-                    { "refresh_token", refreshToken }
+                    { "refresh_token", user!.RefreshToken }
                 });
 
-                return _httpClient.PostAsync($"/api/v10/oauth2/token", form);
+                return await _httpClient.PostAsync($"/api/v10/oauth2/token", form);
             });
 
             var result = await discordResponse.Content.ReadFromJsonAsync<OAuth2ExchangeResponse>();
             return result;
+        }
+
+        public async Task<DiscordSelfUser?> GetDiscordUser(ulong userId)
+        {
+            var discordResponse = await _queue.Enqueue(1, async (_httpClient) =>
+            {
+                var httpRequestMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get
+                };
+                var ctx = await contextFactory.CreateDbContextAsync();
+                var user = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+                httpRequestMessage.Headers.Add("Authorization", $"Bearer {user!.AccessToken}");
+                httpRequestMessage.RequestUri = new Uri("https://discord.com/api/v10/users/@me");
+                return await _httpClient.SendAsync(httpRequestMessage);
+            });
+
+            var res = await discordResponse.Content.ReadFromJsonAsync<DiscordSelfUser>();
+            return res;
         }
 
         public async Task<DiscordSelfUser?> GetDiscordUser(string accessToken)

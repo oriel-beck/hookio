@@ -30,16 +30,14 @@ namespace Hookio.Database
         public async Task<CurrentUserResponse?> GetUser(ulong userId)
         {
             var ctx = await contextFactory.CreateDbContextAsync();
+            await RevalidateUserAccessToken(userId);
+
             var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
             if (dbUser == null) return null;
 
-            var accessToken = await GetAccessToken(userId);
-            if (accessToken == null) return null;
-
-            var discordUser = await discordRequestManager.GetDiscordUser(accessToken);
+            var discordUser = await discordRequestManager.GetDiscordUser(userId);
             if (discordUser == null) return null;
 
-            dbUser.AccessToken = accessToken;
             return await ToContract(dbUser, discordUser);
         }
 
@@ -78,7 +76,6 @@ namespace Hookio.Database
                 var result = await discordRequestManager.ExchangeOAuth2Code(code);
                 if (result == null) return null;
 
-
                 var discordUser = await discordRequestManager.GetDiscordUser(result.AccessToken);
                 if (discordUser == null) return null;
 
@@ -96,19 +93,19 @@ namespace Hookio.Database
             }
         }
 
-        public async Task<string?> GetAccessToken(ulong userId)
+        public async Task RevalidateUserAccessToken(ulong userId)
         {
             var ctx = contextFactory.CreateDbContext();
             var currentUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (currentUser == null) return null;
-            //if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return currentUser.AccessToken;
+            if (currentUser == null) return;
+            if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return;
             // generate a new access token and update the db
-            var result = await discordRequestManager.RefreshOAuth2(currentUser.RefreshToken);
+            var result = await discordRequestManager.RefreshOAuth2(userId);
             currentUser.ExpireAt = DateTimeOffset.UtcNow.AddMilliseconds(result!.ExpiresIn);
             currentUser.AccessToken = result.AccessToken;
             currentUser.RefreshToken = result.RefreshToken;
             await ctx.SaveChangesAsync();
-            return result.AccessToken;
+            return;
         }
 
         public async Task RefreshUserAuthentication(TokenValidatedContext context, SecurityToken token)
@@ -117,14 +114,14 @@ namespace Hookio.Database
             var ctx = await contextFactory.CreateDbContextAsync();
             var claim = parsedToken.Claims.First(claim => claim.Type == "id").Value;
             _ = ulong.TryParse(claim, out var userId);
-            var accessToken = await GetAccessToken(userId);
-            if (accessToken == null) return;
 
-            var discordUser = await discordRequestManager.GetDiscordUser(accessToken);
-            if (discordUser == null) return;
+            await RevalidateUserAccessToken(userId);
 
             var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
             if (dbUser == null) return;
+
+            var discordUser = await discordRequestManager.GetDiscordUser(dbUser.Id);
+            if (discordUser == null) return;
 
             var userContract = await ToContract(dbUser, discordUser);
             CreateTokenAndSetCookie(context, discordUser, userContract!.Guilds.Select(g => g.Id));

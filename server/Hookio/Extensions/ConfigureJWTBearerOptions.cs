@@ -25,10 +25,12 @@ namespace Hookio.Extensions
                     OnMessageReceived = context =>
                     {
                         context.Token = context.Request.Cookies["Authorization"];
+                        Console.WriteLine(context.Request.Cookies["Authorization"]);
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = async context =>
                      {
+                         Console.WriteLine("reached");
                          var totalTimeFromCreation = DateTime.UtcNow.Subtract(context.SecurityToken.ValidFrom).TotalMinutes;
                          if (totalTimeFromCreation > 10)
                          {

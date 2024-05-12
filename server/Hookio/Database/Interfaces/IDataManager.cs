@@ -14,7 +14,7 @@ namespace Hookio.Database.Interfaces
         public Task<IEnumerable<DiscordPartialGuild>?> GetUserGuilds(User user);
         public Task<CurrentUserResponse?> GetUser(ulong userId);
         public Task<User> CreateUser(DiscordSelfUser user, OAuth2ExchangeResponse token);
-        public Task<string?> GetAccessToken(ulong userId);
+        public Task RevalidateUserAccessToken(ulong userId);
         public Task<CurrentUserResponse?> Authenticate(HttpContext httpContext, string code);
         public void CreateTokenAndSetCookie(HttpContext context, DiscordSelfUser user, IEnumerable<string>? guildIds);
         public void CreateTokenAndSetCookie(TokenValidatedContext context, DiscordSelfUser user, IEnumerable<string>? guildIds);
