@@ -14,7 +14,7 @@ namespace Hookio.Controllers
     [Route("/api/subscriptions")]
     [ApiController]
     [EnableRateLimiting("subscriptions")]
-    public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager, IYoutubeService youtubeService) : ControllerBase
+    public class SubscriptionsController(ILogger<SubscriptionsController> logger, IDataManager dataManager) : ControllerBase
     {
         [HttpGet("{guildId}")]
         public async Task<ActionResult<GuildSubscriptionsResponse>> GetGuildSubscription([DiscordGuildId] ulong guildId, SubscriptionType? subscriptionType, bool withCounts = false)
