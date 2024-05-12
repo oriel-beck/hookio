@@ -1,0 +1,52 @@
+.markdown-content {
+  .mention {
+    cursor: pointer;
+    color: rgb(222, 224, 252);
+    font-weight: 500;
+    border-radius: 3px;
+    padding: 0px 2px;
+    background: rgba(88, 101, 242, 0.3);
+    transition: background-color 50ms ease-out 0s, color;
+    &:hover {
+      background: rgb(88, 101, 242);
+      color: rgb(255, 255, 255);
+    }
+  }
+
+  .emoji {
+    height: 1.375em;
+    width: 1.375em;
+    object-fit: contain;
+    vertical-align: bottom;
+
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+
+    display: inline-block;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 16px 0 8px;
+    line-height: 1.375em;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  * {
+    display: inline-block;
+  }
+}

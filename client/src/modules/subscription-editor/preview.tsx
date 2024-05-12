@@ -1,6 +1,7 @@
 import { useFormikContext } from "formik";
 import type { FormikInitialValue, EmbedField, EmbedFormikInitialValue } from "../../types/types";
 import { EventType } from "../../util/enums";
+import DiscordMarkdown from "../../components/markdown/markdown";
 
 const getDate = () => new Date().toLocaleString('en', {
     hour: '2-digit',
@@ -27,7 +28,11 @@ export default function EmbedPreview({ eventType }: { eventType: EventType }) {
                 </div>
                 {data.content &&
                     <div className="overflow-hidden max-w-full pb-2">
-                        <p className="max-w-full break-words whitespace-pre-line text-pretty">{data.content}</p>
+                        <div className="max-w-full break-words whitespace-pre-line text-pretty">
+                            <DiscordMarkdown>
+                                {data.content}
+                            </DiscordMarkdown>
+                        </div>
                     </div>
                 }
                 {/* TODO: demo image */}
@@ -110,7 +115,11 @@ function Embed({ embed }: { embed: EmbedFormikInitialValue, }) {
                             }
                             {/* Description */}
                             {embed.description &&
-                                <p className="mt-[8px] text-sm break-words whitespace-pre-line text-pretty">{embed.description}</p>
+                                <div className="mt-[8px] text-sm break-words whitespace-pre-line text-pretty">
+                                    <DiscordMarkdown>
+                                        {embed.description}
+                                    </DiscordMarkdown>
+                                </div>
                             }
                         </div>
                         <span className="flex-auto"></span>
@@ -124,7 +133,11 @@ function Embed({ embed }: { embed: EmbedFormikInitialValue, }) {
                             {embed.fields.map((field) => (
                                 <div key={field.id as string} className="flex flex-col" style={{ gridColumn: getFieldGridColumn(embed, field) }}>
                                     <h3 className="font-semibold">{field.name}</h3>
-                                    <p className="font-normal">{field.value}</p>
+                                    <div className="font-normal">
+                                        <DiscordMarkdown>
+                                            {field.value}
+                                        </DiscordMarkdown>
+                                    </div>
                                 </div>
                             ))}
                         </div>

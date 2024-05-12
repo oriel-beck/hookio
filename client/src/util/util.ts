@@ -88,7 +88,6 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
     const headers = {
         'Content-Type': 'application/json'
     }
-    console.log(data.events)
 
     const body = JSON.stringify(data);
 
