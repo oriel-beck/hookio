@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 
 namespace Hookio.Utils
 {
@@ -129,20 +130,39 @@ namespace Hookio.Utils
             }
         }
 
-        public YoutubeNotification ConvertAtomToSyndication(Stream stream)
+        public YoutubeNotification? ConvertFromXml(Stream xmlStream)
         {
-            using var xmlReader = XmlReader.Create(stream);
-            SyndicationFeed feed = SyndicationFeed.Load(xmlReader);
-            var item = feed.Items.FirstOrDefault();
-            return new YoutubeNotification()
+            try
             {
-                ChannelId = GetElementExtensionValueByOuterName(item!, "channelId")!,
-                VideoId = GetElementExtensionValueByOuterName(item!, "videoId")!,
-                Title = item!.Title.Text,
-                Published = item!.PublishDate.ToString("dd/MM/yyyy"),
-                Updated = item!.LastUpdatedTime.ToString("dd/MM/yyyy")
-            };
+                // Create an XmlSerializer for the YoutubeNotification class
+                XmlSerializer serializer = new(typeof(YoutubeNotification));
+
+                // Deserialize the XML stream into a YoutubeNotification object
+                YoutubeNotification notification = (YoutubeNotification)serializer.Deserialize(xmlStream)!;
+
+                return notification;
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during deserialization
+                Console.WriteLine($"Error converting XML to YoutubeNotification: {ex.Message}");
+                return null;
+            }
         }
+        //public YoutubeNotification ConvertAtomToSyndication(Stream stream)
+        //{
+        //    using var xmlReader = XmlReader.Create(stream);
+        //    SyndicationFeed feed = SyndicationFeed.Load(xmlReader);
+        //    var item = feed.Items.FirstOrDefault();
+        //    return new YoutubeNotification()
+        //    {
+        //        ChannelId = GetElementExtensionValueByOuterName(item!, "channelId")!,
+        //        VideoId = GetElementExtensionValueByOuterName(item!, "videoId")!,
+        //        Title = item!.Title.Text,
+        //        Published = item!.PublishDate.ToString("dd/MM/yyyy"),
+        //        Updated = item!.LastUpdatedTime.ToString("dd/MM/yyyy")
+        //    };
+        //}
 
         public bool VerifyToken(string verifyToken) => verifyToken == IDENTIFIER!;
 
@@ -151,11 +171,12 @@ namespace Hookio.Utils
             await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddSeconds(time).ToUnixTimeMilliseconds());
 
         }
-        private static string? GetElementExtensionValueByOuterName(SyndicationItem item, string outerName)
-        {
-            if (item.ElementExtensions.All(x => x.OuterName != outerName)) return null;
-            return item.ElementExtensions.Single(x => x.OuterName == outerName).GetObject<XElement>().Value;
-        }
+
+        //private static string? GetElementExtensionValueByOuterName(SyndicationItem item, string outerName)
+        //{
+        //    if (item.ElementExtensions.All(x => x.OuterName != outerName)) return null;
+        //    return item.ElementExtensions.Single(x => x.OuterName == outerName).GetObject<XElement>().Value;
+        //}
 
         public string? GetYoutubeChannelId(string url)
         {

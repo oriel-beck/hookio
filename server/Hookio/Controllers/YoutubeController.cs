@@ -3,6 +3,7 @@ using Google.Apis.YouTube.v3;
 using Hookio.Database.Interfaces;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace Hookio.Controllers
 {
@@ -21,21 +22,29 @@ namespace Hookio.Controllers
         public async Task<ActionResult> NotificationsCallback()
         {
             var request = HttpContext.Request;
-            var token = request.Query.TryGetValue("hub.verify_token", out var verifyToken);
-            if (!token || !youtubeService.VerifyToken(verifyToken!))
-            {
-                return Unauthorized(new
-                {
-                    Error = "Invalid verify_token"
-                });
-            }
+            // TODO: use hub.secret when creating the subscriptions to verify source
+            //var token = request.Query.TryGetValue("hub.verify_token", out var verifyToken);
+            //if (!token || !youtubeService.VerifyToken(verifyToken!))
+            //{
+            //    return Unauthorized(new
+            //    {
+            //        Error = "Invalid verify_token"
+            //    });
+            //}
 
-            var challengeResponse = request.Query["hub.challenge"].ToString();
-            if (challengeResponse == null)
+            var stringBuilder = new StringBuilder();
+            foreach (var item in request.Query) 
+            {
+                stringBuilder.Append($"{item.Key}: {item.Value.FirstOrDefault()}\n");
+            }
+            logger.LogInformation("Incoming yt callback query: {Query}", stringBuilder.ToString());
+
+            var challengeResponse = request.Query["hub.challenge"].FirstOrDefault();
+            if (string.IsNullOrEmpty(challengeResponse))
             {
                 logger.LogInformation("handling new/updated video");
                 var stream = request.Body;
-                var data = youtubeService.ConvertAtomToSyndication(stream);
+                var data = youtubeService.ConvertFromXml(stream);
                 var videoListRequest = ytService.Videos.List("snippet, contentDetails");
                 videoListRequest.Id = data.VideoId;
                 var videoList = await videoListRequest.ExecuteAsync();

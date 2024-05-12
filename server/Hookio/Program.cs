@@ -9,6 +9,7 @@ using Hookio.Utils;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -28,6 +29,11 @@ builder.Services.AddSingleton<ITaskQueue, TaskQueue>();
 builder.Services.AddSingleton<IDiscordRequestManager, DiscordRequestManager>();
 builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
+
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.AllowSynchronousIO = true;
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
