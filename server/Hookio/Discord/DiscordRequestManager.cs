@@ -122,7 +122,7 @@ namespace Hookio.Discord
         {
             try
             {
-                var response = await _queue.Enqueue(3, (_httpClient) => _httpClient.PostAsJsonAsync($"{webhookUrl}?wait=true", payload));
+                var response = await _queue.Enqueue(2, (_httpClient) => _httpClient.PostAsJsonAsync($"{webhookUrl}?wait=true", payload));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)
@@ -136,7 +136,7 @@ namespace Hookio.Discord
         {
             try
             {
-                var response = await _queue.Enqueue(3, (_httpClient) => _httpClient.PatchAsJsonAsync($"{webhookUrl}/messages/{messageId}", payload));
+                var response = await _queue.Enqueue(2, (_httpClient) => _httpClient.PatchAsJsonAsync($"{webhookUrl}/messages/{messageId}", payload));
                 return await response.Content.ReadFromJsonAsync<DiscordPartialMessage>();
             }
             catch (Exception ex)

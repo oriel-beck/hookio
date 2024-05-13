@@ -8,12 +8,12 @@ namespace Hookio.Utils.Interfaces
     {
         public Task<bool?> Subscribe(string channelId, bool subscribe = true);
         public bool VerifyToken(string verifyToken);
-        //public YoutubeNotification ConvertAtomToSyndication(Stream stream);
-        public YoutubeNotification? ConvertFromXml(Stream stream);
+        public Task<YoutubeNotification?> ConvertFromXml(Stream stream);
         public void PublishVideo(Video video, Channel channel, IDataManager dataManager);
         public void UpdateVideo(Video video, Channel channel, IDataManager dataManager);
         public string? GetYoutubeChannelId(string url);
         public Task AddResub(string channelId, ulong time);
+        public Task<bool> IsNewVideo(string videoId);
 
     }
 }

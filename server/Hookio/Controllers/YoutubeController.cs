@@ -3,6 +3,7 @@ using Google.Apis.YouTube.v3;
 using Hookio.Database.Interfaces;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using System.Text;
 
 namespace Hookio.Controllers
@@ -23,28 +24,26 @@ namespace Hookio.Controllers
         {
             var request = HttpContext.Request;
             // TODO: use hub.secret when creating the subscriptions to verify source
-            //var token = request.Query.TryGetValue("hub.verify_token", out var verifyToken);
-            //if (!token || !youtubeService.VerifyToken(verifyToken!))
-            //{
-            //    return Unauthorized(new
-            //    {
-            //        Error = "Invalid verify_token"
-            //    });
-            //}
 
-            var stringBuilder = new StringBuilder();
-            foreach (var item in request.Query) 
-            {
-                stringBuilder.Append($"{item.Key}: {item.Value.FirstOrDefault()}\n");
-            }
-            logger.LogInformation("Incoming yt callback query: {Query}", stringBuilder.ToString());
+            //var stringBuilder = new StringBuilder();
+            //foreach (var item in request.Query) 
+            //{
+            //    stringBuilder.Append($"{item.Key}: {item.Value.FirstOrDefault()}\n");
+            //}
+            //logger.LogInformation("Incoming yt callback query: {Query}", stringBuilder.ToString());
 
             var challengeResponse = request.Query["hub.challenge"].FirstOrDefault();
             if (string.IsNullOrEmpty(challengeResponse))
             {
-                logger.LogInformation("handling new/updated video");
                 var stream = request.Body;
-                var data = youtubeService.ConvertFromXml(stream);
+                var data = await youtubeService.ConvertFromXml(stream);
+                logger.LogInformation("parsed data: {DataString}", GetLogFor(data is null ? new {} : data));
+                if (data == null || data.VideoId == null)
+                {
+                    logger.LogInformation("malformed data was recieved, aborting");
+                    return Ok();
+                }
+                // TODO: check video publish, if video was published more than 12h ago, skip it.
                 var videoListRequest = ytService.Videos.List("snippet, contentDetails");
                 videoListRequest.Id = data.VideoId;
                 var videoList = await videoListRequest.ExecuteAsync();
@@ -59,14 +58,15 @@ namespace Hookio.Controllers
 
                     if (channel != null)
                     {
-                        if (data.IsNewVideo)
+                        var exists = await youtubeService.IsNewVideo(data.VideoId);
+                        if (!exists)
                         {
-                            logger.LogInformation("publishing new video for {Channel}", channel.Snippet.CustomUrl);
+                            logger.LogInformation("publishing new video for {Channel}, video: {VideoUrl}", channel.Snippet.CustomUrl, data.Link.Href);
                             youtubeService.PublishVideo(video, channel, dataManager);
                         }
                         else
                         {
-                            logger.LogInformation("updating video for {Channel}", channel.Snippet.CustomUrl);
+                            logger.LogInformation("updating video for {Channel}, video: {VideoUrl}", channel.Snippet.CustomUrl, data.Link.Href);
                             youtubeService.UpdateVideo(video, channel, dataManager);
                         }
                     }
@@ -100,6 +100,30 @@ namespace Hookio.Controllers
                 };
                 return contentResult;
             }
+        }
+
+        public static string GetLogFor(object target)
+        {
+            var properties =
+                from property in target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                select new
+                {
+                    property.Name,
+                    Value = property.GetValue(target, null)
+                };
+
+            var builder = new StringBuilder();
+
+            foreach (var property in properties)
+            {
+                builder
+                    .Append(property.Name)
+                    .Append(" = ")
+                    .Append(property.Value)
+                    .AppendLine();
+            }
+
+            return builder.ToString();
         }
     }
 }

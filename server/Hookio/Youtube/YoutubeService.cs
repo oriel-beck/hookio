@@ -6,9 +6,7 @@ using Hookio.Enunms;
 using Hookio.Utils.Contracts;
 using Hookio.Utils.Interfaces;
 using StackExchange.Redis;
-using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
-using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -32,7 +30,7 @@ namespace Hookio.Utils
         const string YT_CALLBACK_URL = "https://hookio.gg/api/youtube/callback";
         // Set of channelId : score (timestamp)
         const string YT_SUBS_EXPIRED = "youtube_subscriptions_expiration";
-        // Set of `{YT_SENT_VIDEOS}-videoId` : dbMessageId-DiscordMessageId
+        // Set of `{YT_SENT_VIDEOS}-videoId` : subscriptionId-DiscordMessageId
         const string YT_MSGS_SENT = "youtube_messages_sent";
         // Set of videoId : score (timestamp)
         const string YT_SENT_VIDEOS = "youtube_videos_sent";
@@ -90,7 +88,7 @@ namespace Hookio.Utils
                 if (res == null) continue;
 
                 // Create a set for this videoId in case of editing // TODO: res should be a class of WebhookResponse
-                await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{video.Id}", $"{subscriptionEvent.Message.Id}-{res.Id}");
+                await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{video.Id}", $"{subscription.Id}-{res.Id}");
             }
             // add the video ID to the sorted set to be deleted in 12h
             await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, video.Id, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
@@ -101,18 +99,18 @@ namespace Hookio.Utils
             // get all messages that were published
             var allSentMessages = await _redisDatabase.SetMembersAsync($"{YT_MSGS_SENT}-{video.Id}");
             var subscriptions = await _dataManager.GetSubscriptions(video, EventType.YoutubeVideoEdited);
-            var subscriptionsDictionary = subscriptions.ToDictionary(k => k.Events.FirstOrDefault()!.Message.Id, k => k);
+            var subscriptionsDictionary = subscriptions.ToDictionary(k => k.Id, k => k);
 
             foreach (var messageSent in allSentMessages)
             {
-                var dbMessageIdString = int.TryParse(messageSent.ToString().Split('-').ElementAt(0), out var dbMessageId);
+                var dbMessageIdString = int.TryParse(messageSent.ToString().Split('-').ElementAt(0), out var dbSubscriptionId);
                 if (!dbMessageIdString) continue;
 
                 var discordMessageIdString = ulong.TryParse(messageSent.ToString().Split('-').ElementAt(1), out var discordMessageId);
                 if (!discordMessageIdString) continue;
 
-                var subscription = subscriptionsDictionary[dbMessageId];
-                if (subscription == null) continue;
+                var subscriptionExists = subscriptionsDictionary.TryGetValue(dbSubscriptionId, out var subscription);
+                if (!subscriptionExists || subscription == null) continue;
 
                 var subscriptionEvent = subscription.Events.FirstOrDefault();
                 if (subscriptionEvent == null) continue;
@@ -130,53 +128,56 @@ namespace Hookio.Utils
             }
         }
 
-        public YoutubeNotification? ConvertFromXml(Stream xmlStream)
+        public async Task<YoutubeNotification?> ConvertFromXml(Stream stream)
         {
             try
             {
-                // Create an XmlSerializer for the YoutubeNotification class
-                XmlSerializer serializer = new(typeof(YoutubeNotification));
+                XNamespace atom = "http://www.w3.org/2005/Atom";
+                XNamespace yt = "http://www.youtube.com/xml/schemas/2015";
 
-                // Deserialize the XML stream into a YoutubeNotification object
-                YoutubeNotification notification = (YoutubeNotification)serializer.Deserialize(xmlStream)!;
+                XDocument doc = XDocument.Load(stream);
+                var entryElement = doc.Descendants(atom + "entry").FirstOrDefault();
 
-                return notification;
+                if (entryElement != null)
+                {
+                    YoutubeNotification notification = new YoutubeNotification
+                    {
+                        Id = entryElement.Element(atom + "id")?.Value,
+                        VideoId = entryElement.Element(yt + "videoId")?.Value,
+                        ChannelId = entryElement.Element(yt + "channelId")?.Value,
+                        Title = entryElement.Element(atom + "title")?.Value,
+                        Link = new Link
+                        {
+                            Href = entryElement.Element(atom + "link")?.Attribute("href")?.Value
+                        },
+                        Author = new Author
+                        {
+                            Name = entryElement.Element(atom + "author")?.Element(atom + "name")?.Value,
+                            Uri = entryElement.Element(atom + "author")?.Element(atom + "uri")?.Value
+                        },
+                        Published = entryElement.Element(atom + "published")?.Value,
+                        Updated = entryElement.Element(atom + "updated")?.Value
+                    };
+
+                    return notification;
+                }
             }
             catch (Exception ex)
             {
-                // Handle any exceptions that occur during deserialization
-                Console.WriteLine($"Error converting XML to YoutubeNotification: {ex.Message}");
-                return null;
+                Console.WriteLine($"Error while parsing XML: {ex.Message}");
             }
+
+            return null;
         }
-        //public YoutubeNotification ConvertAtomToSyndication(Stream stream)
-        //{
-        //    using var xmlReader = XmlReader.Create(stream);
-        //    SyndicationFeed feed = SyndicationFeed.Load(xmlReader);
-        //    var item = feed.Items.FirstOrDefault();
-        //    return new YoutubeNotification()
-        //    {
-        //        ChannelId = GetElementExtensionValueByOuterName(item!, "channelId")!,
-        //        VideoId = GetElementExtensionValueByOuterName(item!, "videoId")!,
-        //        Title = item!.Title.Text,
-        //        Published = item!.PublishDate.ToString("dd/MM/yyyy"),
-        //        Updated = item!.LastUpdatedTime.ToString("dd/MM/yyyy")
-        //    };
-        //}
 
         public bool VerifyToken(string verifyToken) => verifyToken == IDENTIFIER!;
+        public Task<bool> IsNewVideo(string videoId) => _redisDatabase.KeyExistsAsync($"{YT_SENT_VIDEOS}-{videoId}");
 
         public async Task AddResub(string channelId, ulong time)
         {
             await _redisDatabase.SortedSetAddAsync(YT_SUBS_EXPIRED, channelId, DateTimeOffset.UtcNow.AddSeconds(time).ToUnixTimeMilliseconds());
 
         }
-
-        //private static string? GetElementExtensionValueByOuterName(SyndicationItem item, string outerName)
-        //{
-        //    if (item.ElementExtensions.All(x => x.OuterName != outerName)) return null;
-        //    return item.ElementExtensions.Single(x => x.OuterName == outerName).GetObject<XElement>().Value;
-        //}
 
         public string? GetYoutubeChannelId(string url)
         {

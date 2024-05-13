@@ -117,11 +117,11 @@ namespace Hookio.Database
 
             await RevalidateUserAccessToken(userId);
 
+            var discordUser = await discordRequestManager.GetDiscordUser(userId);
+            if (discordUser == null) return;
+
             var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
             if (dbUser == null) return;
-
-            var discordUser = await discordRequestManager.GetDiscordUser(dbUser.Id);
-            if (discordUser == null) return;
 
             var userContract = await ToContract(dbUser, discordUser);
             CreateTokenAndSetCookie(context, discordUser, userContract!.Guilds.Select(g => g.Id));
