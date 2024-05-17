@@ -7,9 +7,7 @@ using Hookio.Utils.Contracts;
 using Hookio.Utils.Interfaces;
 using StackExchange.Redis;
 using System.Text.RegularExpressions;
-using System.Xml;
 using System.Xml.Linq;
-using System.Xml.Serialization;
 
 namespace Hookio.Utils
 {
@@ -59,8 +57,6 @@ namespace Hookio.Utils
             ]);
 
             var res = await _httpClient.PostAsync("https://pubsubhubbub.appspot.com/subscribe", content);
-            var data = await res.Content.ReadAsStringAsync();
-            Console.WriteLine(data);
             if (res.IsSuccessStatusCode) return null;
             return true;
         }
@@ -91,7 +87,7 @@ namespace Hookio.Utils
                 await _redisDatabase.SetAddAsync($"{YT_MSGS_SENT}-{video.Id}", $"{subscription.Id}-{res.Id}");
             }
             // add the video ID to the sorted set to be deleted in 12h
-            await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, video.Id, DateTimeOffset.UtcNow.AddHours(12).ToUnixTimeMilliseconds());
+            await _redisDatabase.SortedSetAddAsync(YT_SENT_VIDEOS, video.Id, DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeMilliseconds());
         }
 
         public async void UpdateVideo(Video video, Channel channel, IDataManager _dataManager)
@@ -136,11 +132,12 @@ namespace Hookio.Utils
                 XNamespace yt = "http://www.youtube.com/xml/schemas/2015";
 
                 XDocument doc = XDocument.Load(stream);
+                Console.WriteLine("loaded xml {0}", doc.ToString());
                 var entryElement = doc.Descendants(atom + "entry").FirstOrDefault();
 
                 if (entryElement != null)
                 {
-                    YoutubeNotification notification = new YoutubeNotification
+                    YoutubeNotification notification = new()
                     {
                         Id = entryElement.Element(atom + "id")?.Value,
                         VideoId = entryElement.Element(yt + "videoId")?.Value,
@@ -171,7 +168,7 @@ namespace Hookio.Utils
         }
 
         public bool VerifyToken(string verifyToken) => verifyToken == IDENTIFIER!;
-        public Task<bool> IsNewVideo(string videoId) => _redisDatabase.KeyExistsAsync($"{YT_SENT_VIDEOS}-{videoId}");
+        public Task<long?> IsNewVideo(string videoId) => _redisDatabase.SortedSetRankAsync(YT_SENT_VIDEOS, videoId);
 
         public async Task AddResub(string channelId, ulong time)
         {

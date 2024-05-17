@@ -53,6 +53,7 @@ namespace Hookio.Utils
                         var response = await taskToExecute._httpTask(client);
                         if ((int)response.StatusCode >= 400 && (int)response.StatusCode != 429)
                         {
+                            Console.WriteLine("failed to complete task, dequeuing {0}", priority);
                             _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
                             var data = await response.Content.ReadAsStringAsync();
                             Console.WriteLine(data);
@@ -61,14 +62,18 @@ namespace Hookio.Utils
 
                         if (response.IsSuccessStatusCode && (int)response.StatusCode != 429)
                         {
+                            Console.WriteLine("completed task, dequeuing {0}", priority);
                             // if it succeeded, dequeue
                             taskToExecute._tcs.SetResult(response);
                             _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
                         }
                         UpdateRatelimit(response, priority);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
+                        taskToExecute._tcs.SetException(ex);
+                        Console.WriteLine("Caught exception, dequeued task {0}\nexception: {1}\nstack: {2}", priority, ex.Message, ex.StackTrace);
                         // TODO: logging
                     }
                 }

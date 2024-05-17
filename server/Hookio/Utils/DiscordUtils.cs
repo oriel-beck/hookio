@@ -10,13 +10,13 @@ namespace Hookio.Utils
             return embeds.Select((embed) =>
             {
                 var embedBuilder = new EmbedBuilder()
-                    .WithTitle(templateHandler.Parse(embed.Title))
-                    .WithUrl(templateHandler.Parse(embed.TitleUrl))
-                    .WithDescription(templateHandler.Parse(embed.Description))
-                    .WithImageUrl(templateHandler.Parse(embed.Image))
-                    .WithThumbnailUrl(templateHandler.Parse(embed.Thumbnail))
-                    .WithFooter(builder => builder.WithText(templateHandler.Parse(embed.Footer)).WithIconUrl(templateHandler.Parse(embed.FooterIcon)))
-                    .WithAuthor(builder => builder.WithName(templateHandler.Parse(embed.Author)).WithUrl(templateHandler.Parse(embed.AuthorUrl)).WithIconUrl(templateHandler.Parse(embed.AuthorIcon)))
+                    .WithTitle(templateHandler.Parse(embed.Title ?? ""))
+                    .WithUrl(templateHandler.Parse(embed.TitleUrl ?? ""))
+                    .WithDescription(templateHandler.Parse(embed.Description ?? ""))
+                    .WithImageUrl(templateHandler.Parse(embed.Image ?? ""))
+                    .WithThumbnailUrl(templateHandler.Parse(embed.Thumbnail ?? ""))
+                    .WithFooter(builder => builder.WithText(templateHandler.Parse(embed.Footer ?? "")).WithIconUrl(templateHandler.Parse(embed.FooterIcon ?? "")))
+                    .WithAuthor(builder => builder.WithName(templateHandler.Parse(embed.Author ?? "")).WithUrl(templateHandler.Parse(embed.AuthorUrl ?? "")).WithIconUrl(templateHandler.Parse(embed.AuthorIcon ?? "")))
                     .WithFields(ConvertEntityEmbedFieldToEmbedField(embed.Fields, templateHandler));
                 if (embed.AddTimestamp) embedBuilder.WithCurrentTimestamp();
                 if (embed.Color is not null)
@@ -30,7 +30,7 @@ namespace Hookio.Utils
 
         private static IEnumerable<EmbedFieldBuilder> ConvertEntityEmbedFieldToEmbedField(List<Database.Entities.EmbedField> embedFields, TemplateHandler templateHandler)
         {
-            return embedFields.Select((field) => new EmbedFieldBuilder().WithName(templateHandler.Parse(field.Name)).WithValue(templateHandler.Parse(field.Value)).WithIsInline(field.Inline));
+            return embedFields.Select((field) => new EmbedFieldBuilder().WithName(templateHandler.Parse(field.Name ?? "")).WithValue(templateHandler.Parse(field.Value ?? "")).WithIsInline(field.Inline));
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Hookio.Utils.Interfaces
         public void UpdateVideo(Video video, Channel channel, IDataManager dataManager);
         public string? GetYoutubeChannelId(string url);
         public Task AddResub(string channelId, ulong time);
-        public Task<bool> IsNewVideo(string videoId);
+        public Task<long?> IsNewVideo(string videoId);
 
     }
 }

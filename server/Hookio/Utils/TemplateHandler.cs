@@ -46,26 +46,23 @@ namespace Hookio.Utils
                 {
                     "channel", new()
                     {
-                        { "default", video.Snippet.ChannelTitle },
-                        { "name", video.Snippet.ChannelTitle },
-                        { "url", channel.Snippet.CustomUrl },
-                        { "description", channel.Snippet.Description },
-                        { "subscribersCount", channel.Statistics.SubscriberCount.ToString()! },
-                        { "viewsCount", channel.Statistics.VideoCount.ToString()! },
-                        { "videosCount", channel.Statistics.VideoCount.ToString()! },
-                        { "icon", channel.Snippet.Thumbnails.Default__.Url }
+                        { "default", video.Snippet?.ChannelTitle ?? "" },
+                        { "name", video.Snippet?.ChannelTitle ?? "" },
+                        { "url", channel.Snippet?.CustomUrl is not null ? $"https://www.youtube.com/{channel.Snippet.CustomUrl}" : "" },
+                        { "description", channel.Snippet?.Description ?? "" },
+                        { "icon", channel.Snippet?.Thumbnails?.Default__.Url ?? "" }
                     }
                 },
                 {
                     "video", new()
                     {
                         { "default", $"https://www.youtube.com/watch?v={video.Id}" },
-                        { "title", video.Snippet.Title },
-                        { "description", video.Snippet.Description },
+                        { "title", video.Snippet?.Title ?? ""},
+                        { "description", video.Snippet?.Description ?? ""},
                         { "url", $"https://www.youtube.com/watch?v={video.Id}" },
-                        { "thumbnail", video.Snippet.Thumbnails.Standard.Url },
+                        { "thumbnail", video.Snippet?.Thumbnails?.Standard.Url ?? "" },
                         // TODO: parse this to human readable time
-                        { "duration", video.ContentDetails.Duration },
+                        { "duration", video.ContentDetails?.Duration ?? "" },
                     }
                 }
             });

@@ -1,6 +1,7 @@
 ﻿using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Hookio.Database.Interfaces;
+using Hookio.Utils;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
@@ -37,13 +38,13 @@ namespace Hookio.Controllers
             {
                 var stream = request.Body;
                 var data = await youtubeService.ConvertFromXml(stream);
-                logger.LogInformation("parsed data: {DataString}", GetLogFor(data is null ? new {} : data));
                 if (data == null || data.VideoId == null)
                 {
                     logger.LogInformation("malformed data was recieved, aborting");
                     return Ok();
                 }
-                // TODO: check video publish, if video was published more than 12h ago, skip it.
+                
+                // TODO: check video publish, if video was published more than 1d ago, skip it.
                 var videoListRequest = ytService.Videos.List("snippet, contentDetails");
                 videoListRequest.Id = data.VideoId;
                 var videoList = await videoListRequest.ExecuteAsync();
@@ -51,7 +52,7 @@ namespace Hookio.Controllers
 
                 if (video != null)
                 {
-                    var channelRequest = ytService.Channels.List("snippet, statistics");
+                    var channelRequest = ytService.Channels.List("snippet");
                     channelRequest.Id = video.Snippet.ChannelId;
                     var channelList = await channelRequest.ExecuteAsync();
                     var channel = channelList.Items.FirstOrDefault();
@@ -59,7 +60,7 @@ namespace Hookio.Controllers
                     if (channel != null)
                     {
                         var exists = await youtubeService.IsNewVideo(data.VideoId);
-                        if (!exists)
+                        if (exists == null)
                         {
                             logger.LogInformation("publishing new video for {Channel}, video: {VideoUrl}", channel.Snippet.CustomUrl, data.Link.Href);
                             youtubeService.PublishVideo(video, channel, dataManager);
@@ -100,30 +101,6 @@ namespace Hookio.Controllers
                 };
                 return contentResult;
             }
-        }
-
-        public static string GetLogFor(object target)
-        {
-            var properties =
-                from property in target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                select new
-                {
-                    property.Name,
-                    Value = property.GetValue(target, null)
-                };
-
-            var builder = new StringBuilder();
-
-            foreach (var property in properties)
-            {
-                builder
-                    .Append(property.Name)
-                    .Append(" = ")
-                    .Append(property.Value)
-                    .AppendLine();
-            }
-
-            return builder.ToString();
         }
     }
 }
