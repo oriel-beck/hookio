@@ -1,6 +1,4 @@
-﻿using Hookio.Database;
-using Hookio.Discord.Contracts;
-using Microsoft.EntityFrameworkCore;
+﻿using Hookio.Discord.Contracts;
 
 namespace Hookio.Discord.Interfaces
 {

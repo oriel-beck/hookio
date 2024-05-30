@@ -19,7 +19,7 @@ namespace Hookio.Utils
                     .WithAuthor(builder => builder.WithName(templateHandler.Parse(embed.Author ?? "")).WithUrl(templateHandler.Parse(embed.AuthorUrl ?? "")).WithIconUrl(templateHandler.Parse(embed.AuthorIcon ?? "")))
                     .WithFields(ConvertEntityEmbedFieldToEmbedField(embed.Fields, templateHandler));
                 if (embed.AddTimestamp) embedBuilder.WithCurrentTimestamp();
-                if (embed.Color is not null)
+                if (!string.IsNullOrEmpty(embed.Color))
                 {
                     uint decValue = uint.Parse(embed.Color[1..], NumberStyles.HexNumber);
                     embedBuilder.Color = new Color(decValue);

@@ -27,7 +27,15 @@ namespace Hookio.Database.Interfaces
         public Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request);
         public Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request);
         public Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false);
-        public Task<List<Entities.Subscription>> GetSubscriptions(Video video, EventType eventType);
+        //public Task<List<Entities.Subscription>> GetSubscriptions(Video video, EventType eventType);
+        #endregion
+
+        #region feeds
+        public Task<List<Feed>> GetAllFeeds(CancellationToken cancellationToken, bool includeDeleted = false);
+        public Task<FeedResponse?> GetFeed(string url, bool includeSubscriptions, bool includeTemplateStrings);
+        public Task<FeedResponse?> GetFeed(int id, bool includeSubscriptions, bool includeTemplateStrings);
+        public Task<Feed> CreateFeed(string rssUrl);
+        public Task<Feed?> UpdateFeed(int feedId, Feed feed);
         #endregion
     }
 }

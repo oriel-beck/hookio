@@ -9,7 +9,6 @@ namespace Hookio.Database.Entities
     [PrimaryKey("Id")]
     [Index("GuildId")]
     [Index("SubscriptionType")]
-    [Index("Url")]
     public class Subscription
     {
         [Key]
@@ -22,11 +21,13 @@ namespace Hookio.Database.Entities
         public string WebhookUrl { get; set; }
         [Required]
         [Column(TypeName = "varchar(200)")]
-        public string Url { get; set; }
         public List<Event> Events { get; set; }
         public bool Disabled { get; set; }
         [Column(TypeName = "varchar(1000)")]
         public string? DisabledReason { get; set; }
+        [ForeignKey(nameof(Feed))]
+        public int? FeedId { get; set; }
+        public Feed? Feed { get; set; }
     }
 
 }

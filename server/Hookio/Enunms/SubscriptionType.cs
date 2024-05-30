@@ -2,7 +2,8 @@
 {
     public enum SubscriptionType
     {
-        Youtube = 0,
-        Twitch = 1,
+        Youtube,
+        Twitch,
+        Custom
     }
 }

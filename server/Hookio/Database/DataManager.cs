@@ -1,12 +1,11 @@
-﻿using Google.Apis.YouTube.v3.Data;
-using Hookio.Contracts;
+﻿using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Hookio.Discord.Contracts;
 using Hookio.Discord.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
-using Hookio.Utils.Interfaces;
+using Hookio.Feeds;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,10 +14,17 @@ using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Hookio.Database
 {
-    public class DataManager(ILogger<DataManager> logger, IDbContextFactory<HookioContext> contextFactory, IConnectionMultiplexer connectionMultiplexer, IYoutubeService youtubeService, IDiscordRequestManager discordRequestManager) : IDataManager
+    public partial class DataManager(
+        ILogger<DataManager> logger,
+        IDbContextFactory<HookioContext> contextFactory,
+        IConnectionMultiplexer connectionMultiplexer,
+        IDiscordRequestManager discordRequestManager,
+        IHttpClientFactory httpClientFactory
+        ) : IDataManager
     {
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IDatabase _redisDatabase = connectionMultiplexer.GetDatabase();
@@ -29,7 +35,7 @@ namespace Hookio.Database
 
         public async Task<CurrentUserResponse?> GetUser(ulong userId)
         {
-            var ctx = await contextFactory.CreateDbContextAsync();
+            using var ctx = await contextFactory.CreateDbContextAsync();
             await RevalidateUserAccessToken(userId);
 
             var dbUser = await ctx.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
@@ -43,7 +49,7 @@ namespace Hookio.Database
 
         public async Task<User> CreateUser(DiscordSelfUser user, OAuth2ExchangeResponse token)
         {
-            var ctx = contextFactory.CreateDbContext();
+            using var ctx = contextFactory.CreateDbContext();
             var currentUser = ctx.Users.SingleOrDefault(u => u.Id == user.Id);
             if (currentUser == null)
             {
@@ -70,7 +76,7 @@ namespace Hookio.Database
 
         public async Task<CurrentUserResponse?> Authenticate(HttpContext httpContext, string code)
         {
-            var context = await contextFactory.CreateDbContextAsync();
+            using var context = await contextFactory.CreateDbContextAsync();
             try
             {
                 var result = await discordRequestManager.ExchangeOAuth2Code(code);
@@ -95,7 +101,7 @@ namespace Hookio.Database
 
         public async Task RevalidateUserAccessToken(ulong userId)
         {
-            var ctx = contextFactory.CreateDbContext();
+            using var ctx = contextFactory.CreateDbContext();
             var currentUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (currentUser == null) return;
             if (currentUser.ExpireAt > DateTimeOffset.UtcNow) return;
@@ -206,15 +212,14 @@ namespace Hookio.Database
             {
                 Id = subscription.Id,
                 SubscriptionType = subscription.SubscriptionType,
-                Url = subscription.Url,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
                 GuildId = subscription.GuildId,
             };
         }
 
-        public async Task<Entities.Subscription?> GetSubscription(int id)
+        public async Task<Subscription?> GetSubscription(int id)
         {
-            var ctx = await contextFactory.CreateDbContextAsync();
+            using var ctx = await contextFactory.CreateDbContextAsync();
 
             var subscription = await ctx.Subscriptions
                 .Where(x => x.Id == id)
@@ -235,11 +240,14 @@ namespace Hookio.Database
         // TODO: Maybe add buttons at some point
         public async Task<SubscriptionResponse?> CreateSubscription(ulong guildId, SubscriptionRequest request)
         {
-            string? channelId = null;
+            var rssUrl = request.Url;
+            Feed? feed = null;
             if (request.SubscriptionType == SubscriptionType.Youtube)
             {
-                channelId = youtubeService.GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+                var channelId = GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+                rssUrl = $"https://www.youtube.com/feeds/videos.xml?channel_id={channelId}";
             }
+
             using var context = await contextFactory.CreateDbContextAsync();
             var subscriptionsCount = await context.Subscriptions.Where(x => x.GuildId == guildId).CountAsync();
             if (subscriptionsCount >= 2)
@@ -249,15 +257,20 @@ namespace Hookio.Database
             }
 
             using var transaction = await context.Database.BeginTransactionAsync();
+
+            if (request.SubscriptionType != SubscriptionType.Twitch) feed = await context.Feeds.FirstOrDefaultAsync(f => f.Url == rssUrl) ?? await CreateFeed(rssUrl!);
+            // enable the feed in the case it was disabled before
+            if (feed != null && feed.Disabled) feed.Disabled = false;
+
             int length = 0;
             try
             {
-                var subscription = new Entities.Subscription
+                var subscription = new Subscription
                 {
                     GuildId = guildId,
                     WebhookUrl = request.WebhookUrl,
-                    Url = request.Url,
                     SubscriptionType = request.SubscriptionType,
+                    Feed = feed,
                 };
                 context.Subscriptions.Add(subscription);
 
@@ -289,7 +302,7 @@ namespace Hookio.Database
 
                     foreach (var embedRequest in eventRequest.Value.Message.Embeds)
                     {
-                        var embed = new Entities.Embed
+                        var embed = new Embed
                         {
                             Index = embedRequest.Index,
                             Description = embedRequest.Description,
@@ -312,7 +325,7 @@ namespace Hookio.Database
 
                         foreach (var embedFieldRequest in embedRequest.Fields)
                         {
-                            var embedField = new Entities.EmbedField
+                            var embedField = new EmbedField
                             {
                                 Index = embedFieldRequest.Index,
                                 Name = embedFieldRequest.Name,
@@ -335,12 +348,6 @@ namespace Hookio.Database
 
                 await transaction.CommitAsync();
 
-                if (request.SubscriptionType == SubscriptionType.Youtube)
-                {
-                    await youtubeService.Subscribe(channelId!);
-                }
-
-
                 var newSubscription = await context.Subscriptions
                     .Where(x => x.Id == subscription.Id)
                     .Include(x => x.Events)
@@ -360,14 +367,16 @@ namespace Hookio.Database
 
         public async Task<SubscriptionResponse?> UpdateSubscription(ulong guildId, int id, SubscriptionRequest request)
         {
-            string? channelId = null;
-            string? unsubUrl = null;
+            var rssUrl = request.Url;
             if (request.SubscriptionType == SubscriptionType.Youtube)
             {
-                channelId = youtubeService.GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+                var channelId = GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+                rssUrl = $"https://www.youtube.com/feeds/videos.xml?channel_id={channelId}";
             }
+
             using var context = await contextFactory.CreateDbContextAsync();
             using var transaction = await context.Database.BeginTransactionAsync();
+
             int length = 0;
             try
             {
@@ -375,6 +384,7 @@ namespace Hookio.Database
                 var subscription = await context.Subscriptions.Where(x =>
                         (x.Id == id) &&
                         (x.GuildId == guildId))
+                    .Include(s => s.Feed)
                     .FirstOrDefaultAsync();
 
                 if (subscription == null)
@@ -382,14 +392,17 @@ namespace Hookio.Database
                     return null;
                 }
 
-                if (subscription.Url != request.Url)
-                {
-                    unsubUrl = subscription.Url;
-                }
-
                 if (!string.IsNullOrEmpty(request.WebhookUrl))
                 {
                     subscription.WebhookUrl = request.WebhookUrl;
+                }
+
+                if (request.SubscriptionType != SubscriptionType.Twitch && subscription.Feed != null && rssUrl != subscription.Feed?.Url)
+                {
+                    var feed = await context.Feeds.FirstOrDefaultAsync(f => f.Url == rssUrl) ?? await CreateFeed(rssUrl!);
+                    // enable the feed in the case it was disabled before
+                    if (feed != null && feed.Disabled) feed.Disabled = false;
+                    subscription.Feed = feed;
                 }
 
                 var events = await context.Events
@@ -423,7 +436,7 @@ namespace Hookio.Database
                     currentEvent.Message.WebhookUsername = incomingMessage.Username;
 
                     // Find all embeds that were not provided in this update request, delete them later
-                    List<Entities.Embed> notFoundEmbeds = currentEvent.Message.Embeds.Where(embed => !incomingMessage.Embeds.Any(req => req.Id == embed.Id))
+                    List<Embed> notFoundEmbeds = currentEvent.Message.Embeds.Where(embed => !incomingMessage.Embeds.Any(req => req.Id == embed.Id))
                                           .Select(embed => embed)
                                           .ToList();
 
@@ -436,7 +449,7 @@ namespace Hookio.Database
                         if (currentEmbed is null)
                         {
                             // If there is no embed with this ID, create a new one
-                            var newEmbed = new Entities.Embed
+                            var newEmbed = new Embed
                             {
                                 Index = incomingEmbed.Index,
                                 Author = incomingEmbed.Author,
@@ -484,7 +497,7 @@ namespace Hookio.Database
                         }
 
                         // If there are any fields missing in this update that existed before, delete them.
-                        List<Entities.EmbedField> notFoundFields = (currentEmbed.Fields is null ? [] : currentEmbed.Fields).Where(field => !incomingEmbed.Fields.Any(req => req.Id == field.Id))
+                        List<EmbedField> notFoundFields = (currentEmbed.Fields is null ? [] : currentEmbed.Fields).Where(field => !incomingEmbed.Fields.Any(req => req.Id == field.Id))
                             .Select(field => field)
                             .ToList();
 
@@ -494,7 +507,7 @@ namespace Hookio.Database
 
                             if (currentEmbedField is null)
                             {
-                                var newField = new Entities.EmbedField
+                                var newField = new EmbedField
                                 {
                                     Index = incomingEmbedField.Index,
                                     Name = incomingEmbedField.Name,
@@ -538,19 +551,10 @@ namespace Hookio.Database
 
                 await transaction.CommitAsync();
 
-                if (request.SubscriptionType == SubscriptionType.Youtube && request.Url != subscription.Url)
-                {
-                    // unsub from old
-                    await youtubeService.Subscribe(channelId!, false);
-                    // sub to new
-                    await youtubeService.Subscribe(channelId!);
-                }
-
                 return new SubscriptionResponse
                 {
                     Id = subscription.Id,
                     SubscriptionType = subscription.SubscriptionType,
-                    Url = subscription.Url,
                 };
             }
             catch (Exception)
@@ -562,8 +566,8 @@ namespace Hookio.Database
 
         public async Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false)
         {
-            var ctx = await contextFactory.CreateDbContextAsync();
-            IQueryable<Entities.Subscription> query = ctx.Subscriptions;
+            using var ctx = await contextFactory.CreateDbContextAsync();
+            IQueryable<Subscription> query = ctx.Subscriptions;
             if (provider is not null)
             {
                 query = query.Where(subscription => (subscription.GuildId == guildId) && (subscription.SubscriptionType == provider));
@@ -579,7 +583,6 @@ namespace Hookio.Database
             {
                 Id = subscription.Id,
                 SubscriptionType = subscription.SubscriptionType,
-                Url = subscription.Url,
                 GuildId = guildId,
                 Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
             });
@@ -591,18 +594,79 @@ namespace Hookio.Database
             };
         }
 
-        public async Task<List<Entities.Subscription>> GetSubscriptions(Video video, EventType eventType)
+        // TODO: DeleteSubscription
+        #endregion
+
+        #region feeds
+        public async Task<List<Feed>> GetAllFeeds(CancellationToken cancellationToken, bool includeDisabled = false)
         {
-            var context = await contextFactory.CreateDbContextAsync();
-            return await context.Subscriptions.Where(s => s.Url == $"https://youtube.com/channel/{video.Snippet.ChannelId}")
-                .Include(x => x.Events.Where(e => e.Type == eventType))
-                .ThenInclude(ev => ev.Message)
-                .ThenInclude(m => m.Embeds)
-                .ThenInclude(em => em.Fields)
-                .ToListAsync();
+            using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            return await context.Feeds
+                .Where(x => includeDisabled || x.Disabled == false)
+                .Include(f => f.Subscriptions)
+                .ThenInclude(s => s.Events)
+                .ToListAsync(cancellationToken);
         }
 
-        // TODO: DeleteSubscription
+        public async Task<FeedResponse?> GetFeed(string url, bool includeSubscriptions, bool includeTemplateStrings)
+        {
+            using var context = await contextFactory.CreateDbContextAsync();
+            var query = !includeSubscriptions ? context.Feeds.Where(f => f.Url == url) : context.Feeds.Where(f => f.Url == url)
+                    .Include(f => f.Subscriptions)
+                    .ThenInclude(s => s.Events)
+                    .ThenInclude(e => e.Message)
+                    .ThenInclude(m => m.Embeds)
+                    .ThenInclude(e => e.Fields);
+            var feed = await query.FirstOrDefaultAsync();
+            if (feed == null) return null;
+            if (includeTemplateStrings)
+            {
+                var templateStrings = await FeedUtils.Parse(feed.Url, httpClientFactory.CreateClient());
+                return ToContract(feed, templateStrings.Item1);
+            }
+            return ToContract(feed, []);
+        }
+        public async Task<FeedResponse?> GetFeed(int id, bool includeSubscriptions, bool includeTemplateStrings)
+        {
+            using var context = await contextFactory.CreateDbContextAsync();
+            var query = includeSubscriptions ? context.Feeds.Where(f => f.Id == id) : context.Feeds.Where(f => f.Id == id)
+                    .Include(f => f.Subscriptions)
+                    .ThenInclude(s => s.Events)
+                    .ThenInclude(e => e.Message)
+                    .ThenInclude(m => m.Embeds)
+                    .ThenInclude(e => e.Fields);
+            var feed = await query.FirstOrDefaultAsync();
+            if (feed == null) return null;
+            if (includeTemplateStrings)
+            {
+                var templateStrings = await FeedUtils.Parse(feed.Url, httpClientFactory.CreateClient());
+                return ToContract(feed, templateStrings.Item1);
+            }
+            return ToContract(feed, []);
+
+        }
+        public async Task<Feed> CreateFeed(string rssUrl)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            var feed = new Feed
+            {
+                Url = rssUrl,
+            };
+            await ctx.Feeds.AddAsync(feed);
+            await ctx.SaveChangesAsync();
+            return feed;
+        }
+
+        public async Task<Feed?> UpdateFeed(int feedId, Feed feed)
+        {
+            var ctx = await contextFactory.CreateDbContextAsync();
+            var originalFeed = await ctx.Feeds.FirstOrDefaultAsync(f => f.Id == feedId);
+            if (originalFeed == null) return null;
+            originalFeed.LastPublishedAt = feed.LastPublishedAt;
+            originalFeed.LastId = feed.LastId;
+            await ctx.SaveChangesAsync();
+            return feed;
+        }
         #endregion
 
         #region contracts
@@ -612,7 +676,7 @@ namespace Hookio.Database
             var guilds = res!.Where(guild => (guild!.Permissions & 0x0000000000000020) != 0).Select(guild => new GuildResponse()
             {
                 Id = guild!.Id.ToString(),
-                Name = guild.Name,
+                Name = guild.Name!,
                 Icon = guild.IconUrl,
             });
 
@@ -629,11 +693,10 @@ namespace Hookio.Database
             return currentUser;
         }
 
-        private SubscriptionResponse ToContract(Entities.Subscription subscription)
+        private SubscriptionResponse ToContract(Subscription subscription)
         {
             return new SubscriptionResponse
             {
-                Url = subscription.Url,
                 Id = subscription.Id,
                 SubscriptionType = subscription.SubscriptionType,
                 GuildId = subscription.GuildId,
@@ -653,7 +716,7 @@ namespace Hookio.Database
             };
         }
 
-        private EmbedResponse ToContract(Entities.Embed embed)
+        private EmbedResponse ToContract(Embed embed)
         {
             return new EmbedResponse
             {
@@ -674,7 +737,7 @@ namespace Hookio.Database
             };
         }
 
-        private EmbedFieldResponse ToContract(Entities.EmbedField field)
+        private EmbedFieldResponse ToContract(EmbedField field)
         {
             return new EmbedFieldResponse
             {
@@ -694,6 +757,35 @@ namespace Hookio.Database
                 Message = ToContract(eventEntity.Message),
             };
         }
+
+        private FeedResponse ToContract(Feed feed, List<TemplateStringResponse>? templateStrings)
+        {
+            return new FeedResponse
+            {
+                Subscriptions = feed.Subscriptions.Select(ToContract).ToList(),
+                TemplateStrings = templateStrings ?? [],
+                Url = feed.Url
+            };
+        }
         #endregion
+
+        private static string? GetYoutubeChannelId(string url)
+        {
+            // Match the URL
+            Match match = YoutubeChannelRegex().Match(url);
+
+            // Extract the channel ID
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null; // Return null if no match found
+            }
+        }
+
+        [GeneratedRegex(@"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]+)")]
+        private static partial Regex YoutubeChannelRegex();
     }
 }

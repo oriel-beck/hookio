@@ -5,6 +5,8 @@ using Hookio.Database.Interfaces;
 using Hookio.Discord;
 using Hookio.Discord.Interfaces;
 using Hookio.Extensions;
+using Hookio.Feeds;
+using Hookio.Feeds.Interfaces;
 using Hookio.Utils;
 using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,11 +25,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING")!));
 builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING")));
+builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING")!));
 builder.Services.AddSingleton<ITaskQueue, TaskQueue>();
 builder.Services.AddSingleton<IDiscordRequestManager, DiscordRequestManager>();
-builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
+//builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
+builder.Services.AddSingleton<IFeedsCacheService, FeedsCacheService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
 
 builder.Services.Configure<KestrelServerOptions>(options =>
@@ -40,11 +43,14 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHostedService<RssWatcherService>();
+builder.Services.AddHostedService<RssCleanupService>();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter(policyName: "subscriptions", options =>
     {
-        options.PermitLimit = 3;
+        options.PermitLimit = 5;
         options.Window = TimeSpan.FromSeconds(10);
         options.QueueLimit = 0;
     });
@@ -76,9 +82,7 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
-/*
- * System.AggregateException: 'Some services are not able to be constructed (Error while validating the service descriptor 'ServiceType: Hookio.Discord.Interfaces.IDiscordRequestManager Lifetime: Singleton ImplementationType: Hookio.Discord.DiscordRequestManager': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Hookio.Utils.Interfaces.IYoutubeService Lifetime: Singleton ImplementationType: Hookio.Utils.YoutubeService': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Hookio.Database.Interfaces.IDataManager Lifetime: Singleton ImplementationType: Hookio.Database.DataManager': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler Lifetime: Transient ImplementationType: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.) (Error while validating the service descriptor 'ServiceType: Microsoft.Extensions.Options.IConfigureOptions`1[Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions] Lifetime: Singleton ImplementationType: Hookio.Extensions.ConfigureJwtBearerOptions': Unable to resolve service for type 'StackExchange.Redis.ConnectionMultiplexer' while attempting to activate 'Hookio.Discord.DiscordRequestManager'.)'
- */
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
