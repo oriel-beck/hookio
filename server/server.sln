@@ -3,7 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio", "Hookio\Hookio.csproj", "{6F6C5CDB-F1DA-4BCD-984A-81DEC94DD6CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hookio", "Hookio\Hookio.csproj", "{6F6C5CDB-F1DA-4BCD-984A-81DEC94DD6CE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hookio.Data", "Hookio.Data\Hookio.Data.csproj", "{F9EBFC0B-B1C1-4206-B29C-08C57BF7C97C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hookio.Shared", "Hookio.Shared\Hookio.Shared.csproj", "{FECF0450-6CB1-45EF-B15D-D4B0A960AD9C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hookio.Contracts", "Hookio.Contracts\Hookio.Contracts.csproj", "{2C274090-5B5D-40A5-AA10-813A8EB9A75B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.DataManagers", "Hookio.DataManagers\Hookio.DataManagers.csproj", "{1F7E6022-D67A-4F61-BE1B-4F04E8D482C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +23,22 @@ Global
 		{6F6C5CDB-F1DA-4BCD-984A-81DEC94DD6CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F6C5CDB-F1DA-4BCD-984A-81DEC94DD6CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F6C5CDB-F1DA-4BCD-984A-81DEC94DD6CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9EBFC0B-B1C1-4206-B29C-08C57BF7C97C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9EBFC0B-B1C1-4206-B29C-08C57BF7C97C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9EBFC0B-B1C1-4206-B29C-08C57BF7C97C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9EBFC0B-B1C1-4206-B29C-08C57BF7C97C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FECF0450-6CB1-45EF-B15D-D4B0A960AD9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FECF0450-6CB1-45EF-B15D-D4B0A960AD9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FECF0450-6CB1-45EF-B15D-D4B0A960AD9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FECF0450-6CB1-45EF-B15D-D4B0A960AD9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C274090-5B5D-40A5-AA10-813A8EB9A75B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C274090-5B5D-40A5-AA10-813A8EB9A75B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C274090-5B5D-40A5-AA10-813A8EB9A75B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C274090-5B5D-40A5-AA10-813A8EB9A75B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F7E6022-D67A-4F61-BE1B-4F04E8D482C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F7E6022-D67A-4F61-BE1B-4F04E8D482C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F7E6022-D67A-4F61-BE1B-4F04E8D482C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F7E6022-D67A-4F61-BE1B-4F04E8D482C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,13 @@
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\bin\Debug\net8.0\Hookio.Shared.deps.json
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\bin\Debug\net8.0\Hookio.Shared.dll
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\bin\Debug\net8.0\Hookio.Shared.pdb
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.csproj.AssemblyReference.cache
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.AssemblyInfoInputs.cache
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.AssemblyInfo.cs
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.csproj.CoreCompileInputs.cache
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.sourcelink.json
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.dll
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\refint\Hookio.Shared.dll
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\Hookio.Shared.pdb
+C:\Users\oriel\projects\hookio\server\Hookio.Shared\obj\Debug\net8.0\ref\Hookio.Shared.dll

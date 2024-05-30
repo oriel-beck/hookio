@@ -1,14 +1,14 @@
 using System.Text;
-using Hookio;
 using Hookio.Database;
 using Hookio.Database.Interfaces;
+using Hookio.DataManagers.Utils.Interfaces;
 using Hookio.Discord;
 using Hookio.Discord.Interfaces;
 using Hookio.Extensions;
 using Hookio.Feeds;
 using Hookio.Feeds.Interfaces;
+using Hookio.Shared;
 using Hookio.Utils;
-using Hookio.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -29,7 +29,6 @@ builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(E
 builder.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING")!));
 builder.Services.AddSingleton<ITaskQueue, TaskQueue>();
 builder.Services.AddSingleton<IDiscordRequestManager, DiscordRequestManager>();
-//builder.Services.AddSingleton<IYoutubeService, YoutubeService>();
 builder.Services.AddSingleton<IFeedsCacheService, FeedsCacheService>();
 builder.Services.AddSingleton<IDataManager, DataManager>();
 

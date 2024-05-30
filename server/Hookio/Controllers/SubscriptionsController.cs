@@ -2,7 +2,7 @@
 using Hookio.Database.Interfaces;
 using Hookio.Enunms;
 using Hookio.Exceptions;
-using Hookio.ModelBindings;
+using Hookio.Shared.ModelBindings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
