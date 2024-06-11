@@ -1,4 +1,5 @@
-﻿using Hookio.Contracts;
+﻿using Discord.Rest;
+using Hookio.Contracts;
 using Hookio.Database.Entities;
 using Hookio.Database.Interfaces;
 using Hookio.Discord.Contracts;
@@ -13,7 +14,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -210,13 +213,7 @@ namespace Hookio.Database
                 return null; // Subscription not found
             }
 
-            return new SubscriptionResponse
-            {
-                Id = subscription.Id,
-                SubscriptionType = subscription.SubscriptionType,
-                Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType),
-                GuildId = subscription.GuildId,
-            };
+            return ToContract(subscription);
         }
 
         public async Task<Subscription?> GetSubscription(int id)
@@ -267,12 +264,17 @@ namespace Hookio.Database
             int length = 0;
             try
             {
+                var res = await httpClientFactory.CreateClient().GetAsync(request.WebhookUrl);
+                var webhookData = await res.Content.ReadFromJsonAsync<WebhookInfo>();
+                if (webhookData.ChannelId is null) throw new ValidationException("Webhook Channel ID must exist!");
+
                 var subscription = new Subscription
                 {
                     GuildId = guildId,
-                    WebhookUrl = request.WebhookUrl,
+                    WebhookUrl = request.WebhookUrl!,
                     SubscriptionType = request.SubscriptionType,
                     Feed = feed,
+                    WebhookChannel = (ulong)webhookData.ChannelId
                 };
                 context.Subscriptions.Add(subscription);
 
@@ -296,7 +298,7 @@ namespace Hookio.Database
                         Event = eventEntity, // Set Event navigation property
                     };
                     context.Messages.Add(message);
-                    length += eventRequest.Value.Message.Content.Length;
+                    length += eventRequest.Value.Message.Content?.Length ?? 0;
 
                     eventEntity.Message = message;
 
@@ -343,7 +345,7 @@ namespace Hookio.Database
                 if (length > 6000)
                 {
                     await transaction.RollbackAsync();
-                    throw new EmbedTooLongException("The embeds and content length cannot be longer than 6k characters");
+                    throw new ValidationException("The embeds and content length cannot be longer than 6k characters");
                 }
 
                 await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
@@ -372,7 +374,7 @@ namespace Hookio.Database
             var rssUrl = request.Url;
             if (request.SubscriptionType == SubscriptionType.Youtube)
             {
-                var channelId = GetYoutubeChannelId(request!.Url) ?? throw new Exception("Invalid youtube channel ID");
+                var channelId = GetYoutubeChannelId(request!.Url) ?? throw new ValidationException("Invalid youtube channel ID");
                 rssUrl = $"https://www.youtube.com/feeds/videos.xml?channel_id={channelId}";
             }
 
@@ -405,6 +407,14 @@ namespace Hookio.Database
                     // enable the feed in the case it was disabled before
                     if (feed != null && feed.Disabled) feed.Disabled = false;
                     subscription.Feed = feed;
+                }
+
+                if (request.WebhookUrl != subscription.WebhookUrl)
+                {
+                    var res = await httpClientFactory.CreateClient().GetAsync(request.WebhookUrl);
+                    var webhookData = await res.Content.ReadFromJsonAsync<WebhookInfo>();
+                    if (webhookData.ChannelId is null) throw new ValidationException("Webhook Channel ID must exist!");
+                    subscription.WebhookChannel = (ulong)webhookData.ChannelId;
                 }
 
                 var events = await context.Events
@@ -442,7 +452,7 @@ namespace Hookio.Database
                                           .Select(embed => embed)
                                           .ToList();
 
-                    length += eventRequest.Value.Message.Content.Length;
+                    length += eventRequest.Value.Message.Content?.Length ?? 0;
 
                     foreach (var incomingEmbed in incomingMessage.Embeds)
                     {
@@ -545,18 +555,14 @@ namespace Hookio.Database
                 if (length > 6000)
                 {
                     await transaction.RollbackAsync();
-                    throw new EmbedTooLongException();
+                    throw new ValidationException("The embeds and content length cannot be longer than 6k characters");
                 }
 
                 await context.SaveChangesAsync(); // SaveChangesAsync to generate EmbedFieldIds
 
                 await transaction.CommitAsync();
 
-                return new SubscriptionResponse
-                {
-                    Id = subscription.Id,
-                    SubscriptionType = subscription.SubscriptionType,
-                };
+                return ToContract(subscription);
             }
             catch (Exception)
             {
@@ -568,30 +574,20 @@ namespace Hookio.Database
         public async Task<GuildSubscriptionsResponse> GetSubscriptions(ulong guildId, SubscriptionType? provider, bool withCounts = false)
         {
             using var ctx = await contextFactory.CreateDbContextAsync();
-            IQueryable<Subscription> query = ctx.Subscriptions;
-            if (provider is not null)
-            {
-                query = query.Where(subscription => (subscription.GuildId == guildId) && (subscription.SubscriptionType == provider));
-            }
-            else
-            {
-                query = query.Where(subscription => subscription.GuildId == guildId);
-            }
+            IQueryable<Subscription> query = ctx.Subscriptions
+                .Where(subscription => subscription.GuildId == guildId)
+                // only include the events of the requested providers
+                .Include(x => x.Events.Where(s => provider == null || s.Subscription.SubscriptionType == provider))
+                .ThenInclude(e => e.Message)
+                .ThenInclude(m => m.Embeds)
+                .ThenInclude(e => e.Fields);
 
-            query = query.Include(x => x.Events).ThenInclude(e => e.Message).ThenInclude(m => m.Embeds).ThenInclude(e => e.Fields);
-
-            var subscriptions = (await query.ToListAsync()).Select(subscription => new SubscriptionResponse
-            {
-                Id = subscription.Id,
-                SubscriptionType = subscription.SubscriptionType,
-                GuildId = guildId,
-                Events = subscription.Events.Select(ToContract).ToDictionary(key => key.EventType)
-            });
+            var subscriptions = (await query.ToListAsync()).Select(ToContract);
 
             return new GuildSubscriptionsResponse
             {
-                Count = await ctx.Subscriptions.Where(s => s.GuildId == guildId).CountAsync(),
-                Subscriptions = subscriptions.ToList()
+                Count = subscriptions.Count(),
+                Subscriptions = subscriptions.Where(s => provider is null || s.SubscriptionType == provider).ToList()
             };
         }
 
@@ -701,7 +697,8 @@ namespace Hookio.Database
                 Id = subscription.Id,
                 SubscriptionType = subscription.SubscriptionType,
                 GuildId = subscription.GuildId,
-                Events = subscription.Events.Select(ToContract).ToDictionary(ev => ev.EventType)
+                Events = subscription.Events.Select(ToContract).ToDictionary(ev => ev.EventType),
+                ChannelId = subscription.WebhookChannel
             };
         }
 
@@ -722,6 +719,7 @@ namespace Hookio.Database
             return new EmbedResponse
             {
                 Id = embed.Id,
+                Index = embed.Index,
                 Description = embed.Description,
                 TitleUrl = embed.TitleUrl,
                 Title = embed.Title,
@@ -745,7 +743,8 @@ namespace Hookio.Database
                 Id = field.Id,
                 Name = field.Name,
                 Value = field.Value,
-                Inline = field.Inline
+                Inline = field.Inline,
+                Index = field.Index,
             };
         }
 
@@ -789,7 +788,7 @@ namespace Hookio.Database
         [GeneratedRegex(@"https?:\/\/(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]+)")]
         private static partial Regex YoutubeChannelRegex();
 
-        private static int GetEmbedLength(Database.Entities.Embed embed)
+        private static int GetEmbedLength(Embed embed)
         {
             int num = embed.Title?.Length ?? 0;
             int valueOrDefault = (embed.Author?.Length).GetValueOrDefault();

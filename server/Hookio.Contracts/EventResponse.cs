@@ -4,8 +4,8 @@ namespace Hookio.Contracts
 {
     public class EventResponse
     {
-        public int Id { get; set; }
-        public MessageResponse Message { get; set; }
-        public EventType EventType { get; set; }
+        public required int Id { get; set; }
+        public required MessageResponse Message { get; set; }
+        public required EventType EventType { get; set; }
     }
 }

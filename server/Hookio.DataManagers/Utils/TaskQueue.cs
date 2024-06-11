@@ -32,7 +32,7 @@ namespace Hookio.Utils
                 while (true)
                 {
                     await Task.Delay(1000); // Wait for 1 second
-                    ResetTasksExecutedThisSecond();
+                     ResetTasksExecutedThisSecond();
                 }
             });
         }

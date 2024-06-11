@@ -8,13 +8,13 @@ namespace Hookio.Database.Entities
         [Key]
         public int Id { get; set; }
         [Column(TypeName = "varchar(2000)")]
-        public string Content { get; set; }
-        public List<Embed> Embeds { get; set; }
+        public string? Content { get; set; }
+        public List<Embed> Embeds { get; set; } = default!;
         [Column(TypeName = "varchar(80)")]
         public string? WebhookUsername { get; set; }
         public string? WebhookAvatar { get; set; }
         [ForeignKey(nameof(Event))]
         public int EventId { get; set; }
-        public Event Event { get; set; }
+        public Event Event { get; set; } = default!;
     }
 }

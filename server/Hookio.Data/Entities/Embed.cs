@@ -7,7 +7,7 @@ namespace Hookio.Database.Entities
     {
         [Key]
         public int Id { get; set; }
-        public int Index { get; set; }
+        public required int Index { get; set; }
         [Column(TypeName = "varchar(4096)")]
         public string? Description { get; set; }
         [Column(TypeName = "varchar(256)")]
@@ -26,7 +26,7 @@ namespace Hookio.Database.Entities
         public bool AddTimestamp { get; set; }
         [ForeignKey("Message")]
         public int MessageId { get; set; }
-        public Message Message { get; set; }
-        public List<EmbedField> Fields { get; set; }
+        public Message Message { get; set; } = default!;
+        public List<EmbedField> Fields { get; set; } = default!;
     }
 }

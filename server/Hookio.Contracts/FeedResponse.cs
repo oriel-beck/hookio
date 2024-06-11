@@ -2,8 +2,8 @@
 {
     public class FeedResponse
     {
-        public string Url { get; set; }
-        public List<TemplateStringResponse> TemplateStrings { get; set; }
-        public List<SubscriptionResponse> Subscriptions { get; set; }
+        public required string Url { get; set; }
+        public required List<TemplateStringResponse> TemplateStrings { get; set; }
+        public required List<SubscriptionResponse> Subscriptions { get; set; }
     }
 }

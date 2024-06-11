@@ -2,7 +2,7 @@
 {
     public class GuildSubscriptionsResponse
     {
-        public int Count { get; set; }
-        public List<SubscriptionResponse> Subscriptions { get; set; }
+        public required int Count { get; set; }
+        public required List<SubscriptionResponse> Subscriptions { get; set; }
     }
 }

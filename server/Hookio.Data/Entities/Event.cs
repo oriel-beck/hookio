@@ -8,10 +8,10 @@ namespace Hookio.Database.Entities
     {
         [Key]
         public int Id { get; set; }
-        public EventType Type { get; set; }
-        public Message Message { get; set; }
+        public required EventType Type { get; set; }
+        public Message Message { get; set; } = default!;
         [ForeignKey("Subscription")]
         public int SubscriptionId { get; set; }
-        public Subscription Subscription { get; set; }
+        public Subscription Subscription { get; set; } = default!;
     }
 }

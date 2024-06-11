@@ -2,8 +2,11 @@
 {
     public enum SubscriptionType
     {
-        Youtube,
+        // has a feed
+        Youtube = 1,
+        // has no feed
         Twitch,
+        // has a feed
         Custom
     }
 }

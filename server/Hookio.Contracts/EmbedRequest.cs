@@ -6,7 +6,7 @@ namespace Hookio.Contracts
     {
         public int? Id { get; set; }
         [Required]
-        public int Index { get; set; }
+        public required int Index { get; set; }
         [MaxLength(4096)]
         public string? Description { get; set; }
         public string? TitleUrl { get; set; }
@@ -22,9 +22,9 @@ namespace Hookio.Contracts
         public string? Footer { get; set; }
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }
-        public bool AddTimestamp { get; set; }
+        public required bool AddTimestamp { get; set; }
 
-        public List<EmbedFieldRequest> Fields { get; set; } = [];
+        public required List<EmbedFieldRequest> Fields { get; set; } = [];
         
         //
         // Summary:

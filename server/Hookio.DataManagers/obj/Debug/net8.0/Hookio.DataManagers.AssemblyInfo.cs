@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Hookio.DataManagers")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4c11c26dfa5e07e5e6b806c5fd8674156b611880")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38497ea35f1858c5f9df789e29b7fab132c78685")]
 [assembly: System.Reflection.AssemblyProductAttribute("Hookio.DataManagers")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Hookio.DataManagers")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

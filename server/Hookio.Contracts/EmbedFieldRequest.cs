@@ -6,7 +6,7 @@ namespace Hookio.Contracts
     {
         public int? Id { get; set; }
         [Required]
-        public int Index { get; set; }
+        public required int Index { get; set; }
         [Required]
         [MaxLength(256)]
         public required string Name { get; set; }

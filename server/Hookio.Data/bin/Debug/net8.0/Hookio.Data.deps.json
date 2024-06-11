@@ -9,6 +9,7 @@
       "Hookio.Data/1.0.0": {
         "dependencies": {
           "Hookio.Shared": "1.0.0",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.6",
           "Microsoft.EntityFrameworkCore": "8.0.6",
           "Microsoft.EntityFrameworkCore.Design": "8.0.6",
           "Microsoft.EntityFrameworkCore.Relational": "8.0.6",
@@ -40,66 +41,6 @@
           "lib/net6.0/Discord.Net.Rest.dll": {
             "assemblyVersion": "3.15.0.0",
             "fileVersion": "3.15.0.0"
-          }
-        }
-      },
-      "EFCore.NamingConventions/8.0.3": {
-        "dependencies": {
-          "Microsoft.EntityFrameworkCore": "8.0.6",
-          "Microsoft.EntityFrameworkCore.Relational": "8.0.6",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0"
-        },
-        "runtime": {
-          "lib/net8.0/EFCore.NamingConventions.dll": {
-            "assemblyVersion": "8.0.3.0",
-            "fileVersion": "8.0.3.0"
-          }
-        }
-      },
-      "Google.Apis/1.68.0": {
-        "dependencies": {
-          "Google.Apis.Core": "1.68.0"
-        },
-        "runtime": {
-          "lib/net6.0/Google.Apis.dll": {
-            "assemblyVersion": "1.68.0.0",
-            "fileVersion": "1.68.0.0"
-          }
-        }
-      },
-      "Google.Apis.Auth/1.68.0": {
-        "dependencies": {
-          "Google.Apis": "1.68.0",
-          "Google.Apis.Core": "1.68.0",
-          "System.Management": "7.0.2"
-        },
-        "runtime": {
-          "lib/net6.0/Google.Apis.Auth.dll": {
-            "assemblyVersion": "1.68.0.0",
-            "fileVersion": "1.68.0.0"
-          }
-        }
-      },
-      "Google.Apis.Core/1.68.0": {
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
-        },
-        "runtime": {
-          "lib/net6.0/Google.Apis.Core.dll": {
-            "assemblyVersion": "1.68.0.0",
-            "fileVersion": "1.68.0.0"
-          }
-        }
-      },
-      "Google.Apis.YouTube.v3/1.68.0.3421": {
-        "dependencies": {
-          "Google.Apis": "1.68.0",
-          "Google.Apis.Auth": "1.68.0"
-        },
-        "runtime": {
-          "lib/net6.0/Google.Apis.YouTube.v3.dll": {
-            "assemblyVersion": "1.68.0.3421",
-            "fileVersion": "1.68.0.3421"
           }
         }
       },
@@ -533,7 +474,7 @@
       },
       "Mono.TextTemplating/2.2.1": {
         "dependencies": {
-          "System.CodeDom": "7.0.0"
+          "System.CodeDom": "4.4.0"
         },
         "runtime": {
           "lib/netstandard2.0/Mono.TextTemplating.dll": {
@@ -609,17 +550,6 @@
           }
         }
       },
-      "SimpleFeedReader/1.0.9": {
-        "dependencies": {
-          "System.ServiceModel.Syndication": "4.7.0"
-        },
-        "runtime": {
-          "lib/netstandard2.0/SimpleFeedReader.dll": {
-            "assemblyVersion": "0.0.0.0",
-            "fileVersion": "0.0.0.0"
-          }
-        }
-      },
       "StackExchange.Redis/2.6.122": {
         "dependencies": {
           "Pipelines.Sockets.Unofficial": "2.2.8"
@@ -669,11 +599,11 @@
           }
         }
       },
-      "System.CodeDom/7.0.0": {
+      "System.CodeDom/4.4.0": {
         "runtime": {
-          "lib/net7.0/System.CodeDom.dll": {
-            "assemblyVersion": "7.0.0.0",
-            "fileVersion": "7.0.22.51805"
+          "lib/netstandard2.0/System.CodeDom.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.6.25519.3"
           }
         }
       },
@@ -777,25 +707,6 @@
           }
         }
       },
-      "System.Management/7.0.2": {
-        "dependencies": {
-          "System.CodeDom": "7.0.0"
-        },
-        "runtime": {
-          "lib/net7.0/System.Management.dll": {
-            "assemblyVersion": "7.0.0.2",
-            "fileVersion": "7.0.723.27404"
-          }
-        },
-        "runtimeTargets": {
-          "runtimes/win/lib/net7.0/System.Management.dll": {
-            "rid": "win",
-            "assetType": "runtime",
-            "assemblyVersion": "7.0.0.2",
-            "fileVersion": "7.0.723.27404"
-          }
-        }
-      },
       "System.Memory/4.5.4": {},
       "System.Reflection.Metadata/6.0.1": {
         "dependencies": {
@@ -803,14 +714,6 @@
         }
       },
       "System.Runtime.CompilerServices.Unsafe/6.0.0": {},
-      "System.ServiceModel.Syndication/4.7.0": {
-        "runtime": {
-          "lib/netstandard2.0/System.ServiceModel.Syndication.dll": {
-            "assemblyVersion": "4.0.2.0",
-            "fileVersion": "4.700.19.56404"
-          }
-        }
-      },
       "System.Text.Encoding.CodePages/6.0.0": {
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
@@ -827,12 +730,8 @@
       "Hookio.Shared/1.0.0": {
         "dependencies": {
           "Discord.Net.Rest": "3.15.0",
-          "EFCore.NamingConventions": "8.0.3",
-          "Google.Apis.YouTube.v3": "1.68.0.3421",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.6",
           "NRedisStack": "0.12.0",
           "Newtonsoft.Json": "13.0.3",
-          "SimpleFeedReader": "1.0.9",
           "Swashbuckle.AspNetCore": "6.6.2"
         },
         "runtime": {
@@ -860,41 +759,6 @@
       "sha512": "sha512-s2kZAK79+zUhTThjm5YOKqJs/ry7KSRKQPI8EwbYlme5Qz1ACZYQRPmt0t/yHW4utP/hb2AwCw9fNizpmscalQ==",
       "path": "discord.net.rest/3.15.0",
       "hashPath": "discord.net.rest.3.15.0.nupkg.sha512"
-    },
-    "EFCore.NamingConventions/8.0.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-TdDarM6kyIS2oVIhrs3W+r+xL/76ooFJxIXxfhzsNJQu0pB9VdFZwuyKvKJnhoc7OHYFNTBP08AN37kr4CPc+Q==",
-      "path": "efcore.namingconventions/8.0.3",
-      "hashPath": "efcore.namingconventions.8.0.3.nupkg.sha512"
-    },
-    "Google.Apis/1.68.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-s2MymhdpH+ybZNBeZ2J5uFgFHApBp+QXf9FjZSdM1lk/vx5VqIknJwnaWiuAzXxPrLEkesX0Q+UsiWn39yZ9zw==",
-      "path": "google.apis/1.68.0",
-      "hashPath": "google.apis.1.68.0.nupkg.sha512"
-    },
-    "Google.Apis.Auth/1.68.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-hFx8Qz5bZ4w0hpnn4tSmZaaFpjAMsgVElZ+ZgVLUZ2r9i+AKcoVgwiNfv1pruNS5cCvpXqhKECbruBCfRezPHA==",
-      "path": "google.apis.auth/1.68.0",
-      "hashPath": "google.apis.auth.1.68.0.nupkg.sha512"
-    },
-    "Google.Apis.Core/1.68.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-pAqwa6pfu53UXCR2b7A/PAPXeuVg6L1OFw38WckN27NU2+mf+KTjoEg2YGv/f0UyKxzz7DxF1urOTKg/6dTP9g==",
-      "path": "google.apis.core/1.68.0",
-      "hashPath": "google.apis.core.1.68.0.nupkg.sha512"
-    },
-    "Google.Apis.YouTube.v3/1.68.0.3421": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-ToAWh6fpLCFO3iFLbCfRTY9MJp+gjJwPOF156e5i8FhcuWyAjXweLM3a541LWFB2cm+jfAZD0qKWnttZkU+EKQ==",
-      "path": "google.apis.youtube.v3/1.68.0.3421",
-      "hashPath": "google.apis.youtube.v3.1.68.0.3421.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",
@@ -1162,13 +1026,6 @@
       "path": "pipelines.sockets.unofficial/2.2.8",
       "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
     },
-    "SimpleFeedReader/1.0.9": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-JjuTePuOZs8Nr0nSUBrUqsN8E2dhSTV09NAOh4HD/gun7IJO8RaoFt0KHA2RDBNYeS/H/SPCRX/6N6SpX5mIDw==",
-      "path": "simplefeedreader/1.0.9",
-      "hashPath": "simplefeedreader.1.0.9.nupkg.sha512"
-    },
     "StackExchange.Redis/2.6.122": {
       "type": "package",
       "serviceable": true,
@@ -1204,12 +1061,12 @@
       "path": "swashbuckle.aspnetcore.swaggerui/6.6.2",
       "hashPath": "swashbuckle.aspnetcore.swaggerui.6.6.2.nupkg.sha512"
     },
-    "System.CodeDom/7.0.0": {
+    "System.CodeDom/4.4.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-GLltyqEsE5/3IE+zYRP5sNa1l44qKl9v+bfdMcwg+M9qnQf47wK3H0SUR/T+3N4JEQXF3vV4CSuuo0rsg+nq2A==",
-      "path": "system.codedom/7.0.0",
-      "hashPath": "system.codedom.7.0.0.nupkg.sha512"
+      "sha512": "sha512-2sCCb7doXEwtYAbqzbF/8UAeDRMNmPaQbU2q50Psg1J9KzumyVVCgKQY8s53WIPTufNT0DpSe9QRvVjOzfDWBA==",
+      "path": "system.codedom/4.4.0",
+      "hashPath": "system.codedom.4.4.0.nupkg.sha512"
     },
     "System.Collections.Immutable/6.0.0": {
       "type": "package",
@@ -1288,13 +1145,6 @@
       "path": "system.linq.async/6.0.1",
       "hashPath": "system.linq.async.6.0.1.nupkg.sha512"
     },
-    "System.Management/7.0.2": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-/qEUN91mP/MUQmJnM5y5BdT7ZoPuVrtxnFlbJ8a3kBJGhe2wCzBfnPFtK2wTtEEcf3DMGR9J00GZZfg6HRI6yA==",
-      "path": "system.management/7.0.2",
-      "hashPath": "system.management.7.0.2.nupkg.sha512"
-    },
     "System.Memory/4.5.4": {
       "type": "package",
       "serviceable": true,
@@ -1315,13 +1165,6 @@
       "sha512": "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
       "path": "system.runtime.compilerservices.unsafe/6.0.0",
       "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
-    },
-    "System.ServiceModel.Syndication/4.7.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-uqGE0hFhoE6w7SxBchhR+ebdf4krpnZe3FPdo7skxJZHOqwcGk+cDZ74Yfp3yFD2yl3emHBGAZb6SBsQWEaSkg==",
-      "path": "system.servicemodel.syndication/4.7.0",
-      "hashPath": "system.servicemodel.syndication.4.7.0.nupkg.sha512"
     },
     "System.Text.Encoding.CodePages/6.0.0": {
       "type": "package",

@@ -113,18 +113,6 @@
               "target": "Package",
               "version": "[3.15.0, )"
             },
-            "EFCore.NamingConventions": {
-              "target": "Package",
-              "version": "[8.0.3, )"
-            },
-            "Google.Apis.YouTube.v3": {
-              "target": "Package",
-              "version": "[1.68.0.3421, )"
-            },
-            "Microsoft.AspNetCore.Authentication.JwtBearer": {
-              "target": "Package",
-              "version": "[8.0.6, )"
-            },
             "NRedisStack": {
               "target": "Package",
               "version": "[0.12.0, )"
@@ -132,10 +120,6 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
-            },
-            "SimpleFeedReader": {
-              "target": "Package",
-              "version": "[1.0.9, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

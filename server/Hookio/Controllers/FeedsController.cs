@@ -14,7 +14,7 @@ namespace Hookio.Controllers
         /// <param name="url"></param>
         /// <returns code="200">Valid RSS feed was provided</returns>
         /// <returns code="400">Invalid RSS feed or Invalid URL was provided</returns>
-        [HttpGet("{url}")]
+        [HttpGet("[action]/{url}")]
         public async Task<ActionResult<List<TemplateStringResponse>>> GetTemplateStrings(string url)
         {
             var isUrl = url.StartsWith("http") && Uri.TryCreate(url, UriKind.Absolute, out var _);

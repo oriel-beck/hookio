@@ -8,17 +8,17 @@ namespace Hookio.Database.Entities
         [Key]
         public int Id { get; set; }
         [Required]
-        public int Index { get; set; }
+        public required int Index { get; set; }
         [Required]
         [Column(TypeName = "varchar(256)")]
-        public string Name { get; set; }
+        public required string Name { get; set; }
         [Required]
         [Column(TypeName = "varchar(1024)")]
-        public string Value { get; set; }
+        public required string Value { get; set; }
         [Required]
         public bool Inline { get; set; }
         [ForeignKey("Embed")]
         public int EmbedId { get; set; }
-        public Embed Embed { get; set; }
+        public Embed Embed { get; set; } = default!;
     }
 }

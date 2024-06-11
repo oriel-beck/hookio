@@ -1,3 +1,9 @@
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.csproj.AssemblyReference.cache
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.AssemblyInfoInputs.cache
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.AssemblyInfo.cs
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.csproj.CoreCompileInputs.cache
+C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.sourcelink.json
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.DataManagers.deps.json
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.DataManagers.dll
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.DataManagers.pdb
@@ -7,12 +13,6 @@ C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hooki
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.Contracts.pdb
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.Data.pdb
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\bin\Debug\net8.0\Hookio.Shared.pdb
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.csproj.AssemblyReference.cache
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.AssemblyInfoInputs.cache
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.AssemblyInfo.cs
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.csproj.CoreCompileInputs.cache
-C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.sourcelink.json
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.D.CAECF167.Up2Date
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\Hookio.DataManagers.dll
 C:\Users\oriel\projects\hookio\server\Hookio.DataManagers\obj\Debug\net8.0\refint\Hookio.DataManagers.dll

@@ -2,10 +2,10 @@
 {
     public class EmbedFieldResponse
     {
-        public int Index { get; set; }
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Value { get; set; }
+        public required int Index { get; set; }
+        public required int Id { get; set; }
+        public required string Name { get; set; }
+        public required string Value { get; set; }
         public bool Inline { get; set; }
     }
 }

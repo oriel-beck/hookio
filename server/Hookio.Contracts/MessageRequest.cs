@@ -6,7 +6,7 @@ namespace Hookio.Contracts
     {
         public int? Id { get; set; }
         [MaxLength(2000)]
-        public string Content { get; set; } = string.Empty;
+        public string? Content { get; set; } = string.Empty;
         public EmbedRequest[] Embeds { get; set; } = [];
         public string? Username { get; set; }
         public string? Avatar { get; set; }

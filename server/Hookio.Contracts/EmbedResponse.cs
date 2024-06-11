@@ -2,8 +2,8 @@
 {
     public class EmbedResponse
     {
-        public int Id { get; set; }
-        public int Index { get; set; }
+        public required int Id { get; set; }
+        public required int Index { get; set; }
         public string? Description { get; set; }
         public string? TitleUrl { get; set; }
         public string? Title { get; set; }
@@ -15,7 +15,7 @@
         public string? Footer { get; set; }
         public string? FooterIcon { get; set; }
         public string? Thumbnail { get; set; }
-        public bool AddTimestamp { get; set; }
-        public List<EmbedFieldResponse> Fields { get; set; } = [];
+        public required bool AddTimestamp { get; set; }
+        public required List<EmbedFieldResponse> Fields { get; set; } = [];
     }
 }

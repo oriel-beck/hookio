@@ -15,7 +15,7 @@ namespace Hookio.Controllers
         /// <returns code="200">The current user</returns>
         /// <returns code="401">You are not authorized</returns>
         [Authorize]
-        [HttpGet("current")]
+        [HttpGet("[action]")]
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser()
         {
             var idClaim = HttpContext.User.Claims.First(claim => claim.Type == "id");
@@ -27,7 +27,7 @@ namespace Hookio.Controllers
         /// Logs out the current user
         /// </summary>
         /// <returns></returns>
-        [HttpPost("logout")]
+        [HttpPost("[action]")]
         public IActionResult LogOut()
         {
             HttpContext.Response.Cookies.Append("Authorization", "", new()
@@ -44,8 +44,8 @@ namespace Hookio.Controllers
         /// </summary>
         /// <param name="code"></param>
         /// <returns>Current user</returns>
-        [HttpPost("authenticate/{code}")]
-        public async Task<ActionResult<CurrentUserResponse?>> Authenticate(string code) =>
+        [HttpPost("[action]")]
+        public async Task<ActionResult<CurrentUserResponse?>> Authenticate([FromQuery] string code) =>
             Ok(await dataManager.Authenticate(HttpContext, code));
     }
 }

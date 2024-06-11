@@ -6,9 +6,9 @@ namespace Hookio.Database.Entities
     {
         [Key]
         public int Id { get; set; }
-        public string Url { get; set; }
+        public required string Url { get; set; }
         public bool Disabled { get; set; }
-        public List<Subscription> Subscriptions { get; set; }
+        public List<Subscription> Subscriptions { get; set; } = default!;
         public DateTime? LastPublishedAt { get; set; }
         public string? LastId { get; set; }
     }

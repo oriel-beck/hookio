@@ -23,7 +23,7 @@ namespace Hookio.Extensions
                 {
                     OnMessageReceived = context =>
                     {
-                        context.Token = context.Request.Cookies["Authorization"];
+                        context.Token = context.Request.Cookies["Authorization"] ?? context.Request.Headers.FirstOrDefault(h => h.Key == "Authorization").Value;
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = async context =>
