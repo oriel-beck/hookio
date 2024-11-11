@@ -1,0 +1,6 @@
+@Hookio_HostAddress = http://localhost:5010
+
+GET {{Hookio_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

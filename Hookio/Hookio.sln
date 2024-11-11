@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34714.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio", "Hookio.csproj", "{DAEBA7F0-C055-4570-ADE8-A24812E1605E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Data", "..\Hookio.Data\Hookio.Data.csproj", "{597CED54-CAF7-457C-BED7-1F40C184A45A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.DataManagers", "..\Hookio.DataManagers\Hookio.DataManagers.csproj", "{87A0DBF0-D22E-4038-841F-2C2B3A08AAF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Shared", "..\Hookio.Shared\Hookio.Shared.csproj", "{B02B05EB-FCB8-474B-953D-4F4443FB9AB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Contracts", "..\Hookio.Contracts\Hookio.Contracts.csproj", "{5746A971-7661-493C-9BCC-1E1DA3EFBF4A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAEBA7F0-C055-4570-ADE8-A24812E1605E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAEBA7F0-C055-4570-ADE8-A24812E1605E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAEBA7F0-C055-4570-ADE8-A24812E1605E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAEBA7F0-C055-4570-ADE8-A24812E1605E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{597CED54-CAF7-457C-BED7-1F40C184A45A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{597CED54-CAF7-457C-BED7-1F40C184A45A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{597CED54-CAF7-457C-BED7-1F40C184A45A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{597CED54-CAF7-457C-BED7-1F40C184A45A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87A0DBF0-D22E-4038-841F-2C2B3A08AAF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87A0DBF0-D22E-4038-841F-2C2B3A08AAF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87A0DBF0-D22E-4038-841F-2C2B3A08AAF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87A0DBF0-D22E-4038-841F-2C2B3A08AAF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B02B05EB-FCB8-474B-953D-4F4443FB9AB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B02B05EB-FCB8-474B-953D-4F4443FB9AB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B02B05EB-FCB8-474B-953D-4F4443FB9AB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B02B05EB-FCB8-474B-953D-4F4443FB9AB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5746A971-7661-493C-9BCC-1E1DA3EFBF4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5746A971-7661-493C-9BCC-1E1DA3EFBF4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5746A971-7661-493C-9BCC-1E1DA3EFBF4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5746A971-7661-493C-9BCC-1E1DA3EFBF4A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5F68CA4F-1BD4-44E4-95F9-E0FBF655E0C8}
+	EndGlobalSection
+EndGlobal
