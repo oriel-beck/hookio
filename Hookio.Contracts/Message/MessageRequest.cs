@@ -4,9 +4,9 @@ namespace Hookio.Contracts.Message
 {
     public class MessageRequest
     {
-        public required int SubscriptionId { get; set; }
+        public int? Id { get; set; } = null;
 
-        public string? Content { get; set; }
+        public string? Content { get; set; } = string.Empty;
 
         public IEnumerable<EmbedRequest> Embeds { get; set; } = [];
 
@@ -14,7 +14,7 @@ namespace Hookio.Contracts.Message
         {
             get
             {
-                return Content != null || (Embeds.Any() && Embeds.All(e => e.IsValid));
+                return string.IsNullOrEmpty(Content) || (Embeds.Any() && Embeds.All(e => e.IsValid));
             }
         }
     }

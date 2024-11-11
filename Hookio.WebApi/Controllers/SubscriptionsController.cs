@@ -11,9 +11,9 @@ namespace Hookio.Controllers
     {
         private readonly ISubscriptionManager _dataManager = subscriptionManager;
         [HttpPost("{guildId}")]
-        public async Task<ActionResult<SubscriptionResponse?>> CreateSubscription(ulong guildId, SubscriptionRequest request)
+        public async Task<ActionResult<SubscriptionResponse?>> CreateSubscription(ulong guildId, SubscriptionRequest request, CancellationToken cancellationToken)
         {
-            var result = await _dataManager.Create(guildId, request);
+            var result = await _dataManager.Create(guildId, request, cancellationToken);
             if (result == null)
             {
                 return StatusCode(500, new GeneralError(500, "Unknown error, failed to create subscription"));
@@ -22,23 +22,23 @@ namespace Hookio.Controllers
         }
 
         [HttpGet("{guildId}")]
-        public async Task<ActionResult<IEnumerable<SubscriptionResponse>>> GetSubscriptions(ulong guildId, [FromQuery] SubscriptionFilter filter) =>
-            Ok(await _dataManager.Get(guildId, filter));
+        public async Task<ActionResult<IEnumerable<SubscriptionResponse>>> GetSubscriptions(ulong guildId, [FromQuery] SubscriptionFilter filter, CancellationToken cancellationToken) =>
+            Ok(await _dataManager.Get(guildId, filter, cancellationToken));
 
         [HttpGet("{guildId}/{subscriptionId:int}")]
-        public async Task<ActionResult<SubscriptionResponse?>> GetSubscription(ulong guildId, int subscriptionId)
+        public async Task<ActionResult<SubscriptionResponse?>> GetSubscription(ulong guildId, int subscriptionId, CancellationToken cancellationToken)
         {
-            var result = await _dataManager.Get(guildId, subscriptionId);
+            var result = await _dataManager.Get(guildId, subscriptionId, cancellationToken);
             if (result == null) return NotFound(new GeneralError(404, $"Cannot find subscription {subscriptionId} in guild {guildId}"));
             return Ok(result);
         }
 
         [HttpPatch("{guildId}/{subscriptionId:int}")]
-        public async Task<ActionResult<SubscriptionResponse?>> UpdateSubscription(ulong guildId, int subscriptionId, SubscriptionRequest request)
+        public async Task<ActionResult<SubscriptionResponse?>> PatchSubscription(ulong guildId, int subscriptionId, SubscriptionPatch patch, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _dataManager.Update(guildId, subscriptionId, request);
+                var result = await _dataManager.Patch(guildId, subscriptionId, patch, cancellationToken);
                 if (result == null) return NotFound(new GeneralError(404, $"Failed to patch subscription {subscriptionId}"));
                 return Ok(result);
             }
