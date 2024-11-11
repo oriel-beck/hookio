@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Contracts", "Hookio.Contracts\Hookio.Contracts.csproj", "{3CDB9793-69FB-4224-A27D-D2044DFB9536}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Data", "Hookio.Data\Hookio.Data.csproj", "{88C03B5C-6F34-4068-9DA6-F8F2C9686A19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.DataManagers", "Hookio.DataManagers\Hookio.DataManagers.csproj", "{081BE935-FCCF-4FDB-8B30-1D3AF630B8B2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.Shared", "Hookio.Shared\Hookio.Shared.csproj", "{31649A8C-A9DB-477C-9B88-6283BA7298C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hookio.WebApi", "Hookio.WebApi\Hookio.WebApi.csproj", "{68910DFF-4561-47E9-9898-25A641F3C50A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3CDB9793-69FB-4224-A27D-D2044DFB9536}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CDB9793-69FB-4224-A27D-D2044DFB9536}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CDB9793-69FB-4224-A27D-D2044DFB9536}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CDB9793-69FB-4224-A27D-D2044DFB9536}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88C03B5C-6F34-4068-9DA6-F8F2C9686A19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88C03B5C-6F34-4068-9DA6-F8F2C9686A19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88C03B5C-6F34-4068-9DA6-F8F2C9686A19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88C03B5C-6F34-4068-9DA6-F8F2C9686A19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{081BE935-FCCF-4FDB-8B30-1D3AF630B8B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{081BE935-FCCF-4FDB-8B30-1D3AF630B8B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{081BE935-FCCF-4FDB-8B30-1D3AF630B8B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{081BE935-FCCF-4FDB-8B30-1D3AF630B8B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31649A8C-A9DB-477C-9B88-6283BA7298C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31649A8C-A9DB-477C-9B88-6283BA7298C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31649A8C-A9DB-477C-9B88-6283BA7298C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31649A8C-A9DB-477C-9B88-6283BA7298C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68910DFF-4561-47E9-9898-25A641F3C50A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68910DFF-4561-47E9-9898-25A641F3C50A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68910DFF-4561-47E9-9898-25A641F3C50A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68910DFF-4561-47E9-9898-25A641F3C50A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
