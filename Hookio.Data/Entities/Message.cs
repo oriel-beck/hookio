@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hookio.Contracts.Embed;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,8 +13,7 @@ namespace Hookio.Data.Entities
 
         public string? Content { get; set; }
 
-        // Stringified JSON of an embed
-        public string? Embed {  get; set; }
+        public IEnumerable<EmbedRequest>? Embeds { get; set; } = [];
 
         [ForeignKey(nameof(Subscription))]
         public required int SubscriptionId { get; set; }
