@@ -10,6 +10,7 @@ namespace Hookio.Controllers
     public class SubscriptionsController(ISubscriptionManager subscriptionManager) : ControllerBase
     {
         private readonly ISubscriptionManager _dataManager = subscriptionManager;
+        
         [HttpPost("{guildId}")]
         public async Task<ActionResult<SubscriptionResponse?>> CreateSubscription(ulong guildId, SubscriptionRequest request, CancellationToken cancellationToken)
         {
