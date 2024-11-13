@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="User\" />
+    <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
+    <Folder Include="User\" />
   </ItemGroup>
 
 </Project>

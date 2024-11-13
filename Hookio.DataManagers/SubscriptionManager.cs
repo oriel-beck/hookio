@@ -20,7 +20,7 @@ namespace Hookio.DataManagers
             var validWebhook = TestAndParseWebhookUrl(request.WebhookUrl, out var webhookId, out var webhookToken);
             if (!validWebhook) throw new ValidationException("Invalid webhook URL");
 
-            var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
             Webhook webhook;
 
             await ctx.AddAsync(webhook = new() 
@@ -45,7 +45,7 @@ namespace Hookio.DataManagers
 
         public async Task<IEnumerable<SubscriptionResponse?>> Get(ulong guildId, SubscriptionFilter request, CancellationToken cancellationToken)
         {
-            var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
             var res = await ctx.Subscriptions.Where(x => x.GuildId == guildId).ToListAsync(cancellationToken);
 
@@ -54,7 +54,7 @@ namespace Hookio.DataManagers
 
         public async Task<SubscriptionResponse?> Get(ulong guildId, int subscriptionId, CancellationToken cancellationToken)
         {
-            var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
             var res = await ctx.Subscriptions.FirstOrDefaultAsync(x => x.GuildId == guildId && x.Id == subscriptionId, cancellationToken);
 
@@ -63,7 +63,7 @@ namespace Hookio.DataManagers
 
         public async Task<SubscriptionResponse?> Patch(ulong guildId, int subscriptionId, SubscriptionPatch patch, CancellationToken cancellationToken)
         {
-            var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
             var res = await ctx.Subscriptions
                 .Include(x => x.Messages)

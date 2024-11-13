@@ -7,5 +7,6 @@ namespace Hookio.Shared.Configuration
         public required string ClientSecret { get; set; }
         public required string RedirectURI { get; set; }
         public required string Scopes { get; set; }
+        public required string BaseURI { get; set; }
     }
 }
