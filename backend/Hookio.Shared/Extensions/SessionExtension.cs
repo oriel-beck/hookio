@@ -21,18 +21,23 @@ namespace Hookio.Shared.Extensions
             var jsonString = session.GetString(key);
             if (jsonString == null) return default;
 
-            var item = JsonConvert.DeserializeObject<dynamic>(jsonString);
+            var item = JsonConvert.DeserializeObject<SessionItem<T>>(jsonString);
             if (item == null) return default;
 
             // Check for expiry
-            if (item.Expiry != null && DateTime.UtcNow > item.Expiry)
+            if (item.Expiry.HasValue && DateTime.UtcNow > (DateTime)item.Expiry)
             {
                 session.Remove(key);
                 return default;
             }
 
-            return JsonConvert.DeserializeObject<T>(item.Value.ToString());
+            return item.Value;
+        }
+
+        private class SessionItem<T>
+        {
+            public required T Value { get; set; }
+            public DateTime? Expiry { get; set; }
         }
     }
-
 }

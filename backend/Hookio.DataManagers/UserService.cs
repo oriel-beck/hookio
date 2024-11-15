@@ -86,6 +86,7 @@ namespace Hookio.DataManagers
             if (accessToken == null)
             {
                 var refreshToken = session.GetWithExpiry<string>("refreshToken");
+                if (refreshToken == null) return;
                 var response = await RefreshToken(refreshToken!, cancellationToken);
                 accessToken = response!.AccessToken;
                 session.SetWithExpiry("accessToken", accessToken, TimeSpan.FromSeconds(response.ExpiresIn));

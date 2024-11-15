@@ -9,7 +9,7 @@ namespace Hookio.Data
         {
             var optionsBuilder = new DbContextOptionsBuilder<HookioContext>();
             // replace this with whatever connection string you need to run, then remove this
-            optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=very_secure_password;");
+            optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=very_secure_pass;");
             return new HookioContext(optionsBuilder.Options);
         }
     }

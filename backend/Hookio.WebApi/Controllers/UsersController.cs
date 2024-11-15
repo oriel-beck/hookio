@@ -39,14 +39,14 @@ namespace Hookio.Controllers
         [HttpPost("[action]")]
         public async Task<ActionResult> Authenticate([FromQuery] string code, [FromQuery] string state, CancellationToken cancellationToken)
         {
-            if (state != HttpContext.Session.GetString("State")) return Redirect(_oauth2Options.BaseURI);
+            if (state != HttpContext.Session.GetWithExpiry<string>("State")) return Redirect(_oauth2Options.BaseURI);
             try
             {
                 var result = await _userService.Authenticate(code, cancellationToken);
                 if (result == null) return Redirect(_oauth2Options.BaseURI);
 
                 var user = await _userService.GetRestUser(result.AccessToken, cancellationToken);
-                if (user == null) return Redirect(_oauth2Options.BaseURI)
+                if (user == null) return Redirect(_oauth2Options.BaseURI);
 
                 List<Claim> claims = new() 
                 {
@@ -67,6 +67,7 @@ namespace Hookio.Controllers
                         authProperties
                     );
 
+                HttpContext.Session.SetWithExpiry("accessToken", result.AccessToken, TimeSpan.FromSeconds(result.ExpiresIn));
                 await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);
 
                 return Redirect($"{_oauth2Options.BaseURI}/guilds");
