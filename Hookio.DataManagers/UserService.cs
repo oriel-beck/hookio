@@ -45,23 +45,43 @@ namespace Hookio.DataManagers
         public async Task<List<RestUserGuild>> GetUserGuilds(User user, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            if (user == null) return [];
-            if (user.ExpireAt < DateTimeOffset.UtcNow)
-            {
-                await RefreshToken(user, cancellationToken);
-                user = (await ctx.Users.FirstOrDefaultAsync(x => x.Id == user.Id, cancellationToken))!;
-            }
-            await _discordClient.LoginAsync(TokenType.Bearer, user!.AccessToken);
+            // if the token is expired, refresh then try
+            var accessToken = await GetUserToken(user, cancellationToken);
+
+            await _discordClient.LoginAsync(TokenType.Bearer, accessToken);
             var guilds = await _discordClient.GetGuildSummariesAsync(new() { CancelToken = cancellationToken }).FlattenAsync();
             await _discordClient.LogoutAsync();
+
             if (guilds == null) return [];
             return guilds.Where(x => x.IsOwner || x.Permissions.Has(GuildPermission.Administrator) || x.Permissions.Has(GuildPermission.ManageGuild)).ToList();
+        }
+
+        public async Task<RestSelfUser?> GetRestUser(User user, CancellationToken cancellationToken)
+        {
+            var accessToken = await GetUserToken(user, cancellationToken);
+
+            await _discordClient.LoginAsync(TokenType.Bearer, accessToken);
+            var discordUser = await _discordClient.GetCurrentUserAsync(new() { CancelToken = cancellationToken });
+            await _discordClient.LogoutAsync();
+
+            return discordUser;
         }
 
         public async Task<User?> GetUser(ulong id, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            return await ctx.Users.FirstOrDefaultAsync(x => x.Id == id);
+            return await ctx.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
+        }
+
+        private async Task<string> GetUserToken(User user, CancellationToken cancellationToken)
+        {
+            if (user.ExpireAt < DateTimeOffset.UtcNow)
+            {
+                using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+                await RefreshToken(user, cancellationToken);
+                user = (await ctx.Users.FirstOrDefaultAsync(x => x.Id == user.Id, cancellationToken))!;
+            }
+            return user.AccessToken;
         }
 
         private async Task<RestSelfUser> SaveUser(OAuth2Response response, CancellationToken cancellationToken)

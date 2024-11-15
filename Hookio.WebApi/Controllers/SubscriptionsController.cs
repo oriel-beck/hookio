@@ -1,10 +1,12 @@
 ﻿using Hookio.Contracts.Subscription;
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hookio.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SubscriptionsController(ISubscriptionManager subscriptionManager) : ControllerBase

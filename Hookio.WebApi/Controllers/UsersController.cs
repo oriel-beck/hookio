@@ -1,7 +1,11 @@
-﻿using Hookio.DataManagers.Interfaces;
+﻿using Hookio.Contracts.User;
+using Hookio.Data.Entities;
+using Hookio.DataManagers;
+using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
@@ -19,6 +23,10 @@ namespace Hookio.Controllers
     {
         private readonly IUserService _userService = userService;
         private readonly OAuth2 _oauth2Options = oauth2Options.Value;
+        
+        // this only exists under Authorize attributed functions
+        private User? CurrentUser => HttpContext.Items["User"] as User;
+
         private Dictionary<string, string> QueryParamsDict => new() 
         {
             { "response_type", "code" },
@@ -78,11 +86,21 @@ namespace Hookio.Controllers
             return Redirect($"https://discord.com/oauth2/authorize?{QueryParams}&state={token}&access_type=offline&prompt=none");
         }
 
+        [Authorize]
         [HttpGet("[action]")]
         public async Task<ActionResult> LogOut()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Redirect(_oauth2Options.BaseURI);
+        }
+
+        [Authorize]
+        [HttpGet("[action]")]
+        public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser(CancellationToken cancellationToken)
+        {
+            var discordUser = await _userService.GetRestUser(CurrentUser!, cancellationToken);
+            var guilds = await _userService.GetUserGuilds(CurrentUser!, cancellationToken);
+            return Ok(Contractor.ToContract(discordUser!, guilds));
         }
     }
 }
