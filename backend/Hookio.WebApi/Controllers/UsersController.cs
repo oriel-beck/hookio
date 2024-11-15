@@ -1,8 +1,9 @@
-﻿using Hookio.Contracts.User;
-using Hookio.Data.Entities;
+﻿using Discord.Rest;
+using Hookio.Contracts.User;
 using Hookio.DataManagers;
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Configuration;
+using Hookio.Shared.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -24,9 +25,6 @@ namespace Hookio.Controllers
         private readonly IUserService _userService = userService;
         private readonly OAuth2 _oauth2Options = oauth2Options.Value;
         
-        // this only exists under Authorize attributed functions
-        private User? CurrentUser => HttpContext.Items["User"] as User;
-
         private Dictionary<string, string> QueryParamsDict => new() 
         {
             { "response_type", "code" },
@@ -47,9 +45,12 @@ namespace Hookio.Controllers
                 var result = await _userService.Authenticate(code, cancellationToken);
                 if (result == null) return Redirect(_oauth2Options.BaseURI);
 
+                var user = await _userService.GetRestUser(result.AccessToken, cancellationToken);
+                if (user == null) return Redirect(_oauth2Options.BaseURI)
+
                 List<Claim> claims = new() 
                 {
-                    { new Claim("Id", result.Id.ToString()) },
+                    { new Claim("Id", user.Id.ToString()) },
                 };
 
                 ClaimsIdentity identity = new(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -65,6 +66,8 @@ namespace Hookio.Controllers
                         new ClaimsPrincipal(identity),
                         authProperties
                     );
+
+                await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);
 
                 return Redirect($"{_oauth2Options.BaseURI}/guilds");
             }
@@ -82,7 +85,7 @@ namespace Hookio.Controllers
             rng.GetBytes(tokenData);
 
             string token = Convert.ToBase64String(tokenData);
-            HttpContext.Session.SetString("State", token);
+            HttpContext.Session.SetWithExpiry("State", token, TimeSpan.FromMinutes(5));
             return Redirect($"https://discord.com/oauth2/authorize?{QueryParams}&state={token}&access_type=offline&prompt=none");
         }
 
@@ -90,7 +93,14 @@ namespace Hookio.Controllers
         [HttpGet("[action]")]
         public async Task<ActionResult> LogOut()
         {
+            HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            Response.Cookies.Append(".Hookio.Session", string.Empty, new CookieOptions
+            {
+                Expires = DateTime.UtcNow.AddDays(-1), // Expire immediately
+                HttpOnly = true,
+                Secure = true,
+            });
             return Redirect(_oauth2Options.BaseURI);
         }
 
@@ -98,8 +108,9 @@ namespace Hookio.Controllers
         [HttpGet("[action]")]
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser(CancellationToken cancellationToken)
         {
-            var discordUser = await _userService.GetRestUser(CurrentUser!, cancellationToken);
-            var guilds = await _userService.GetUserGuilds(CurrentUser!, cancellationToken);
+            await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);
+            var discordUser = HttpContext.Session.GetWithExpiry<RestSelfUser>("user");
+            var guilds = HttpContext.Session.GetWithExpiry<List<RestUserGuild>>("guilds");
             return Ok(Contractor.ToContract(discordUser!, guilds));
         }
     }

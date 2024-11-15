@@ -1,3 +1,4 @@
+using Community.Microsoft.Extensions.Caching.PostgreSql;
 using Discord.Rest;
 using Hookio.Data;
 using Hookio.DataManagers;
@@ -33,11 +34,19 @@ builder.Services.AddHttpClient("OAuth2", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Hookio v0");
 });
 
+// set up sql server cache
+builder.Services.AddDistributedPostgreSqlCache(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("HookioContext");
+    options.SchemaName = "dbo";
+    options.TableName = "SessionCache";
+});
+
 // Session data (guilds, user info, etc)
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = ".Hookio.Session";
-    options.IdleTimeout = TimeSpan.FromSeconds(30);
+    options.IdleTimeout = TimeSpan.FromHours(24);
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
 });
@@ -61,15 +70,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Custom middlewares
-app.UseExtractUser();
-
 // Built in middlewares
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 app.UseSession();
 app.UseCookiePolicy();
+
+// Custom middlewars
+app.UseSessionRefresh();
 
 app.MapControllers();
 

@@ -8,7 +8,8 @@ namespace Hookio.Data
         public HookioContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<HookioContext>();
-            optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("PG_CONNECTION_STRING") ?? "Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=admin;");
+            // replace this with whatever connection string you need to run, then remove this
+            optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=hookio;Port=5432;User Id=postgres;Password=very_secure_password;");
             return new HookioContext(optionsBuilder.Options);
         }
     }

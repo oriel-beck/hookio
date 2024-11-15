@@ -1,13 +1,14 @@
 ﻿using Discord.Rest;
 using Hookio.Contracts.Discord;
 using Hookio.Data;
-using Hookio.Data.Entities;
 using Hookio.Shared.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 using Discord;
 using Hookio.DataManagers.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Hookio.Shared.Extensions;
 
 namespace Hookio.DataManagers
 {
@@ -23,7 +24,7 @@ namespace Hookio.DataManagers
         private readonly OAuth2 _oauth2Options = oauth2Options.Value;
         private readonly IDbContextFactory<HookioContext> _contextFactory = contextFactory;
 
-        public async Task<RestSelfUser?> Authenticate(string code, CancellationToken cancellationToken)
+        public async Task<OAuth2Response?> Authenticate(string code, CancellationToken cancellationToken)
         {
             using HttpClient httpClient = _httpClientFactory.CreateClient("OAuth2");
             List<KeyValuePair<string, string>> formData = new()
@@ -38,15 +39,12 @@ namespace Hookio.DataManagers
             FormUrlEncodedContent content = new(formData);
             HttpResponseMessage result = await httpClient.PostAsync("/api/v10/oauth2/token", content, cancellationToken);
             OAuth2Response? response = await result.Content.ReadFromJsonAsync<OAuth2Response>(cancellationToken);
-            if (response == null) return null;
-            return await SaveUser(response, cancellationToken);
+            return response;
         }
 
-        public async Task<List<RestUserGuild>> GetUserGuilds(User user, CancellationToken cancellationToken)
+        public async Task<List<RestUserGuild>> GetUserGuilds(string accessToken, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            // if the token is expired, refresh then try
-            var accessToken = await GetUserToken(user, cancellationToken);
 
             await _discordClient.LoginAsync(TokenType.Bearer, accessToken);
             var guilds = await _discordClient.GetGuildSummariesAsync(new() { CancelToken = cancellationToken }).FlattenAsync();
@@ -56,10 +54,8 @@ namespace Hookio.DataManagers
             return guilds.Where(x => x.IsOwner || x.Permissions.Has(GuildPermission.Administrator) || x.Permissions.Has(GuildPermission.ManageGuild)).ToList();
         }
 
-        public async Task<RestSelfUser?> GetRestUser(User user, CancellationToken cancellationToken)
+        public async Task<RestSelfUser?> GetRestUser(string accessToken, CancellationToken cancellationToken)
         {
-            var accessToken = await GetUserToken(user, cancellationToken);
-
             await _discordClient.LoginAsync(TokenType.Bearer, accessToken);
             var discordUser = await _discordClient.GetCurrentUserAsync(new() { CancelToken = cancellationToken });
             await _discordClient.LogoutAsync();
@@ -67,68 +63,50 @@ namespace Hookio.DataManagers
             return discordUser;
         }
 
-        public async Task<User?> GetUser(ulong id, CancellationToken cancellationToken)
-        {
-            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            return await ctx.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
-        }
-
-        private async Task<string> GetUserToken(User user, CancellationToken cancellationToken)
-        {
-            if (user.ExpireAt < DateTimeOffset.UtcNow)
-            {
-                using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-                await RefreshToken(user, cancellationToken);
-                user = (await ctx.Users.FirstOrDefaultAsync(x => x.Id == user.Id, cancellationToken))!;
-            }
-            return user.AccessToken;
-        }
-
-        private async Task<RestSelfUser> SaveUser(OAuth2Response response, CancellationToken cancellationToken)
-        {
-            await _discordClient.LoginAsync(TokenType.Bearer, response.AccessToken);
-            RestSelfUser currentUser = await _discordClient.GetCurrentUserAsync(new() { CancelToken = cancellationToken });
-
-            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-
-            var existingUser = await ctx.Users.FirstOrDefaultAsync(x => x.Id == currentUser.Id, cancellationToken);
-            if (existingUser != null)
-            {
-                existingUser.AccessToken = response.AccessToken;
-                existingUser.RefreshToken = response.RefreshToken;
-                existingUser.ExpireAt = DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn);
-            }
-            else
-            {
-                await ctx.Users.AddAsync(new()
-                {
-                    AccessToken = response.AccessToken,
-                    RefreshToken = response.RefreshToken,
-                    ExpireAt = DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn),
-                    Id = currentUser.Id
-                }, cancellationToken);
-            }
-
-            await ctx.SaveChangesAsync(cancellationToken);
-            await _discordClient.LogoutAsync();
-            return currentUser;
-        }
-
-        private async Task<RestSelfUser?> RefreshToken(User user, CancellationToken cancellationToken)
+        public async Task<OAuth2Response?> RefreshToken(string refreshToken, CancellationToken cancellationToken)
         {
             using HttpClient httpClient = _httpClientFactory.CreateClient("OAuth2");
             List<KeyValuePair<string, string>> formData = new()
             {
                 { new("grant_type", "refresh_token") },
-                { new("refresh_token", user.RefreshToken) },
+                { new("refresh_token", refreshToken) },
                 { new("client_id", _oauth2Options.ClientId) },
                 { new("client_secret", _oauth2Options.ClientSecret) },
             };
             FormUrlEncodedContent content = new(formData);
             HttpResponseMessage result = await httpClient.PostAsync("/api/v10/oauth2/token", content, cancellationToken);
             OAuth2Response? response = await result.Content.ReadFromJsonAsync<OAuth2Response>(cancellationToken);
-            if (response == null) return null;
-            return await SaveUser(response, cancellationToken);
+            return response;
+        }
+
+        public async Task ValidateSessionData(ISession session, CancellationToken cancellationToken)
+        {
+            // validate if access token cache is valid
+            var accessToken = session.GetWithExpiry<string>("accessToken");
+            if (accessToken == null)
+            {
+                var refreshToken = session.GetWithExpiry<string>("refreshToken");
+                var response = await RefreshToken(refreshToken!, cancellationToken);
+                accessToken = response!.AccessToken;
+                session.SetWithExpiry("accessToken", accessToken, TimeSpan.FromSeconds(response.ExpiresIn));
+                session.SetWithExpiry("refreshToken", response!.RefreshToken, null);
+            }
+
+            // validate if user cache is valid
+            var user = session.GetWithExpiry<RestSelfUser>("user");
+            if (user == null)
+            {
+                user = await GetRestUser(accessToken, cancellationToken);
+                session.SetWithExpiry("user", user, TimeSpan.FromHours(1));
+            }
+
+            // validate if guilds cache is valid
+            var guilds = session.GetWithExpiry<List<RestUserGuild>>("guilds");
+            if (guilds == null)
+            {
+                guilds = await GetUserGuilds(accessToken, cancellationToken);
+                session.SetWithExpiry("guilds", guilds, TimeSpan.FromMinutes(5));
+            }
         }
     }
 }
