@@ -1,7 +1,10 @@
 ﻿using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Web;
 
@@ -28,13 +31,33 @@ namespace Hookio.Controllers
             .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={HttpUtility.UrlEncode(pair.Value)}"));
 
         [HttpPost("[action]")]
-        public async Task<IActionResult> Authenticate([FromQuery] string code, [FromQuery] string state, CancellationToken cancellationToken)
+        public async Task<ActionResult> Authenticate([FromQuery] string code, [FromQuery] string state, CancellationToken cancellationToken)
         {
             if (state != HttpContext.Session.GetString("State")) return Redirect(_oauth2Options.BaseURI);
             try
             {
                 var result = await _userService.Authenticate(code, cancellationToken);
                 if (result == null) return Redirect(_oauth2Options.BaseURI);
+
+                List<Claim> claims = new() 
+                {
+                    { new Claim("Id", result.Id.ToString()) },
+                };
+
+                ClaimsIdentity identity = new(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var authProperties = new AuthenticationProperties
+                {
+                    AllowRefresh = true,
+                    IssuedUtc = DateTime.UtcNow
+                };
+
+                await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(identity),
+                        authProperties
+                    );
+
                 return Redirect($"{_oauth2Options.BaseURI}/guilds");
             }
             catch (Exception)
@@ -44,7 +67,7 @@ namespace Hookio.Controllers
         }
 
         [HttpGet("[action]")] 
-        public IActionResult Login()
+        public ActionResult Login()
         {
             using RandomNumberGenerator rng = RandomNumberGenerator.Create();
             byte[] tokenData = new byte[32];
@@ -53,6 +76,13 @@ namespace Hookio.Controllers
             string token = Convert.ToBase64String(tokenData);
             HttpContext.Session.SetString("State", token);
             return Redirect($"https://discord.com/oauth2/authorize?{QueryParams}&state={token}&access_type=offline&prompt=none");
+        }
+
+        [HttpGet("[action]")]
+        public async Task<ActionResult> LogOut()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Redirect(_oauth2Options.BaseURI);
         }
     }
 }

@@ -42,21 +42,26 @@ namespace Hookio.DataManagers
             return await SaveUser(response, cancellationToken);
         }
 
-        public async Task<List<RestUserGuild>> GetUserGuilds(ulong userId, CancellationToken cancellationToken)
+        public async Task<List<RestUserGuild>> GetUserGuilds(User user, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            var user = await ctx.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
             if (user == null) return [];
             if (user.ExpireAt < DateTimeOffset.UtcNow)
             {
                 await RefreshToken(user, cancellationToken);
-                user = await ctx.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+                user = (await ctx.Users.FirstOrDefaultAsync(x => x.Id == user.Id, cancellationToken))!;
             }
             await _discordClient.LoginAsync(TokenType.Bearer, user!.AccessToken);
             var guilds = await _discordClient.GetGuildSummariesAsync(new() { CancelToken = cancellationToken }).FlattenAsync();
             await _discordClient.LogoutAsync();
             if (guilds == null) return [];
             return guilds.Where(x => x.IsOwner || x.Permissions.Has(GuildPermission.Administrator) || x.Permissions.Has(GuildPermission.ManageGuild)).ToList();
+        }
+
+        public async Task<User?> GetUser(ulong id, CancellationToken cancellationToken)
+        {
+            using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            return await ctx.Users.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         private async Task<RestSelfUser> SaveUser(OAuth2Response response, CancellationToken cancellationToken)

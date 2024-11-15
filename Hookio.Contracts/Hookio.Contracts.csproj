@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
+	<PackageReference Include="Discord.Net.Rest" Version="3.16.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="User\" />
+    <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
   </ItemGroup>
 
 </Project>
