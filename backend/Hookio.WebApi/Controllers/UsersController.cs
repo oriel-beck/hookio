@@ -1,4 +1,5 @@
 ﻿using Discord.Rest;
+using Hookio.Contracts.Discord;
 using Hookio.Contracts.User;
 using Hookio.DataManagers;
 using Hookio.DataManagers.Interfaces;
@@ -110,8 +111,8 @@ namespace Hookio.Controllers
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser(CancellationToken cancellationToken)
         {
             await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);
-            var discordUser = HttpContext.Session.GetWithExpiry<RestSelfUser>("user");
-            var guilds = HttpContext.Session.GetWithExpiry<List<RestUserGuild>>("guilds");
+            var discordUser = HttpContext.Session.GetWithExpiry<DiscordUser>("user");
+            var guilds = HttpContext.Session.GetWithExpiry<List<DiscordGuild>>("guilds");
             return Ok(Contractor.ToContract(discordUser!, guilds));
         }
     }

@@ -35,11 +35,22 @@ builder.Services.AddHttpClient("OAuth2", client =>
 });
 
 // set up sql server cache
-builder.Services.AddDistributedPostgreSqlCache(options =>
+//builder.Services.AddDistributedPostgreSqlCache(options =>
+//{
+//    options.ConnectionString = builder.Configuration.GetConnectionString("HookioContext");
+//    options.SchemaName = "dbo";
+//    options.TableName = "SessionCache";
+//});
+
+builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.ConnectionString = builder.Configuration.GetConnectionString("HookioContext");
-    options.SchemaName = "dbo";
-    options.TableName = "SessionCache";
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "hookio_session";
+    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions()
+    {
+        AbortOnConnectFail = true,
+        EndPoints = { options.Configuration! }
+    };
 });
 
 // Session data (guilds, user info, etc)

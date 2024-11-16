@@ -1,10 +1,10 @@
-﻿using Discord.Rest;
+﻿using Hookio.Contracts.Discord;
 
 namespace Hookio.Contracts.User
 {
     public class CurrentUserResponse
     {
-        public required RestSelfUser User { get; set; }
-        public required IEnumerable<RestUserGuild> Guilds { get; set; }
+        public required DiscordUser User { get; set; }
+        public required IEnumerable<DiscordGuild> Guilds { get; set; }
     }
 }

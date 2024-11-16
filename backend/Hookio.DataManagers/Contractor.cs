@@ -1,4 +1,5 @@
 ﻿using Discord.Rest;
+using Hookio.Contracts.Discord;
 using Hookio.Contracts.Message;
 using Hookio.Contracts.Subscription;
 using Hookio.Contracts.User;
@@ -30,12 +31,11 @@ namespace Hookio.DataManagers
                 Type = message.Type
             };
 
-        public static CurrentUserResponse ToContract(RestSelfUser discordUser, List<RestUserGuild>? guilds) =>
+        public static CurrentUserResponse ToContract(DiscordUser discordUser, List<DiscordGuild>? guilds) =>
             new()
             {
                 Guilds = guilds ?? [],
-                User = discordUser,
+                User = discordUser
             };
-
     }
 }

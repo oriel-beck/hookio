@@ -93,22 +93,39 @@ namespace Hookio.DataManagers
                 session.SetWithExpiry("refreshToken", response!.RefreshToken, null);
             }
 
-            // TODO: Discord.Net.Rest classes cannot be used to deserialize, only serialize. Use a custom class to take required attributes
-
             // validate if user cache is valid
-            var user = session.GetWithExpiry<RestSelfUser>("user");
+            var user = session.GetWithExpiry<DiscordUser>("user");
             if (user == null)
             {
-                user = await GetRestUser(accessToken, cancellationToken);
-                session.SetWithExpiry("user", user, TimeSpan.FromHours(1));
+                var discordUser = await GetRestUser(accessToken, cancellationToken);
+                if (discordUser != null)
+                {
+                    user = new()
+                    {
+                        Id = discordUser.Id,
+                        Username = discordUser.Username,
+                        GlobalName = discordUser.GlobalName,
+                        AvatarUrl = discordUser.GetDisplayAvatarUrl()
+                    };
+                    session.SetWithExpiry("user", user, TimeSpan.FromHours(1));
+                }
             }
 
             // validate if guilds cache is valid
-            var guilds = session.GetWithExpiry<List<RestUserGuild>>("guilds");
+            var guilds = session.GetWithExpiry<List<DiscordGuild>>("guilds");
             if (guilds == null)
             {
-                guilds = await GetUserGuilds(accessToken, cancellationToken);
-                session.SetWithExpiry("guilds", guilds, TimeSpan.FromMinutes(5));
+                var discordGuilds = await GetUserGuilds(accessToken, cancellationToken);
+                if (discordGuilds != null)
+                {
+                    guilds = discordGuilds.Select(g => new DiscordGuild()
+                    {
+                        Id = g.Id,
+                        Name = g.Name,
+                        IconUrl = g.IconUrl,
+                    }).ToList();
+                    session.SetWithExpiry("guilds", guilds, TimeSpan.FromMinutes(5));
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Hookio.Contracts.Embed;
 using Hookio.Shared.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Contracts.Message
 {
@@ -7,6 +8,7 @@ namespace Hookio.Contracts.Message
     {
         public int? Id { get; set; } = null;
 
+        [MaxLength(2048)]
         public string? Content { get; set; } = string.Empty;
 
         public IEnumerable<EmbedRequest> Embeds { get; set; } = [];
@@ -19,7 +21,8 @@ namespace Hookio.Contracts.Message
         {
             get
             {
-                return string.IsNullOrEmpty(Content) || (Embeds.Any() && Embeds.All(e => e.IsValid));
+                // only valid if message action is deleteMessage (which ignores content and embeds) or message content is not empty or null and if there are any embeds they are all valid
+                return Action == MessageAction.DeleteMessage || (!string.IsNullOrEmpty(Content) && ((Embeds.Any() && Embeds.All(e => e.IsValid)) || !Embeds.Any()));
             }
         }
     }
