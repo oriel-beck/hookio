@@ -5,6 +5,21 @@ export enum SubscriptionType {
     Twitch
 }
 
+export enum MessageAction {
+    CreateMessage = 1,
+    UpdateMessage,
+    DeleteMessage
+}
+
+export enum MessageType {
+    YouTubeVideoCreated = 1,
+    YouTubeVideoUpdated,
+    YouTubeVideoDeleted,
+    TwitchStreamStarted,
+    TwitchStreamUpdated,
+    TwitchStreamEnded,
+}
+
 export type Subscription = z.TypeOf<typeof subscription>;
 
 export const footer = z.object({
@@ -47,8 +62,10 @@ export const embed = z.object({
 
 export const message = z.object({
     id: z.number(),
-    content: z.string().optional(),
-    embeds: z.array(embed)
+    content: z.string().max(2048).optional(),
+    embeds: z.array(embed),
+    action: z.nativeEnum(MessageAction).optional(),
+    type: z.nativeEnum(MessageType)
 });
 
 export const subscription = z.object({
