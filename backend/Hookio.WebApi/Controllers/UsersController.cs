@@ -37,7 +37,7 @@ namespace Hookio.Controllers
             .Where(pair => !string.IsNullOrEmpty(pair.Key) && !string.IsNullOrEmpty(pair.Value))
             .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={HttpUtility.UrlEncode(pair.Value)}"));
 
-        [HttpPost("[action]")]
+        [HttpGet("[action]")]
         public async Task<ActionResult> Authenticate([FromQuery] string code, [FromQuery] string state, CancellationToken cancellationToken)
         {
             if (state != HttpContext.Session.GetWithExpiry<string>("State")) return Redirect(_oauth2Options.BaseURI);
