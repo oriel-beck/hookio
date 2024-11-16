@@ -1,7 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpService } from '../http/http.service';
-import { Subscription } from '../../schemas/subscription.schema';
-import { Observable } from 'rxjs';
+import { subscription, Subscription } from '../../schemas/subscription.schema';
+import { map, Observable } from 'rxjs';
+
+// validate that real subscriptions are returned and parse their data
+const validateSubscription = (sub: Subscription) => subscription.parse(sub);
+const validateSubscriptions = (subs: Subscription[]) => subs.map(validateSubscription);
 
 @Injectable({
   providedIn: 'root'
@@ -13,15 +17,15 @@ export class SubscriptionService {
   public getSubscriptions(guildId: bigint): Observable<Subscription[]>;
   public getSubscriptions(guildId: bigint, subscriptionId?: number): Observable<Subscription | Subscription[]> {
     if (subscriptionId) return this.httpService.get<Subscription>(`/api/subscriptions/${guildId}/${subscriptionId}`);
-    return this.httpService.get<Subscription[]>(`/api/subscriptions/${guildId}`);
+    return this.httpService.get<Subscription[]>(`/api/subscriptions/${guildId}`).pipe(map(validateSubscriptions));
   }
 
   public createSubscription(guildId: bigint, data: Omit<Subscription, 'id'>) {
-    return this.httpService.post<Subscription | null>(`/api/subscriptions/${guildId}`, data);
+    return this.httpService.post<Subscription>(`/api/subscriptions/${guildId}`, data).pipe(map(validateSubscription));
   }
 
   public patchSubscription(guildId: bigint, subscriptionId: number, data: Partial<Subscription>) {
-    return this.httpService.patch<Subscription | null>(`/api/subscriptions/${guildId}/${subscriptionId}`, data);
+    return this.httpService.patch<Subscription>(`/api/subscriptions/${guildId}/${subscriptionId}`, data).pipe(map(validateSubscription));
   }
 
   public deletesubscription(guildId: bigint, subscriptionId: number) {

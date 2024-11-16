@@ -1,5 +1,4 @@
-﻿using Discord.Rest;
-using Hookio.Contracts.Discord;
+﻿using Hookio.Contracts.Discord;
 using Hookio.Contracts.User;
 using Hookio.DataManagers;
 using Hookio.DataManagers.Interfaces;

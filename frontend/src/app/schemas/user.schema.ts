@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export type User = z.TypeOf<typeof userData>;
+
 export const guild = z.object({
   id: z.bigint(),
   name: z.string(),
