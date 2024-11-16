@@ -25,7 +25,9 @@ namespace Hookio.DataManagers
             {
                 Content = message.Content,
                 Id = message.Id,
-                Embeds = message.Embeds ?? []
+                Embeds = message.Embeds ?? [],
+                Action = message.Action,
+                Type = message.Type
             };
 
         public static CurrentUserResponse ToContract(RestSelfUser discordUser, List<RestUserGuild>? guilds) =>

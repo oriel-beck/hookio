@@ -93,6 +93,8 @@ namespace Hookio.DataManagers
                 session.SetWithExpiry("refreshToken", response!.RefreshToken, null);
             }
 
+            // TODO: Discord.Net.Rest classes cannot be used to deserialize, only serialize. Use a custom class to take required attributes
+
             // validate if user cache is valid
             var user = session.GetWithExpiry<RestSelfUser>("user");
             if (user == null)

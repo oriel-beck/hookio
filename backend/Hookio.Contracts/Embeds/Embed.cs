@@ -1,6 +1,7 @@
 ﻿using Hookio.Shared;
 using System.ComponentModel.DataAnnotations;
 
+// TODO: URL Validation attribute
 namespace Hookio.Contracts.Embed
 {
     public class EmbedRequest

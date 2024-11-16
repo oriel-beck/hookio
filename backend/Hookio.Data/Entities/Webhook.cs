@@ -8,5 +8,7 @@ namespace Hookio.Data.Entities
         public required ulong Id { get; set; }
 
         public required string Token { get; set; }
+
+        public IEnumerable<Subscription> Subscriptions { get; set; }
     }
 }
