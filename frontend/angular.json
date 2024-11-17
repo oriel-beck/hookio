@@ -12,7 +12,7 @@
       },
       "root": "",
       "sourceRoot": "src",
-      "prefix": "app",
+      "prefix": "hookio",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",

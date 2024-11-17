@@ -122,7 +122,7 @@ namespace Hookio.DataManagers
                     {
                         Id = g.Id,
                         Name = g.Name,
-                        IconUrl = g.IconUrl,
+                        IconUrl = g.IconUrl?.Replace("2048", "128"),
                     }).ToList();
                     session.SetWithExpiry("guilds", guilds, TimeSpan.FromMinutes(5));
                 }

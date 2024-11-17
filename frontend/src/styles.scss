@@ -1,1 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
+@import 'primeng/resources/themes/md-dark-indigo/theme.css';
+@import 'primeng/resources/primeng.css';
+// @import 'primeicons/primeicons.css';
+
+* {
+    font-family: 'Open Sans', Arial, sans-serif;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+}
+
+.header-popup {
+    width: 90px;
+}

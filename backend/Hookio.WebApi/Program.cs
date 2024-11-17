@@ -34,14 +34,6 @@ builder.Services.AddHttpClient("OAuth2", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Hookio v0");
 });
 
-// set up sql server cache
-//builder.Services.AddDistributedPostgreSqlCache(options =>
-//{
-//    options.ConnectionString = builder.Configuration.GetConnectionString("HookioContext");
-//    options.SchemaName = "dbo";
-//    options.TableName = "SessionCache";
-//});
-
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
@@ -60,8 +52,8 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromHours(24);
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
-
 
 // Auth cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -70,6 +62,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(12);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+        };
     });
 
 var app = builder.Build();

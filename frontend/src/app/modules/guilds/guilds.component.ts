@@ -1,12 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { UserService } from '../../services/user/user.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-guilds',
+  selector: 'hookio-guilds',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './guilds.component.html',
   styleUrl: './guilds.component.scss'
 })
 export class GuildsComponent {
+  private readonly userService = inject(UserService);
 
+  user = this.userService.user;
 }

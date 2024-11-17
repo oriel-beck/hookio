@@ -70,7 +70,7 @@ namespace Hookio.Controllers
                 HttpContext.Session.SetWithExpiry("accessToken", result.AccessToken, TimeSpan.FromSeconds(result.ExpiresIn));
                 await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);
 
-                return Redirect($"{_oauth2Options.BaseURI}/guilds");
+                return Redirect($"{_oauth2Options.BaseURI}/servers");
             }
             catch (Exception)
             {

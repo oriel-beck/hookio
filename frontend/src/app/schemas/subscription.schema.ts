@@ -24,7 +24,7 @@ export type Subscription = z.TypeOf<typeof subscription>;
 
 export const footer = z.object({
     text: z.string().max(256),
-    iconUrl: z.string().url().optional()
+    iconUrl: z.optional(z.string().url())
 });
 
 export const image = z.object({
@@ -32,13 +32,13 @@ export const image = z.object({
 });
 
 export const thumbnail = z.object({
-    url: z.string().optional()
+    url: z.optional(z.string())
 });
 
 export const author = z.object({
     name: z.string().max(256),
-    url: z.string().url().optional(),
-    iconUrl: z.string().url().optional()
+    url: z.optional(z.string().url()),
+    iconUrl: z.optional(z.string().url())
 });
 
 export const field = z.object({
@@ -48,23 +48,23 @@ export const field = z.object({
 })
 
 export const embed = z.object({
-    title: z.string().max(250).optional(),
-    description: z.string().max(4096).optional(),
-    url: z.string().url().optional(),
-    timestamp: z.date().optional(),
-    color: z.number().positive().optional(),
-    footer: footer.optional(),
-    image: image.optional(),
-    thumbnail: thumbnail.optional(),
-    author: author.optional(),
+    title: z.optional(z.string().max(250)),
+    description: z.optional(z.string().max(4096)),
+    url: z.optional(z.string().url()),
+    timestamp: z.optional(z.date()),
+    color: z.optional(z.number().positive()),
+    footer: z.optional(footer),
+    image: z.optional(image),
+    thumbnail: z.optional(thumbnail),
+    author: z.optional(author),
     fields: z.array(field)
 })
 
 export const message = z.object({
     id: z.number(),
-    content: z.string().max(2048).optional(),
+    content: z.optional(z.string().max(2048)),
     embeds: z.array(embed),
-    action: z.nativeEnum(MessageAction).optional(),
+    action: z.optional(z.nativeEnum(MessageAction)),
     type: z.nativeEnum(MessageType)
 });
 
@@ -72,6 +72,6 @@ export const subscription = z.object({
     id: z.number(),
     guildId: z.bigint(),
     subscriptionType: z.nativeEnum(SubscriptionType),
-    source: z.string().optional(),
+    source: z.optional(z.string()),
     messages: z.array(message)
 });

@@ -1,0 +1,30 @@
+<p-toolbar>
+  <div class="p-toolbar-group-start">
+    <a routerLink="/">
+      <h1>Hookio</h1>
+    </a>
+  </div>
+  <div class="p-toolbar-group-end">
+    @if (user()) {
+    <p-menu [popup]="true" [model]="items" appendTo="body" styleClass="header-popup" #popup />
+    @if (user()?.user?.avatarUrl) {
+    <p-avatar
+      buttonify
+      [image]="user()?.user?.avatarUrl!"
+      size="large"
+      shape="circle"
+      (clicked)="popup.toggle($event)"
+    />
+    } @else {
+    <p-avatar
+      buttonify
+      size="large"
+      shape="circle"
+      [label]="label()"
+      (clicked)="popup.toggle($event)"
+    />
+    } } @else {
+    <p-button label="Login" (onClick)="login()" />
+    }
+  </div>
+</p-toolbar>

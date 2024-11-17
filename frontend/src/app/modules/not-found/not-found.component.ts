@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-not-found',
+  selector: 'hookio-not-found',
   standalone: true,
   imports: [],
   templateUrl: './not-found.component.html',
