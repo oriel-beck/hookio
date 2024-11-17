@@ -1,4 +1,3 @@
-using Community.Microsoft.Extensions.Caching.PostgreSql;
 using Discord.Rest;
 using Hookio.Data;
 using Hookio.DataManagers;
