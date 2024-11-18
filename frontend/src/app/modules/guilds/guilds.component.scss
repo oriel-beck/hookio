@@ -1,0 +1,30 @@
+:host {
+  .guilds {
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background-color: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid lightgray;
+      h2 {
+        padding: 0;
+        margin: 0;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    .list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem 1.5rem;
+    }
+  }
+}

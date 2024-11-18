@@ -1,1 +1,14 @@
-<h1>Guilds page is working!</h1>
+<div role="region" class="guilds">
+  <div class="header">
+    <h2>Select a server to continue</h2>
+  </div>
+  <div role="list" class="list">
+    @for (guild of user()?.guilds || []; track $index) {
+    <hookio-guild-icon
+      role="listitem"
+      [guild]="guild"
+      (clicked)="navigateToGuildDashboard(guild.id)"
+    />
+    }
+  </div>
+</div>

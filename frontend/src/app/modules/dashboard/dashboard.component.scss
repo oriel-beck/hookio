@@ -1,0 +1,46 @@
+:host {
+  .pi-youtube {
+    color: #ff0000;
+  }
+
+  .pi-twitch {
+    color: #6441a5;
+  }
+
+  .youtube,
+  .twitch,
+  .total {
+    &:is(span) {
+      margin-left: 0.5rem;
+      font-weight: 550;
+    }
+  }
+
+  .stats {
+    padding: 1rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    div {
+      border-radius: 16px;
+      ::ng-deep .p-card-header {
+        padding-inline: 0.5rem;
+        padding-top: 0.5rem;
+      }
+    }
+  }
+
+  .recent-actions {
+    padding-inline: 1rem;
+  }
+
+  ::ng-deep .p-card-header,
+  .platform {
+    display: flex;
+    align-items: center;
+  }
+
+  a {
+    color: white;
+  }
+}

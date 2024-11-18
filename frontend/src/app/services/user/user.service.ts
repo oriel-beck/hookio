@@ -1,7 +1,8 @@
-import {  inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { HttpService } from '../http/http.service';
 import { User, userData } from '../../schemas/user.schema';
-import {  finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, shareReplay, tap, throwError } from 'rxjs';
+import { CookieService } from 'ngx-cookie-service';
 
 const validateUser = (user: User) => userData.parse(user);
 
@@ -10,6 +11,7 @@ const validateUser = (user: User) => userData.parse(user);
 })
 export class UserService {
   private readonly httpService = inject(HttpService);
+  private readonly cookieService = inject(CookieService);
 
   readonly user = signal<User | undefined>(undefined);
   private fetchingUser$?: Observable<User>; // Cache pending request
@@ -38,7 +40,13 @@ export class UserService {
     if (!this.fetchingUser$) {
       this.fetchingUser$ = this.fetchCurrentUser().pipe(
         tap((user) => this.user.set(user)), // Update signal
-        finalize(() => (this.fetchingUser$ = undefined)) // Clear after completion
+        finalize(() => (this.fetchingUser$ = undefined)), // Clear after completion
+        catchError((err) => {
+          // TODO: test this when the session expires (there seems to be a login issue)
+          this.cookieService.delete(".AspNetCore.Cookies");
+          this.cookieService.delete(".Hookio.Session");
+          return throwError(() => err);
+        })
       );
     }
 

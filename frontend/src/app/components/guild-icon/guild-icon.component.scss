@@ -1,0 +1,31 @@
+:host {
+  max-width: 7rem;
+
+  ::ng-deep .p-avatar {
+    height: 7rem;
+    width: 7rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+    ::ng-deep .p-avatar {
+      // TODO: proper color
+      outline: 1px solid white;
+      box-shadow: 0px 0px 15px 2px rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  .guild-name-wrapper {
+    display: flex;
+    justify-content: center;
+    .guild-name {
+      margin: 0;
+      padding: 0;
+      text-overflow: ellipsis;
+      text-wrap: nowrap;
+      overflow: hidden;
+      width: fit-content;
+    }
+  }
+}
