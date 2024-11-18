@@ -7,12 +7,12 @@ namespace Hookio.Contracts.Subscription
     {
         public int Id { get; set; }
 
-        public ulong GuildId { get; set; }
+        public required string GuildId { get; set; }
 
         public SubscriptionType SubscriptionType { get; set; }
         
         public string? Source { get; set; }
 
-        public IEnumerable<MessageResponse> Messages { get; set; } = [];
+        public List<MessageResponse> Messages { get; set; } = [];
     }
 }

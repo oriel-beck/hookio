@@ -18,7 +18,7 @@ namespace Hookio.DataManagers
                 GuildId = subscription.GuildId,
                 Source = "", // tmp
                 SubscriptionType = subscription.SubscriptionType,
-                Messages = subscription.Messages?.Select(ToContract) ?? []
+                Messages = subscription.Messages?.Select(ToContract).ToList() ?? []
             };
 
         public static MessageResponse ToContract(Message message) =>

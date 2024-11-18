@@ -6,7 +6,7 @@ namespace Hookio.Contracts.Subscription
     {
         public string? WebhookUrl {  get; set; }
 
-        public IEnumerable<MessageRequest>? Messages { get; set; }
+        public List<MessageRequest>? Messages { get; set; }
 
         // url for yt, probably username for twitch
         public string? Source { get; set; }

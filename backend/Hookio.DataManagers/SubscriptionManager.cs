@@ -16,30 +16,19 @@ namespace Hookio.DataManagers
         [GeneratedRegex(@"^https:\/\/(canary\.|ptb\.|www\.)?discord\.com\/api\/webhooks\/(?<webhookId>\d+){17,19}\/(?<webhookToken>[A-Za-z0-9_-]+)$", RegexOptions.IgnoreCase)]
         private static partial Regex WebhookRegex();
 
-        public async Task<SubscriptionResponse?> Create(ulong guildId, SubscriptionRequest request, CancellationToken cancellationToken)
+        public async Task<SubscriptionResponse?> Create(string guildId, SubscriptionRequest request, CancellationToken cancellationToken)
         {
-            var validWebhook = TestAndParseWebhookUrl(request.WebhookUrl, out var webhookId, out var webhookToken);
+            var validWebhook = TestAndParseWebhookUrl(request.WebhookUrl);
             if (!validWebhook) throw new ValidationException("Invalid webhook URL");
 
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            Webhook? webhook = await ctx.Webhooks.FirstOrDefaultAsync(x => x.Id == webhookId, cancellationToken);
-
-            if (webhook == null)
-            {
-                await ctx.AddAsync(webhook = new()
-                {
-                    Id = webhookId,
-                    Token = webhookToken,
-                }, cancellationToken);
-            }
 
             Subscription res;
             await ctx.AddAsync(res = new()
             {
                 GuildId = guildId,
                 SubscriptionType = request.SubscriptionType,
-                WebhookId = webhookId,
-                Webhook = webhook,
+                WebhookUrl = request.WebhookUrl,
             }, cancellationToken);
 
             // generate Id for subscription
@@ -54,41 +43,49 @@ namespace Hookio.DataManagers
             return Contractor.ToContract(res);
         }
 
-        public async Task<IEnumerable<SubscriptionResponse?>> Get(ulong guildId, SubscriptionFilter request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<SubscriptionResponse?>> Get(string guildId, SubscriptionFilter filter, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-            var res = await ctx.Subscriptions.Where(x => x.GuildId == guildId).ToListAsync(cancellationToken);
+            IQueryable<Subscription> query = ctx.Subscriptions;
+
+            if (filter.IncludeMessages)
+                query = query.Include(x => x.Messages);
+
+            var res = await query
+                .Where(x => x.GuildId == guildId)
+                .ToListAsync(cancellationToken);
+
 
             return res.Select(Contractor.ToContract);
         }
 
-        public async Task<SubscriptionResponse?> Get(ulong guildId, int subscriptionId, CancellationToken cancellationToken)
+        public async Task<SubscriptionResponse?> Get(string guildId, int subscriptionId, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-            var res = await ctx.Subscriptions.FirstOrDefaultAsync(x => x.GuildId == guildId && x.Id == subscriptionId, cancellationToken);
+            var res = await ctx.Subscriptions
+                .Include(x => x.Messages)
+                .FirstOrDefaultAsync(x => x.GuildId == guildId && x.Id == subscriptionId, cancellationToken);
 
             return Contractor.ToContract(res);
         }
 
-        public async Task<SubscriptionResponse?> Patch(ulong guildId, int subscriptionId, SubscriptionPatch patch, CancellationToken cancellationToken)
+        public async Task<SubscriptionResponse?> Patch(string guildId, int subscriptionId, SubscriptionPatch patch, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
             await ctx.Database.BeginTransactionAsync(cancellationToken);
 
             var res = await ctx.Subscriptions
                 .Include(x => x.Messages)
-                .Include(x => x.Webhook!)
-                .ThenInclude(x => x.Subscriptions)
                 .FirstOrDefaultAsync(x => x.GuildId == guildId && x.Id == subscriptionId, cancellationToken);
 
             if (res == null) return null;
 
             if (patch.WebhookUrl != null)
             {
-                var webhookId = UpdateWebhook(res, patch.WebhookUrl, ctx, cancellationToken);
-                res.WebhookId = webhookId;
+                if (!TestAndParseWebhookUrl(patch.WebhookUrl)) throw new ValidationException("Invalid webhook URL");
+                res.WebhookUrl = patch.WebhookUrl;
             }
 
             if (patch.Messages != null)
@@ -144,43 +141,10 @@ namespace Hookio.DataManagers
             };
         }
 
-        private static ulong UpdateWebhook(Subscription subscription, string webhookUrl, HookioContext ctx, CancellationToken cancellationToken)
+        private static bool TestAndParseWebhookUrl(string url)
         {
-            var validWebhook = TestAndParseWebhookUrl(webhookUrl, out ulong webhookId, out string webhookToken);
-            if (!validWebhook) throw new ValidationException("Invalid webhook URL");
-            var webhook = subscription.Webhook!;
-
-            // if the new webhook is not the original webhook, check if the original webhook has more than 1 subscriptions, and if not, remove it
-            if (webhook.Id != webhookId)
-            {
-                if (webhook.Subscriptions.Count() == 1) ctx.Remove(webhook);
-                ctx.Webhooks.Add(webhook = new() 
-                { 
-                    Id = webhookId ,
-                    Token = webhookToken
-                });
-            }
-            return webhook.Id;
-        }
-
-        private static bool TestAndParseWebhookUrl(string url, out ulong webhookId, out string webhookToken)
-        {
-            // Initialize output parameters
-            webhookId = 0;
-            webhookToken = string.Empty;
-
             Match match = WebhookRegex().Match(url);
             if (!match.Success)
-            {
-                return false;
-            }
-
-            // Extract and return the webhook ID and token
-            webhookId = ulong.Parse(match.Groups["webhookId"].Value);
-            webhookToken = match.Groups["webhookToken"].Value;
-
-            // Basic validation
-            if (webhookId == 0 || string.IsNullOrEmpty(webhookToken))
             {
                 return false;
             }

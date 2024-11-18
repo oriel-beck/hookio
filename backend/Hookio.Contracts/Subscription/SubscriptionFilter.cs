@@ -2,8 +2,6 @@
 {
     public class SubscriptionFilter
     {
-        public int? Id { get; set; }
-
-        public ulong? GuildId { get; set; }
+        public bool IncludeMessages { get; set; }
     }
 }

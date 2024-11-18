@@ -1,7 +1,6 @@
 ﻿using Hookio.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hookio.Data.Entities
 {
@@ -12,15 +11,12 @@ namespace Hookio.Data.Entities
         [Key]
         public int Id { get; set; }
 
-        public required ulong GuildId { get; set; }
+        public required string GuildId { get; set; }
 
         public required SubscriptionType SubscriptionType { get; set; }
 
-        [ForeignKey(nameof(Webhook))]
-        public required ulong WebhookId { get; set; }
+        public required string WebhookUrl { get; set; }
 
-        public Webhook? Webhook { get; set; }
-
-        public IEnumerable<Message>? Messages { get; set; } = [];
+        public List<Message>? Messages { get; set; } = [];
     }
 }

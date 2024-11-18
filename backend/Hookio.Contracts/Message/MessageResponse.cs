@@ -9,7 +9,7 @@ namespace Hookio.Contracts.Message
 
         public string? Content { get; set; } = string.Empty;
 
-        public IEnumerable<EmbedRequest> Embeds { get; set; } = [];
+        public List<EmbedRequest> Embeds { get; set; } = [];
 
         public required MessageAction? Action { get; set; }
 

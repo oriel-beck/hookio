@@ -22,7 +22,7 @@ namespace Hookio.Data.Entities
 
         public string? Content { get; set; }
 
-        public IEnumerable<EmbedRequest>? Embeds { get; set; } = [];
+        public List<EmbedRequest>? Embeds { get; set; } = [];
 
         [ForeignKey(nameof(Subscription))]
         public required int SubscriptionId { get; set; }

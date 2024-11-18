@@ -11,7 +11,5 @@ import { UserService } from './services/user/user.service';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  private readonly userService = inject(UserService);
-
-  user = this.userService.user;
+  readonly userService = inject(UserService);
 }

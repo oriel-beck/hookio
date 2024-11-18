@@ -102,7 +102,7 @@ namespace Hookio.DataManagers
                 {
                     user = new()
                     {
-                        Id = discordUser.Id,
+                        Id = discordUser.Id.ToString(),
                         Username = discordUser.Username,
                         GlobalName = discordUser.GlobalName,
                         AvatarUrl = discordUser.GetDisplayAvatarUrl()
@@ -120,7 +120,7 @@ namespace Hookio.DataManagers
                 {
                     guilds = discordGuilds.Select(g => new DiscordGuild()
                     {
-                        Id = g.Id,
+                        Id = g.Id.ToString(),
                         Name = g.Name,
                         IconUrl = g.IconUrl?.Replace("2048", "128"),
                     }).ToList();

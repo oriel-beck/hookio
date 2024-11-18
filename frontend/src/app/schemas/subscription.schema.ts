@@ -70,7 +70,7 @@ export const message = z.object({
 
 export const subscription = z.object({
     id: z.number(),
-    guildId: z.bigint().or(z.number()),
+    guildId: z.string(),
     subscriptionType: z.nativeEnum(SubscriptionType),
     source: z.string(),
     messages: z.array(message)

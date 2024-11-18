@@ -3,6 +3,7 @@ using Hookio.Data;
 using Hookio.DataManagers;
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Configuration;
+using Hookio.WebApi.Authorization;
 using Hookio.WebApi.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             OnRedirectToLogin = context =>
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            },
+            OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return Task.CompletedTask;
             }
         };

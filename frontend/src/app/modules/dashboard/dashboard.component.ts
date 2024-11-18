@@ -10,6 +10,7 @@ import { Router, RouterModule } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AddSubscriptionComponent } from '../../components/add-subscription/add-subscription.component';
 import { ButtonModule } from 'primeng/button';
+import { HttpErrorResponse } from '@angular/common/http';
 
 interface RecentAction {
   platform: string;
@@ -107,7 +108,7 @@ export class DashboardComponent implements OnInit {
     dialog.onClose.subscribe({
       next: (v?: Subscription) => {
         if (v) {
-          this.router.navigate(["dashboard", this.guildId(), v.id]);
+          this.router.navigate(["servers", this.guildId(), v.id]);
         }
       }
     })
@@ -115,7 +116,10 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.subscriptionService.getSubscriptions(this.guildId()).subscribe({
-      next: (v) => this.subscriptions.set(v)
+      next: (v) => this.subscriptions.set(v),
+      error: (e: HttpErrorResponse) => {
+        if (e.status === 403) this.router.navigate(["servers"]);
+      }
     });
   }
 }
