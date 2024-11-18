@@ -23,7 +23,7 @@ export class SubscriptionService {
     return this.httpService.get<Subscription[]>(`/api/subscriptions/${guildId}`).pipe(map(validateSubscriptions));
   }
 
-  public createSubscription(guildId: GuildId, data: Omit<Subscription, 'id'>) {
+  public createSubscription(guildId: GuildId, data: Omit<Subscription, 'id' | 'guildId' | 'messages'> & { webhookUrl: string }) {
     return this.httpService.post<Subscription>(`/api/subscriptions/${guildId}`, data).pipe(map(validateSubscription));
   }
 

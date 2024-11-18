@@ -62,16 +62,16 @@ export const embed = z.object({
 
 export const message = z.object({
     id: z.number(),
-    content: z.optional(z.string().max(2048)),
+    content: z.string().max(2048).or(z.null()),
     embeds: z.array(embed),
-    action: z.optional(z.nativeEnum(MessageAction)),
+    action: z.nativeEnum(MessageAction).or(z.null()),
     type: z.nativeEnum(MessageType)
 });
 
 export const subscription = z.object({
     id: z.number(),
-    guildId: z.bigint(),
+    guildId: z.bigint().or(z.number()),
     subscriptionType: z.nativeEnum(SubscriptionType),
-    source: z.optional(z.string()),
+    source: z.string(),
     messages: z.array(message)
 });

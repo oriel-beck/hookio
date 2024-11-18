@@ -13,7 +13,7 @@ namespace Hookio.DataManagers
     {
         private readonly IDbContextFactory<HookioContext> _contextFactory = contextFactory;
 
-        [GeneratedRegex(@"^https:\/\/(canary|ptb|www\.)?discord\.com\/api\/webhooks\/(?<webhookId>\d+)\/(?<webhookToken>[\w-]+)$")]
+        [GeneratedRegex(@"^https:\/\/(canary\.|ptb\.|www\.)?discord\.com\/api\/webhooks\/(?<webhookId>\d+){17,19}\/(?<webhookToken>[A-Za-z0-9_-]+)$", RegexOptions.IgnoreCase)]
         private static partial Regex WebhookRegex();
 
         public async Task<SubscriptionResponse?> Create(ulong guildId, SubscriptionRequest request, CancellationToken cancellationToken)

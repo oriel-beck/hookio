@@ -54,9 +54,9 @@
           </span>
         </td>
         <td>
-            <a [routerLink]="'/servers/' + guildId() + '/' + ''">
-                {{ action.source }}
-            </a>
+          <a [routerLink]="'/servers/' + guildId() + '/' + ''">
+            {{ action.source }}
+          </a>
         </td>
         <td>{{ action.action }}</td>
         <td>{{ action.timestamp }}</td>
@@ -74,4 +74,11 @@
       </tr>
     </ng-template>
   </p-table>
+</div>
+<div class="add-subscription">
+  <p-button
+    label="Add Subscription"
+    icon="pi pi-plus"
+    (onClick)="openAddSubscriptionDialog()"
+  ></p-button>
 </div>

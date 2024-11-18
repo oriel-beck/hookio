@@ -6,7 +6,10 @@ import { Subscription, SubscriptionType } from '../../schemas/subscription.schem
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { BadgeModule } from 'primeng/badge';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { DialogService } from 'primeng/dynamicdialog';
+import { AddSubscriptionComponent } from '../../components/add-subscription/add-subscription.component';
+import { ButtonModule } from 'primeng/button';
 
 interface RecentAction {
   platform: string;
@@ -20,14 +23,27 @@ interface RecentAction {
 @Component({
   selector: 'hookio-dashboard',
   standalone: true,
-  imports: [CommonModule, CardModule, TableModule, BadgeModule, RouterModule],
+  imports: [
+    CommonModule,
+    CardModule,
+    TableModule,
+    BadgeModule,
+    RouterModule,
+    ButtonModule
+  ],
+  providers: [
+    DialogService
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
-  subscriptionService = inject(SubscriptionService);
-  subscriptions = signal<Subscription[]>([]);
-  recentActions = signal<RecentAction[]>([
+  private readonly subscriptionService = inject(SubscriptionService);
+  private readonly dialogService = inject(DialogService);
+  private readonly router = inject(Router)
+
+  readonly subscriptions = signal<Subscription[]>([]);
+  readonly recentActions = signal<RecentAction[]>([
     {
       platform: 'YouTube',
       action: 'SendMessage',
@@ -70,13 +86,32 @@ export class DashboardComponent implements OnInit {
     }
   ]);
 
-  totalSubscriptions = computed(() => this.subscriptions().length)
-  youtubeSubscriptions = computed(() => this.subscriptions().filter(s => s.subscriptionType === SubscriptionType.YouTube).length)
-  twitchSubscriptions = computed(() => this.subscriptions().filter(s => s.subscriptionType === SubscriptionType.Twitch).length)
+  readonly totalSubscriptions = computed(() => this.subscriptions().length)
+  readonly youtubeSubscriptions = computed(() => this.subscriptions().filter(s => s.subscriptionType === SubscriptionType.YouTube).length)
+  readonly twitchSubscriptions = computed(() => this.subscriptions().filter(s => s.subscriptionType === SubscriptionType.Twitch).length)
 
-  params = injectParams();
+  readonly params = injectParams();
 
-  guildId = computed<string>(() => this.params()['guildId']);
+  readonly guildId = computed<string>(() => this.params()['guildId']);
+
+  public openAddSubscriptionDialog() {
+    const dialog = this.dialogService.open(AddSubscriptionComponent, {
+      showHeader: false,
+      width: '600px',
+      modal: true,
+      data: {
+        guildId: this.guildId()
+      }
+    });
+
+    dialog.onClose.subscribe({
+      next: (v?: Subscription) => {
+        if (v) {
+          this.router.navigate(["dashboard", this.guildId(), v.id]);
+        }
+      }
+    })
+  }
 
   ngOnInit(): void {
     this.subscriptionService.getSubscriptions(this.guildId()).subscribe({

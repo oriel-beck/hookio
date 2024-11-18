@@ -43,4 +43,12 @@
   a {
     color: white;
   }
+
+  .add-subscription {
+    display: flex;
+    margin-top: 1rem;
+    padding-inline: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
