@@ -21,6 +21,8 @@ export enum MessageType {
 }
 
 export type Subscription = z.TypeOf<typeof subscription>;
+export type Embed = z.TypeOf<typeof embed>;
+export type Message = z.TypeOf<typeof message>;
 
 export const footer = z.object({
     text: z.string().max(256),
@@ -62,7 +64,7 @@ export const embed = z.object({
 
 export const message = z.object({
     id: z.number(),
-    content: z.string().max(2048).or(z.null()),
+    content: z.string().max(2000).or(z.null()),
     embeds: z.array(embed),
     action: z.nativeEnum(MessageAction).or(z.null()),
     type: z.nativeEnum(MessageType)

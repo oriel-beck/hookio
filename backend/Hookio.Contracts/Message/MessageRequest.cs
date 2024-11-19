@@ -8,7 +8,7 @@ namespace Hookio.Contracts.Message
     {
         public int? Id { get; set; } = null;
 
-        [MaxLength(2048)]
+        [MaxLength(2000)]
         public string? Content { get; set; } = string.Empty;
 
         public List<EmbedRequest> Embeds { get; set; } = [];
