@@ -1,0 +1,17 @@
+.loading-overlay {
+    margin-top: 84.8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: calc(100vh - 84.8px);
+    width: 100vw;
+    background-color: black;
+    opacity: 0.6;
+    z-index: 1;
+    p-progressspinner {
+      margin-bottom: 84.8px;
+    }
+  }

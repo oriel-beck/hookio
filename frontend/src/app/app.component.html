@@ -1,3 +1,7 @@
+@if (navigating()) {
+<hookio-loading-overlay />
+} @else {
 <hookio-layout [user]="userService.user()">
-    <router-outlet></router-outlet>
+  <router-outlet></router-outlet>
 </hookio-layout>
+}
