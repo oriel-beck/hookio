@@ -20,5 +20,8 @@ namespace Hookio.Data.Entities
         public List<Message> Messages { get; set; } = [];
 
         public List<RecentAction> RecentActions { get; set; } = [];
+
+        // This is used for ratelimits as webhooks are ratelimited per channel
+        public required string ChannelId { get; set; }
     }
 }

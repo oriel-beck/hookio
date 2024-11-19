@@ -3,6 +3,7 @@ using Hookio.DataManagers.Interfaces;
 using Hookio.Shared;
 using Hookio.WebApi.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Controllers
 {
@@ -16,12 +17,19 @@ namespace Hookio.Controllers
         [HttpPost("{guildId}")]
         public async Task<ActionResult<SubscriptionResponse?>> CreateSubscription(string guildId, SubscriptionRequest request, CancellationToken cancellationToken)
         {
-            var result = await _dataManager.Create(guildId, request, cancellationToken);
-            if (result == null)
+            try
             {
-                return StatusCode(500, new GeneralError(500, "Unknown error, failed to create subscription"));
+                var result = await _dataManager.Create(guildId, request, cancellationToken);
+                if (result == null)
+                {
+                    return StatusCode(500, new GeneralError(500, "Unknown error, failed to create subscription"));
+                }
+                return Ok(result);
             }
-            return Ok(result);
+            catch (ValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [OnlyAuthorizedGuilds("guildId")]
@@ -47,6 +55,10 @@ namespace Hookio.Controllers
                 var result = await _dataManager.Patch(guildId, subscriptionId, patch, cancellationToken);
                 if (result == null) return NotFound(new GeneralError(404, $"Failed to patch subscription {subscriptionId}"));
                 return Ok(result);
+            }
+            catch(ValidationException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (Exception)
             {

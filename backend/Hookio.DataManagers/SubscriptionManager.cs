@@ -1,17 +1,20 @@
-﻿using Hookio.Contracts.Subscription;
+﻿using Hookio.Contracts.Discord;
+using Hookio.Contracts.Subscription;
 using Hookio.Data;
 using Hookio.Data.Entities;
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 
 namespace Hookio.DataManagers
 {
-    public partial class SubscriptionManager(IDbContextFactory<HookioContext> contextFactory) : ISubscriptionManager
+    public partial class SubscriptionManager(IDbContextFactory<HookioContext> contextFactory, IHttpClientFactory httpClientFactory) : ISubscriptionManager
     {
         private readonly IDbContextFactory<HookioContext> _contextFactory = contextFactory;
+        private readonly HttpClient _httpClient = httpClientFactory.CreateClient("WebhooksCheck");
 
         [GeneratedRegex(@"^https:\/\/(canary\.|ptb\.|www\.)?discord\.com\/api\/webhooks\/(?<webhookId>\d+){17,19}\/(?<webhookToken>[A-Za-z0-9_-]+)$", RegexOptions.IgnoreCase)]
         private static partial Regex WebhookRegex();
@@ -21,6 +24,8 @@ namespace Hookio.DataManagers
             var validWebhook = TestAndParseWebhookUrl(request.WebhookUrl);
             if (!validWebhook) throw new ValidationException("Invalid webhook URL");
 
+            var webhook = await _httpClient.GetFromJsonAsync<DiscordWebhook>(request.WebhookUrl, cancellationToken) ?? throw new ValidationException("Invalid webhook");
+
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
             Subscription res;
@@ -28,7 +33,8 @@ namespace Hookio.DataManagers
             {
                 GuildId = guildId,
                 SubscriptionType = request.SubscriptionType,
-                WebhookUrl = request.WebhookUrl,
+                WebhookUrl = webhook.Url,
+                ChannelId = webhook.ChannelId,
             }, cancellationToken);
 
             // generate Id for subscription
@@ -85,7 +91,9 @@ namespace Hookio.DataManagers
             if (patch.WebhookUrl != null)
             {
                 if (!TestAndParseWebhookUrl(patch.WebhookUrl)) throw new ValidationException("Invalid webhook URL");
-                res.WebhookUrl = patch.WebhookUrl;
+                var webhook = await _httpClient.GetFromJsonAsync<DiscordWebhook>(patch.WebhookUrl, cancellationToken) ?? throw new ValidationException("Invalid webhook");
+                res.WebhookUrl = webhook.Url;
+                res.ChannelId = webhook.ChannelId;
             }
 
             if (patch.Messages != null)

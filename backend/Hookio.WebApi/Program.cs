@@ -27,12 +27,14 @@ builder.Services.AddSingleton<DiscordRestClient>();
 
 builder.Services.Configure<OAuth2>(builder.Configuration.GetSection(nameof(OAuth2)));
 
-// OAuth2 http client to centralize requests
+// Http client to centralize requests
 builder.Services.AddHttpClient("OAuth2", client =>
 {
     client.BaseAddress = new Uri("https://discord.com");
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Hookio v0");
 });
+builder.Services.AddHttpClient("WebhooksCheck");
+
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
