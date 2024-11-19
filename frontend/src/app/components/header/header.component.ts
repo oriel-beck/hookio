@@ -7,6 +7,7 @@ import { ButtonifyDirective } from '../../directives/buttonify/buttonify.directi
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { Router } from '@angular/router';
+import { defaultDiscordIcon } from '../../constants';
 
 @Component({
   selector: 'hookio-header',
@@ -34,12 +35,9 @@ export class HeaderComponent {
       command: () => location.replace("/api/users/logout")
     }
   ]
+
   user = input<User>();
-  label = computed(() => {
-    const name = this.user()?.user.globalName || this.user()?.user.username;
-    if (name) return name.split(' ').map(w => w[0].toUpperCase()).join("");
-    return "";
-  });
+  userAvatar = computed(() => this.user()?.user.avatarUrl || defaultDiscordIcon)
 
   login() {
     location.replace("/api/users/login");
