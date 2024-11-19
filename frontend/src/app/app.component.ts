@@ -20,7 +20,6 @@ export class AppComponent {
   constructor() {
     this.router.events.subscribe({
       next: (ev) => {
-        console.log(ev)
         if (ev instanceof NavigationStart) {
           this.navigating.set(true)
         }
@@ -37,9 +36,5 @@ export class AppComponent {
         }
       }
     })
-  }
-
-  ngOnInit(): void {
-
   }
 }
