@@ -1,6 +1,7 @@
 ﻿using Discord.Rest;
 using Hookio.Contracts.Discord;
 using Hookio.Contracts.Message;
+using Hookio.Contracts.RecentAction;
 using Hookio.Contracts.Subscription;
 using Hookio.Contracts.User;
 using Hookio.Data.Entities;
@@ -18,7 +19,7 @@ namespace Hookio.DataManagers
                 GuildId = subscription.GuildId,
                 Source = "", // tmp
                 SubscriptionType = subscription.SubscriptionType,
-                Messages = subscription.Messages?.Select(ToContract).ToList() ?? []
+                Messages = subscription.Messages.Select(ToContract).ToList()
             };
 
         public static MessageResponse ToContract(Message message) =>
@@ -26,7 +27,7 @@ namespace Hookio.DataManagers
             {
                 Content = message.Content,
                 Id = message.Id,
-                Embeds = message.Embeds ?? [],
+                Embeds = message.Embeds,
                 Action = message.Action,
                 Type = message.Type
             };
@@ -36,6 +37,15 @@ namespace Hookio.DataManagers
             {
                 Guilds = guilds ?? [],
                 User = discordUser
+            };
+
+        public static RecentActionResponse ToContract(RecentAction recentAction) =>
+            new()
+            {
+                Id = recentAction.Id,
+                Type = recentAction.Type,
+                CreatedAt = recentAction.CreatedAt,
+                Action = recentAction.Action,
             };
     }
 }
