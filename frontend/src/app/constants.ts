@@ -1,1 +1,2 @@
 export const webhookRegex = /^https:\/\/(canary\.|ptb\.|www\.)?discord\.com\/api\/webhooks\/(\d+){17,19}\/([A-Za-z0-9_-]+)$/i
+export const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/

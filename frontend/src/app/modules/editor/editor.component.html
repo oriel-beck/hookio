@@ -1,2 +1,37 @@
-<p>editor works!</p>
-{{subscription() | json}}
+@if (loading()) {
+<div class="loading-overlay">
+  <p-progressSpinner
+    styleClass="loader"
+    strokeWidth="3px"
+    fill="transparent"
+    animationDuration="1s"
+  />
+</div>
+}
+<div class="wrapper">
+  <div
+    class="editor-drawer"
+    [class.hidden]="!editorOpen()"
+    [class.ready]="isReady()"
+  >
+    <p-tabView>
+      @for (key of tabs(); track key) {
+      <p-tabPanel [header]="key">
+        {{ key }}
+      </p-tabPanel>
+      }
+    </p-tabView>
+  </div>
+  <span class="toggle-editor-wrapper">
+    <p-button
+      [icon]="
+        editorOpen() ? 'pi pi-angle-double-left' : 'pi pi-angle-double-right'
+      "
+      [text]="true"
+      [outlined]="true"
+      class="toggle-editor"
+      (onClick)="editorOpen.set(!editorOpen())"
+    ></p-button>
+  </span>
+  <div class="editor-preview" [class.full]="!editorOpen()"></div>
+</div>
