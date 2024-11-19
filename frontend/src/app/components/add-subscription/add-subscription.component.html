@@ -1,74 +1,77 @@
-
-@switch (state()) {
-  @case ('form') {
-    <div [formGroup]="form">
-      <div class="header">
-        <h1>Add Subscription</h1>
-        <p-dropdown
-          formControlName="subscriptionType"
-          [options]="platforms"
-          placeholder="Select a platform"
-          optionLabel="label"
-          optionValue="value"
+@switch (state()) { @case ('form') {
+<div [formGroup]="form">
+  <div class="header">
+    <h1>Add Subscription</h1>
+    <p-dropdown
+      formControlName="subscriptionType"
+      [options]="platforms"
+      placeholder="Select a platform"
+      optionLabel="label"
+      optionValue="value"
+    />
+  </div>
+  <div class="form">
+    <div class="form-item">
+      @let webhookUrl = form.get('webhookUrl'); @let invalidWebhook =
+      !webhookUrl?.pristine && (webhookUrl?.errors?.['required'] ||
+      webhookUrl?.errors?.['pattern'] || webhookUrl?.errors?.['notFound']);
+      <p-inputGroup>
+        <input
+          pInputText
+          formControlName="webhookUrl"
+          placeholder="Webhook URL"
         />
-      </div>
-      <div class="form">
-        <div class="form-item">
-          @let webhookUrl = form.get('webhookUrl'); @let invalidWebhook =
-          !webhookUrl?.pristine && (webhookUrl?.errors?.['required'] ||
-          webhookUrl?.errors?.['pattern'] || webhookUrl?.errors?.['notFound']);
-          <p-inputGroup>
-            <input
-            pInputText
-            formControlName="webhookUrl"
-            placeholder="Webhook URL"
+        @if (!webhookUrl?.pristine && loadingWebhook()) {
+        <p-inputGroupAddon>
+          <div class="loader-wrapper">
+            <p-progressSpinner
+              strokeWidth="5"
+              fill="transparent"
+              animationDuration="1s"
             />
-            @if (!webhookUrl?.pristine && loadingWebhook()) {
-            <p-inputGroupAddon>
-              <div class="loader-wrapper">
-                <div class="loader"></div>
-              </div>
-            </p-inputGroupAddon>
-            }
-          </p-inputGroup>
-          <p>@if (invalidWebhook) { Please provide a valid webhook URL }</p>
-        </div>
-        <div class="form-item">
-          <input pInputText formControlName="source" placeholder="Channel" />
-          <p></p>
-        </div>
-      </div>
-      <div class="footer">
-        <p-button
-          label="Cancel"
-          severity="danger"
-          [outlined]="true"
-          (onClick)="close()"
-        />
-        <p-button
-          label="Confirm"
-          severity="primary"
-          [disabled]="form.invalid || loadingWebhook()"
-          (onClick)="close(true)"
-        />
-      </div>
+          </div>
+        </p-inputGroupAddon>
+        }
+      </p-inputGroup>
+      <p>@if (invalidWebhook) { Please provide a valid webhook URL }</p>
     </div>
-  }
-  @case ('loading') {
-    <div class="loading">
-      <p>Creating subscription, please wait. You will be redirected shortly.</p>
-      <div class="loader-wrapper">
-        <div class="loader"></div>
-      </div>
+    <div class="form-item">
+      <input pInputText formControlName="source" placeholder="Channel" />
+      <p></p>
     </div>
-  }
-  @case ('error') {
-    <div class="error">
-      <p>Error occurred, please try again later.</p>
-      <p-button label="Close" severity="danger" [outlined]="true" (onClick)="close()"/>
-    </div>
-  }
-}
-
-  
-
+  </div>
+  <div class="footer">
+    <p-button
+      label="Cancel"
+      severity="danger"
+      [outlined]="true"
+      (onClick)="close()"
+    />
+    <p-button
+      label="Confirm"
+      severity="primary"
+      [disabled]="form.invalid || loadingWebhook()"
+      (onClick)="close(true)"
+    />
+  </div>
+</div>
+} @case ('loading') {
+<div class="loading">
+  <p>Creating subscription, please wait. You will be redirected shortly.</p>
+  <p-progressSpinner
+    strokeWidth="5"
+    fill="transparent"
+    animationDuration="1s"
+  />
+</div>
+} @case ('error') {
+<div class="error">
+  <p>Error occurred, please try again later.</p>
+  <p-button
+    label="Close"
+    severity="danger"
+    [outlined]="true"
+    (onClick)="close()"
+  />
+</div>
+} }

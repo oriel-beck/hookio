@@ -11,6 +11,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { SubscriptionService } from '../../services/subscription/subscription.service';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 type State = 'form' | 'loading' | 'error';
 
@@ -23,7 +24,8 @@ type State = 'form' | 'loading' | 'error';
     InputTextModule,
     ButtonModule,
     InputGroupAddonModule,
-    InputGroupModule
+    InputGroupModule,
+    ProgressSpinnerModule
   ],
   templateUrl: './add-subscription.component.html',
   styleUrl: './add-subscription.component.scss'
@@ -36,7 +38,7 @@ export class AddSubscriptionComponent implements OnInit {
   readonly config: DynamicDialogConfig<{ guildId: string }> = inject(DynamicDialogConfig)
   readonly ref = inject(DynamicDialogRef);
 
-  loadingWebhook = signal(true);
+  loadingWebhook = signal(false);
   state = signal<State>('form');
 
   form = this.fb.group({
@@ -60,7 +62,7 @@ export class AddSubscriptionComponent implements OnInit {
   ngOnInit(): void {
     this.form.get('webhookUrl')?.valueChanges
       .pipe(
-        filter((v) => !!v && webhookRegex.test(v)),
+        filter((v) => !!v && webhookRegex.test(v || "")),
         tap(() => this.loadingWebhook.set(true)),
         debounceTime(1000),
         switchMap((url) => this.httpClient.get(url!).pipe(catchError(() => of(null)))),
