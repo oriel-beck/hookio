@@ -18,7 +18,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
 import { LoadingOverlayComponent } from "../../components/loading-overlay/loading-overlay.component";
-import { EmbedEditorComponent } from "../../components/editor/embed-editor/embed-editor.component";
+import { EmbedEditorComponent } from "../../components/embed-editor/embed-editor.component";
 
 export interface Tab {
   label: string;

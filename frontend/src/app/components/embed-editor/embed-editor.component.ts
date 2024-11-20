@@ -7,9 +7,9 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Tab } from '../../../modules/editor/editor.component';
+import { Tab } from '../../modules/editor/editor.component';
 import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
-import { getEmbedFieldForm } from '../../../modules/editor/util';
+import { getEmbedFieldForm } from '../../modules/editor/util';
 
 @Component({
   selector: 'hookio-embed-editor',
