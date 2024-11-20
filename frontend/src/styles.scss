@@ -24,3 +24,73 @@ html {
 .p-progress-spinner-circle {
   stroke: #5865f2 !important;
 }
+
+.discord-scrollbar {
+  .p-scrollpanel-bar-y {
+    width: 5px;
+    background-color: #5865f2;
+  }
+}
+
+.p-colorpicker-panel .p-colorpicker-color {
+  background: transparent url("/color.png") no-repeat left top;
+}
+
+.p-colorpicker-panel .p-colorpicker-hue {
+  background: transparent url("/hue.png") no-repeat left top !important;
+}
+
+.form-wrapper, .form-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+
+  textarea,
+  input {
+    width: 100%;
+  }
+
+  p-floatlabel {
+    flex: 1;
+  }
+
+  p-colorpicker {
+    width: 35px;
+  }
+
+  .color-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+.form-group {
+  flex-direction: row;
+
+  &.col {
+    flex-direction: column;
+  }
+
+  &.m-col {
+    @media screen and (max-width:800px) {
+      flex-direction: column;
+    }
+  }
+
+  &.m-col-reverse {
+    flex-direction: column-reverse;
+  }
+}
+
+.add-embed-btn {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-field-btn {
+  display: flex;
+  padding-top: 1rem;
+  justify-content: flex-end;
+}

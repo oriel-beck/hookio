@@ -1,13 +1,6 @@
 @if (loading()) {
-<div class="loading-overlay">
-  <p-progressSpinner
-    styleClass="loader"
-    strokeWidth="3px"
-    fill="transparent"
-    animationDuration="1s"
-  />
-</div>
-}
+<hookio-loading-overlay />
+} @else {
 <div class="wrapper">
   <div
     class="editor-drawer"
@@ -15,9 +8,77 @@
     [class.ready]="isReady()"
   >
     <p-tabView>
-      @for (key of tabs(); track key) {
-      <p-tabPanel [header]="key">
-        {{ key }}
+      @for (tab of tabs(); track tab.value) {
+      <p-tabPanel [header]="tab.label">
+        <!-- This forces tabView to eager load the tabs, causes an error on PrimeNG's end but its fine -->
+        <ng-template pTemplate="content">
+          <p-scrollPanel
+            styleClass="discord-scrollbar"
+            [style]="{ height: 'calc(100vh - 151.8px)' }"
+          >
+            <p-accordion [activeIndex]="0">
+              <p-accordionTab header="Subscription Details">
+                <div class="form-group col" [formGroup]="subscriptionForm()">
+                  <p-floatLabel>
+                    <input
+                      id="webhookUrl"
+                      pInputText
+                      formControlName="webhookUrl"
+                      placeholder="https://discord.com/api/webhooks/..."
+                    />
+                    <label for="webhookUrl">Webhook URL</label>
+                  </p-floatLabel>
+                  <p-floatLabel>
+                    <input
+                      id="source"
+                      pInputText
+                      formControlName="source"
+                      placeholder="Source"
+                    />
+                    <label for="source">Subscription Source</label>
+                  </p-floatLabel>
+                </div>
+              </p-accordionTab>
+            </p-accordion>
+            <p-divider />
+            <p-accordion [activeIndex]="0">
+              <p-accordionTab header="Message">
+                <div class="form-wrapper" [formGroup]="tab.messageForm">
+                  <p-floatLabel>
+                    <textarea
+                      [maxlength]="2000"
+                      id="content"
+                      pInputTextarea
+                      formControlName="content"
+                      [rows]="5"
+                      cols="30"
+                      #textarea
+                    ></textarea>
+                    <label for="content"
+                      >Content ({{ textarea.value.length }}/2000)</label
+                    >
+                  </p-floatLabel>
+                  <p-accordion [multiple]="true" formArrayName="embeds">
+                    @for (embed of tab.embedsForm.value; track $index) {
+                    <!-- Embed -->
+                      <hookio-embed-editor
+                        [tab]="tab"
+                        [idx]="$index"
+                      />
+                    }
+                  </p-accordion>
+                  <div class="add-embed-btn">
+                    <p-button
+                      label="Add Embed"
+                      [disabled]="tab.embedsForm.value.length === 10"
+                      (onClick)="addEmbedTo(tab.embedsForm)"
+                    />
+                  </div>
+                </div>
+              </p-accordionTab>
+            </p-accordion>
+          </p-scrollPanel>
+        </ng-template>
       </p-tabPanel>
       }
     </p-tabView>
@@ -35,3 +96,4 @@
   </span>
   <div class="editor-preview" [class.full]="!editorOpen()"></div>
 </div>
+}

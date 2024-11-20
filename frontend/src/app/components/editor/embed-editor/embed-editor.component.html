@@ -1,0 +1,166 @@
+<p-accordionTab [header]="'Embed ' + (idx() + 1)" [formGroup]="embedForm()">
+  <p-accordion (activeIndexChange)="activeIndexChanged($event)" [activeIndex]="activeIndexes()" [multiple]="true">
+    <!-- Author -->
+    <p-accordionTab header="Author">
+      <div class="form-group col" formGroupName="author">
+        <p-floatLabel>
+          <textarea
+            formControlName="name"
+            [maxlength]="256"
+            pInputTextarea
+            id="author-name"
+            #author
+          ></textarea>
+          <label for="author-name"
+            >Author ({{ author.value.length }}/256)</label
+          >
+        </p-floatLabel>
+        <div class="form-group m-col">
+          <p-floatLabel>
+            <input formControlName="url" pInputText id="author-url" />
+            <label for="author-url">URL</label>
+          </p-floatLabel>
+          <p-floatLabel>
+            <input formArrayName="iconUrl" pInputText id="author-icon-url" />
+            <label for="author-icon-url">Icon URL</label>
+          </p-floatLabel>
+        </div>
+      </div>
+    </p-accordionTab>
+    <!-- Body (title & desc) -->
+    <p-accordionTab header="Body">
+      <div class="form-group col">
+        <p-floatLabel>
+          <input
+            pInputText
+            id="title"
+            [maxlength]="256"
+            formControlName="title"
+            #title
+          />
+          <label for="title">Title ({{ title.value.length }}/256)</label>
+        </p-floatLabel>
+        <p-floatLabel>
+          <textarea
+            pInputTextarea
+            [rows]="5"
+            cols="5"
+            id="description"
+            [maxlength]="4096"
+            formControlName="description"
+            #description
+          ></textarea>
+          <label for="description"
+            >Description ({{ description.value.length }}/4096)</label
+          >
+        </p-floatLabel>
+        <div class="form-group m-col">
+          <p-floatLabel>
+            <input pInputText id="url" formControlName="url" />
+            <label for="url">URL</label>
+          </p-floatLabel>
+          <div class="color-picker">
+            <p-floatLabel>
+              <input
+                pInputText
+                formControlName="color"
+                id="color"
+                [maxlength]="7"
+                #colorinput
+                (input)="colorInputChanged($event, colorpicker)"
+              />
+              <label for="color">Color</label>
+            </p-floatLabel>
+            <p-colorPicker
+              #colorpicker
+              id="color-picker"
+              appendTo="body"
+              formControlName="color"
+              (onChange)="colorinput.value = $event.value.toString()"
+            />
+          </div>
+        </div>
+      </div>
+    </p-accordionTab>
+    <!-- Fields -->
+    <p-accordionTab header="Fields">
+      <p-accordion [multiple]="true" formArrayName="fields">
+        @for (field of embedForm().value.fields; track $index) {
+        <p-accordionTab
+          [header]="'Field ' + ($index + 1)"
+          [formGroupName]="$index"
+        >
+          <div class="form-group col">
+            <div class="form-group m-col-reverse">
+              <p-floatLabel>
+                <textarea
+                  pInputTextarea
+                  [id]="'field-name-' + $index"
+                  formControlName="name"
+                  #name
+                ></textarea>
+                <label [for]="'field-name-' + $index">Name ({{name.value.length}}/256)</label>
+              </p-floatLabel>
+              <p-checkbox
+                [binary]="true"
+                label="Inline"
+                formControlName="inline"
+              />
+            </div>
+            <p-floatLabel>
+              <textarea
+                pInputTextarea
+                [id]="'field-value-' + $index"
+                formControlName="value"
+                #value
+              ></textarea>
+              <label [for]="'field-value-' + $index">Value ({{value.value.length}}/256)</label>
+            </p-floatLabel>
+          </div>
+        </p-accordionTab>
+        }
+      </p-accordion>
+      <div class="add-field-btn">
+        <p-button
+          label="Add Field"
+          [disabled]="embedForm().value.fields?.length === 25"
+          (onClick)="addField()"
+        />
+      </div>
+    </p-accordionTab>
+    <!-- Images (image & thumbnail) -->
+    <p-accordionTab header="Images">
+      <div class="form-group col">
+        <p-floatLabel formGroupName="image">
+          <input pInputText id="image" formControlName="url" />
+          <label for="image">Image</label>
+        </p-floatLabel>
+        <p-floatLabel formGroupName="thumbnail">
+          <input pInputText id="thumbnail" formControlName="url" />
+          <label for="thumbnail">Thumbnail</label>
+        </p-floatLabel>
+      </div>
+    </p-accordionTab>
+    <!-- Footer -->
+    <p-accordionTab header="Footer">
+      <div class="form-group col" formGroupName="footer">
+        <p-floatLabel>
+          <textarea
+            formControlName="text"
+            [maxlength]="2048"
+            pInputTextarea
+            id="footer-text"
+            #footer
+          ></textarea>
+          <label for="footer-text"
+            >Footer ({{ footer.value.length }}/2048 )</label
+          >
+        </p-floatLabel>
+        <p-floatLabel>
+          <input formArrayName="iconUrl" pInputText id="footer-icon-url" />
+          <label for="footer-icon-url">Icon URL</label>
+        </p-floatLabel>
+      </div>
+    </p-accordionTab>
+  </p-accordion>
+</p-accordionTab>

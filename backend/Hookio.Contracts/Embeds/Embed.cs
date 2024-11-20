@@ -48,7 +48,7 @@ namespace Hookio.Contracts.Embed
 
     public class Footer
     {
-        [MaxLength(256)]
+        [MaxLength(2048)]
         public required string Text { get; set; }
 
         public string? IconUrl { get; set; }
