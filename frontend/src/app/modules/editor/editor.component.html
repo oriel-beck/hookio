@@ -61,10 +61,15 @@
                   <p-accordion [multiple]="true" formArrayName="embeds">
                     @for (embed of tab.embedsForm.value; track $index) {
                     <!-- Embed -->
-                      <hookio-embed-editor
-                        [tab]="tab"
-                        [idx]="$index"
-                      />
+                    <hookio-embed-editor
+                      [tab]="tab"
+                      [idx]="$index"
+                      (duplicate)="duplicateEmbed($event, tab.embedsForm)"
+                      (remove)="removeEmbed($event, tab.embedsForm)"
+                      (swap)="
+                        swapEmbed($event.origin, $event.target, tab.embedsForm)
+                      "
+                    />
                     }
                   </p-accordion>
                   <div class="add-embed-btn">

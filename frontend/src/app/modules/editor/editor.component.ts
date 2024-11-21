@@ -89,19 +89,24 @@ export class EditorComponent implements OnInit {
     });
   }
 
-
-
   addEmbedTo(embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
     if (embedsForm.value.length === 10) return;
     embedsForm.push(getEmbedForm());
   }
 
-  addFieldToEmbed(embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm'], index: number) {
-    const embedForm = embedsForm.at(index);
-    if (!embedForm) return;
-    if (embedForm.value.fields!.length === 25) return;
-    const fieldsControl = embedForm.get('fields') as FormArray<ReturnType<typeof getEmbedFieldForm>>;
-    if (!fieldsControl) return;
-    fieldsControl.push(getEmbedFieldForm());
+  duplicateEmbed(idx: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
+    const origin = embedsForm.at(idx);
+    if (origin && embedsForm.value.length !== 10) embedsForm.insert(idx + 1, origin);
+  }
+
+  removeEmbed(idx: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
+    embedsForm.removeAt(idx);
+  }
+
+  swapEmbed(origin: number, target: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
+    const originControl = embedsForm.at(origin);
+    const targetControl = embedsForm.at(target);
+    embedsForm.setControl(origin, targetControl);
+    embedsForm.setControl(target, originControl);
   }
 }

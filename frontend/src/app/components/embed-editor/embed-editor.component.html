@@ -1,5 +1,20 @@
-<p-accordionTab [header]="'Embed ' + (idx() + 1)" [formGroup]="embedForm()">
-  <p-accordion (activeIndexChange)="activeIndexChanged($event)" [activeIndex]="activeIndexes()" [multiple]="true">
+<p-accordionTab [formGroup]="embedForm()">
+  <ng-template pTemplate="header">
+    <hookio-accordion-header
+      [showMoveUp]="idx() !== 0"
+      [showMoveDown]="idx() + 1 !== tab().embedsForm.value.length"
+      [showCopyIcon]="tab().embedsForm.value.length !== 10"
+      [label]="'Embed ' + (idx() + 1)"
+      (move)="moveEmbed($event)"
+      (remove)="remove.emit(idx())"
+      (copy)="duplicate.emit(idx())"
+    />
+  </ng-template>
+  <p-accordion
+    (activeIndexChange)="activeIndexChanged($event)"
+    [activeIndex]="activeIndexes()"
+    [multiple]="true"
+  >
     <!-- Author -->
     <p-accordionTab header="Author">
       <div class="form-group col" formGroupName="author">
@@ -87,9 +102,17 @@
       <p-accordion [multiple]="true" formArrayName="fields">
         @for (field of embedForm().value.fields; track $index) {
         <p-accordionTab
-          [header]="'Field ' + ($index + 1)"
           [formGroupName]="$index"
         >
+          <hookio-accordion-header
+            [showMoveUp]="!$first"
+            [showMoveDown]="!$last"
+            [showCopyIcon]="embedForm().value.fields?.length !== 25"
+            [label]="'Field ' + ($index + 1)"
+            (move)="swapField($index, $event)"
+            (remove)="removeField($index)"
+            (copy)="duplicateField($index)"
+          />
           <div class="form-group col">
             <div class="form-group m-col-reverse">
               <p-floatLabel>
@@ -99,7 +122,9 @@
                   formControlName="name"
                   #name
                 ></textarea>
-                <label [for]="'field-name-' + $index">Name ({{name.value.length}}/256)</label>
+                <label [for]="'field-name-' + $index"
+                  >Name ({{ name.value.length }}/256)</label
+                >
               </p-floatLabel>
               <p-checkbox
                 [binary]="true"
@@ -114,7 +139,9 @@
                 formControlName="value"
                 #value
               ></textarea>
-              <label [for]="'field-value-' + $index">Value ({{value.value.length}}/256)</label>
+              <label [for]="'field-value-' + $index"
+                >Value ({{ value.value.length }}/256)</label
+              >
             </p-floatLabel>
           </div>
         </p-accordionTab>

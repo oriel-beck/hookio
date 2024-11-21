@@ -1,0 +1,36 @@
+<span> {{ label() }} </span>
+<div class="icons">
+  @if (showMoveUp()) {
+  <p-button
+    icon="pi pi-chevron-up"
+    severity="secondary"
+    [rounded]="true"
+    [text]="true"
+    (onClick)="emitMove($event, 'up')"
+  />
+  } @if (showMoveDown()) {
+  <p-button
+    icon="pi pi-chevron-down"
+    severity="secondary"
+    [rounded]="true"
+    [text]="true"
+    (onClick)="emitMove($event, 'down')"
+  />
+  } @if (showCopyIcon()) {
+  <p-button
+    icon="pi pi-copy"
+    severity="secondary"
+    [rounded]="true"
+    [text]="true"
+    (onClick)="emitCopy($event)"
+  />
+  } @if (showRemoveIcon()) {
+  <p-button
+    icon="pi pi-trash"
+    severity="secondary"
+    [rounded]="true"
+    [text]="true"
+    (onClick)="emitRemove($event)"
+  />
+  }
+</div>
