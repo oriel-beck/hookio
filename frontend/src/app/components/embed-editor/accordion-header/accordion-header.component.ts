@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 export type MoveDirection = 'up' | 'down';
 
@@ -7,7 +8,8 @@ export type MoveDirection = 'up' | 'down';
   selector: 'hookio-accordion-header',
   standalone: true,
   imports: [
-    ButtonModule
+    ButtonModule,
+    TooltipModule
   ],
   templateUrl: './accordion-header.component.html',
   styleUrl: './accordion-header.component.scss'
