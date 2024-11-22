@@ -2,8 +2,16 @@ import { FormArray, FormControl, FormGroup, Validators } from "@angular/forms";
 import { urlRegex, webhookRegex } from "../../constants";
 import { Embed, Message, Subscription } from "../../schemas/subscription.schema";
 
+let id = 0;
+
+function* getId() {
+    yield id++;
+}
+
 export function getEmbedForm(embed?: Embed) {
     return new FormGroup({
+        // ID for change detection
+        id: new FormControl(getId().next().value),
         title: new FormControl<string | undefined>(embed?.title),
         description: new FormControl<string | undefined>(embed?.description),
         url: new FormControl<string | undefined>(embed?.url, [Validators.pattern(urlRegex)]),
@@ -30,6 +38,8 @@ export function getEmbedForm(embed?: Embed) {
 
 export function getEmbedFieldForm(field?: Embed['fields'][0]) {
     return new FormGroup({
+        // ID for change detection
+        id: new FormControl(getId().next().value),
         name: new FormControl<string | undefined>(field?.name, [Validators.required, Validators.maxLength(256)]),
         value: new FormControl<string | undefined>(field?.value, [Validators.required, Validators.maxLength(1024)]),
         inline: new FormControl<boolean>(field?.inline || false)

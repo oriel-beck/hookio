@@ -58,18 +58,31 @@
                       >Content ({{ textarea.value.length }}/2000)</label
                     >
                   </p-floatLabel>
-                  <p-accordion [multiple]="true" formArrayName="embeds">
-                    @for (embed of tab.embedsForm.value; track $index) {
+                  <p-accordion
+                    [activeIndex]="activeIndexes()"
+                    (activeIndexChange)="activeIndexChanged($event)"
+                    [multiple]="true"
+                    formArrayName="embeds"
+                  >
+                    @for (embed of tab.embedsForm.value; track embed.id) {
                     <!-- Embed -->
-                    <hookio-embed-editor
-                      [tab]="tab"
-                      [idx]="$index"
-                      (duplicate)="duplicateEmbed($event, tab.embedsForm)"
-                      (remove)="removeEmbed($event, tab.embedsForm)"
-                      (swap)="
-                        swapEmbed($event.origin, $event.target, tab.embedsForm)
-                      "
-                    />
+                    <p-accordionTab>
+                      <ng-template pTemplate="header">
+                        <hookio-accordion-header
+                          [showMoveUp]="$index !== 0"
+                          [showMoveDown]="
+                            $index + 1 !== tab.embedsForm.value.length
+                          "
+                          [showCopyIcon]="tab.embedsForm.value.length !== 10"
+                          [label]="'Embed ' + ($index + 1)"
+                          (move)="swapEmbed($index, $event, tab.embedsForm)"
+                          (remove)="removeEmbed($index, tab.embedsForm)"
+                          (copy)="duplicateEmbed($index, tab.embedsForm)"
+                        />
+                      </ng-template>
+                      <hookio-embed-editor [tab]="tab" [idx]="$index" />
+                    </p-accordionTab>
+
                     }
                   </p-accordion>
                   <div class="add-embed-btn">

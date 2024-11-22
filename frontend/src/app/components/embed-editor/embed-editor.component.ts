@@ -12,6 +12,7 @@ import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
 import { getEmbedFieldForm } from '../../modules/editor/util';
 import { AccordionHeaderComponent, MoveDirection } from "./accordion-header/accordion-header.component";
 
+// TODO: move all controls for the embed fields out since this component is re-rendered when there is a change above it (like embeds moving, duplicating)
 @Component({
   selector: 'hookio-embed-editor',
   standalone: true,
@@ -34,9 +35,6 @@ export class EmbedEditorComponent {
   tab = input.required<Tab>();
   idx = input.required<number>();
   embedForm = computed(() => this.tab().embedsForm.at(this.idx()));
-  swap = output<{ origin: number, target: number }>();
-  remove = output<number>();
-  duplicate = output<number>();
 
   activeIndexes = signal<number[]>([]);
 
@@ -74,10 +72,7 @@ export class EmbedEditorComponent {
   }
 
   activeIndexChanged(ev: number | number[]) {
+    console.log("field index", ev)
     if (Array.isArray(ev)) this.activeIndexes.set(ev);
-  }
-
-  moveEmbed(direction: MoveDirection) {
-    this.swap.emit({ origin: this.idx(), target: this.idx() + direction === 'down' ? 1 : -1 })
   }
 }

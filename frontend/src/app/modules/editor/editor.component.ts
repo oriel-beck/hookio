@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { SubscriptionService } from '../../services/subscription/subscription.service';
 import { Router } from '@angular/router';
-import { Message, MessageType, Subscription, SubscriptionType } from '../../schemas/subscription.schema';
+import { Embed, Message, MessageType, Subscription, SubscriptionType } from '../../schemas/subscription.schema';
 import { injectParams } from 'ngxtension/inject-params';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { FormArray, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TabViewModule } from 'primeng/tabview';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { toReadableFormat } from '../../util';
@@ -19,6 +19,7 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
 import { LoadingOverlayComponent } from "../../components/loading-overlay/loading-overlay.component";
 import { EmbedEditorComponent } from "../../components/embed-editor/embed-editor.component";
+import { AccordionHeaderComponent, MoveDirection } from "../../components/embed-editor/accordion-header/accordion-header.component";
 
 export interface Tab {
   label: string;
@@ -42,8 +43,9 @@ export interface Tab {
     FloatLabelModule,
     ScrollPanelModule,
     LoadingOverlayComponent,
-    EmbedEditorComponent
-],
+    EmbedEditorComponent,
+    AccordionHeaderComponent
+  ],
   templateUrl: './editor.component.html',
   styleUrl: './editor.component.scss'
 })
@@ -73,6 +75,8 @@ export class EditorComponent implements OnInit {
   readonly editorOpen = signal(true);
   readonly isReady = signal(false);
 
+  readonly activeIndexes = signal<number[]>([]);
+
   ngOnInit(): void {
     const subscriptionAsNumber = Number(this.subscriptionId());
     if (isNaN(subscriptionAsNumber)) this.router.navigate(["servers", this.guildId()]);
@@ -96,17 +100,35 @@ export class EditorComponent implements OnInit {
 
   duplicateEmbed(idx: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
     const origin = embedsForm.at(idx);
-    if (origin && embedsForm.value.length !== 10) embedsForm.insert(idx + 1, origin);
+    if (origin && embedsForm.value.length !== 10) embedsForm.insert(idx, getEmbedForm(origin.value as Embed));
+    this.activeIndexes.update(i => {
+      // shift all indexes above the current index by 1
+      const mapped = i.map(cidx => cidx > idx ? cidx + 1 : cidx);
+      // add the new index in
+      mapped.splice(idx, 0, idx + 1);
+      return mapped;
+    })
   }
 
   removeEmbed(idx: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
     embedsForm.removeAt(idx);
+    this.activeIndexes.update(i => {
+      // remove the removed index
+      i.splice(idx, 1);
+      return [...i];
+    });
   }
 
-  swapEmbed(origin: number, target: number, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
-    const originControl = embedsForm.at(origin);
-    const targetControl = embedsForm.at(target);
+  swapEmbed(origin: number, direction: MoveDirection, embedsForm: ReturnType<typeof this.tabs>[0]['embedsForm']) {
+    const target = direction === 'down' ? origin + 1 : origin - 1;
+    const originControl = getEmbedForm(embedsForm.at(origin).value as Embed);
+    const targetControl = getEmbedForm(embedsForm.at(target).value as Embed);
     embedsForm.setControl(origin, targetControl);
     embedsForm.setControl(target, originControl);
+  }
+
+  activeIndexChanged(ev: number | number[]) {
+    console.log("index", ev)
+    if (Array.isArray(ev)) this.activeIndexes.set(ev);
   }
 }
