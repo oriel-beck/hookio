@@ -1,6 +1,6 @@
-@if (loading()) {
+@if (store.loading()) {
 <hookio-loading-overlay />
-} @else {
+} @else if (store.error()) { } @else {
 <div class="wrapper">
   <div
     class="editor-drawer"
@@ -8,8 +8,13 @@
     [class.ready]="isReady()"
   >
     <p-tabView>
-      @for (tab of tabs(); track tab.value) {
-      <p-tabPanel [header]="tab.label">
+      @for (message of store.subscription()!.messages; track message.id; let
+      messageIdx = $index) {
+      <p-tabPanel
+        [header]="
+          message.type | toMessageLabel : store.subscription()!.subscriptionType
+        "
+      >
         <!-- This forces tabView to eager load the tabs, causes an error on PrimeNG's end but its fine -->
         <ng-template pTemplate="content">
           <p-scrollPanel
@@ -18,7 +23,7 @@
           >
             <p-accordion [activeIndex]="0">
               <p-accordionTab header="Subscription Details">
-                <div class="form-group col" [formGroup]="subscriptionForm()">
+                <div class="form-group col" [formGroup]="store.form()!">
                   <p-floatLabel>
                     <input
                       id="webhookUrl"
@@ -43,7 +48,10 @@
             <p-divider />
             <p-accordion [activeIndex]="0">
               <p-accordionTab header="Message">
-                <div class="form-wrapper" [formGroup]="tab.messageForm">
+                <div
+                  class="form-wrapper"
+                  [formGroup]="store.messages().at($index)"
+                >
                   <p-floatLabel>
                     <textarea
                       [maxlength]="2000"
@@ -59,28 +67,38 @@
                     >
                   </p-floatLabel>
                   <p-accordion
-                    [activeIndex]="activeIndexes()"
-                    (activeIndexChange)="activeIndexChanged($event)"
                     [multiple]="true"
                     formArrayName="embeds"
                   >
-                    @for (embed of tab.embedsForm.value; track embed.id) {
+                    @for (embed of store.messages().at($index).value.embeds;
+                    track embed.id) {
                     <!-- Embed -->
                     <p-accordionTab>
                       <ng-template pTemplate="header">
                         <hookio-accordion-header
                           [showMoveUp]="$index !== 0"
                           [showMoveDown]="
-                            $index + 1 !== tab.embedsForm.value.length
+                            $index + 1 !==
+                            store.messages().at(messageIdx).value.embeds?.length
                           "
-                          [showCopyIcon]="tab.embedsForm.value.length !== 10"
+                          [showCopyIcon]="
+                            store.messages().at(messageIdx).value.embeds
+                              ?.length !== 10
+                          "
                           [label]="'Embed ' + ($index + 1)"
-                          (move)="swapEmbed($index, $event, tab.embedsForm)"
-                          (remove)="removeEmbed($index, tab.embedsForm)"
-                          (copy)="duplicateEmbed($index, tab.embedsForm)"
+                          (move)="store.moveEmbed(messageIdx, $index, $event)"
+                          (remove)="store.removeEmbed(messageIdx, $index)"
+                          (copy)="store.duplicateEmbed(messageIdx, $index)"
                         />
                       </ng-template>
-                      <hookio-embed-editor [tab]="tab" [idx]="$index" />
+                      <hookio-embed-editor
+                        [messageForm]="store.messages().at(messageIdx)"
+                        [idx]="$index"
+                        (addField)="store.addEmbedField(messageIdx, $index)"
+                        (duplicateField)="store.duplicateEmbedField(messageIdx, $index, $event)"
+                        (moveField)="store.moveEmbedField(messageIdx, $index, $event.fieldIdx, $event.direction)"
+                        (removeField)="store.removeEmbedField(messageIdx, $index, $event)"
+                      />
                     </p-accordionTab>
 
                     }
@@ -88,8 +106,11 @@
                   <div class="add-embed-btn">
                     <p-button
                       label="Add Embed"
-                      [disabled]="tab.embedsForm.value.length === 10"
-                      (onClick)="addEmbedTo(tab.embedsForm)"
+                      [disabled]="
+                        store.messages().at(messageIdx).value.embeds?.length ===
+                        10
+                      "
+                      (onClick)="store.addEmbed(messageIdx)"
                     />
                   </div>
                 </div>

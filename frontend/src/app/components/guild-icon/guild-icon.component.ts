@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { User } from '../../schemas/user.schema';
 import { ButtonifyDirective } from '../../directives/buttonify/buttonify.directive';
@@ -13,7 +13,8 @@ import { defaultDiscordIcon } from '../../constants';
   hostDirectives: [{
     directive: ButtonifyDirective,
     outputs: ['clicked']
-  }]
+  }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GuildIconComponent {
   guild = input.required<User['guilds'][0]>();

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DropdownModule } from 'primeng/dropdown';
 import { SubscriptionType } from '../../schemas/subscription.schema';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -28,7 +28,8 @@ type State = 'form' | 'loading' | 'error';
     ProgressSpinnerModule
   ],
   templateUrl: './add-subscription.component.html',
-  styleUrl: './add-subscription.component.scss'
+  styleUrl: './add-subscription.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AddSubscriptionComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

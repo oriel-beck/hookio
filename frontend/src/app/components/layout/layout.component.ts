@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { HeaderComponent } from "../header/header.component";
 import { User } from '../../schemas/user.schema';
 
@@ -7,7 +7,8 @@ import { User } from '../../schemas/user.schema';
   standalone: true,
   imports: [HeaderComponent],
   templateUrl: './layout.component.html',
-  styleUrl: './layout.component.scss'
+  styleUrl: './layout.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LayoutComponent {
   user = input<User>();

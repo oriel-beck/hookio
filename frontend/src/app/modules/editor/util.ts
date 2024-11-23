@@ -2,6 +2,11 @@ import { FormArray, FormControl, FormGroup, Validators } from "@angular/forms";
 import { urlRegex, webhookRegex } from "../../constants";
 import { Embed, Message, Subscription } from "../../schemas/subscription.schema";
 
+export type SubscriptionForm = ReturnType<typeof getSubscriptionForm>;
+export type MessageForm = ReturnType<typeof getMessageForm>;
+export type EmbedForm = ReturnType<typeof getEmbedForm>;
+export type EmbedFieldForm = ReturnType<typeof getEmbedFieldForm>;
+
 let id = 0;
 
 function* getId() {

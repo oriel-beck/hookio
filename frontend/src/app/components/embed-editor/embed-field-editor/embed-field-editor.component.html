@@ -1,0 +1,46 @@
+<div [formGroup]="embedForm()">
+  <p-accordion [multiple]="true" formArrayName="fields">
+    @for (field of embedForm().value.fields; track field.id) {
+    <p-accordionTab [formGroupName]="$index">
+      <ng-template pTemplate="header">
+        <hookio-accordion-header
+          [showMoveUp]="!$first"
+          [showMoveDown]="!$last"
+          [showCopyIcon]="embedForm().value.fields?.length !== 25"
+          [label]="'Field ' + ($index + 1)"
+          (move)="moveField.emit({ fieldIdx: $index, direction: $event })"
+          (remove)="removeField.emit($index)"
+          (copy)="duplicateField.emit($index)"
+        />
+      </ng-template>
+      <div class="form-group col">
+        <div class="form-group m-col-reverse">
+          <p-floatLabel>
+            <textarea
+              pInputTextarea
+              [id]="'field-name-' + $index"
+              formControlName="name"
+              #name
+            ></textarea>
+            <label [for]="'field-name-' + $index"
+              >Name ({{ name.value.length }}/256)</label
+            >
+          </p-floatLabel>
+          <p-checkbox [binary]="true" label="Inline" formControlName="inline" />
+        </div>
+        <p-floatLabel>
+          <textarea
+            pInputTextarea
+            [id]="'field-value-' + $index"
+            formControlName="value"
+            #value
+          ></textarea>
+          <label [for]="'field-value-' + $index"
+            >Value ({{ value.value.length }}/256)</label
+          >
+        </p-floatLabel>
+      </div>
+    </p-accordionTab>
+    }
+  </p-accordion>
+</div>

@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { FormArray, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
@@ -9,8 +9,9 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Tab } from '../../modules/editor/editor.component';
 import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
-import { getEmbedFieldForm } from '../../modules/editor/util';
+import { EmbedForm, getEmbedFieldForm, MessageForm } from '../../modules/editor/util';
 import { AccordionHeaderComponent, MoveDirection } from "./accordion-header/accordion-header.component";
+import { EmbedFieldEditorComponent } from "./embed-field-editor/embed-field-editor.component";
 
 // TODO: move all controls for the embed fields out since this component is re-rendered when there is a change above it (like embeds moving, duplicating)
 @Component({
@@ -25,18 +26,21 @@ import { AccordionHeaderComponent, MoveDirection } from "./accordion-header/acco
     FloatLabelModule,
     ButtonModule,
     ColorPickerModule,
-    CheckboxModule,
-    AccordionHeaderComponent
+    EmbedFieldEditorComponent
   ],
   templateUrl: './embed-editor.component.html',
-  styleUrl: './embed-editor.component.scss'
+  styleUrl: './embed-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmbedEditorComponent {
-  tab = input.required<Tab>();
+  messageForm = input.required<MessageForm>();
   idx = input.required<number>();
-  embedForm = computed(() => this.tab().embedsForm.at(this.idx()));
+  embedForm = computed(() => (this.messageForm().get('embeds') as FormArray<EmbedForm>).at(this.idx()));
 
-  activeIndexes = signal<number[]>([]);
+  addField = output();
+  moveField = output<{ fieldIdx: number, direction: MoveDirection }>();
+  removeField = output<number>();
+  duplicateField = output<number>();
 
   colorInputChanged(ev: Event, picker: ColorPicker) {
     const input = ev.target as HTMLInputElement;
@@ -45,34 +49,8 @@ export class EmbedEditorComponent {
     picker.writeValue(input.value);
   }
 
-  addField() {
-    const fieldsControl = this.embedForm().get('fields') as FormArray<ReturnType<typeof getEmbedFieldForm>>;
-    if (fieldsControl.value.length === 25) return;
-    fieldsControl.push(getEmbedFieldForm());
-    this.activeIndexes.update(idx => idx.map(i => i >= 3 ? i + 1 : i));
-  }
-
-  removeField(idx: number) {
-    const fieldsControl = this.embedForm().get('fields') as FormArray<ReturnType<typeof getEmbedFieldForm>>;
-    fieldsControl.removeAt(idx);
-  }
-
-  swapField(origin: number, direction: MoveDirection) {
-    const target = origin + direction === 'down' ? 1 : -1;
-    const fieldsControl = this.embedForm().get('fields') as FormArray<ReturnType<typeof getEmbedFieldForm>>;
-    const originField = fieldsControl.at(origin)
-    const targetField = fieldsControl.at(target);
-    fieldsControl.setControl(target, originField);
-    fieldsControl.setControl(origin, targetField);
-  }
-
-  duplicateField(idx: number) {
-    const fieldsControl = this.embedForm().get('fields') as FormArray<ReturnType<typeof getEmbedFieldForm>>;
-    fieldsControl.insert(idx, fieldsControl.at(idx));
-  }
-
-  activeIndexChanged(ev: number | number[]) {
-    console.log("field index", ev)
-    if (Array.isArray(ev)) this.activeIndexes.set(ev);
-  }
+  // activeIndexChanged(ev: number | number[]) {
+  //   console.log("field index", ev)
+  //   if (Array.isArray(ev)) this.activeIndexes.set(ev);
+  // }
 }

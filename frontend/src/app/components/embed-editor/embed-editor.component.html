@@ -1,6 +1,4 @@
 <p-accordion
-  (activeIndexChange)="activeIndexChanged($event)"
-  [activeIndex]="activeIndexes()"
   [multiple]="true"
   [formGroup]="embedForm()"
 >
@@ -87,59 +85,19 @@
   <!-- Fields -->
   <!-- This should maybe be its own component which talks to the higher ones -->
   <p-accordionTab header="Fields">
-    <p-accordion [multiple]="true" formArrayName="fields">
-      @for (field of embedForm().value.fields; track field.id) {
-      <p-accordionTab [formGroupName]="$index">
-        <ng-template pTemplate="header">
-          <hookio-accordion-header
-            [showMoveUp]="!$first"
-            [showMoveDown]="!$last"
-            [showCopyIcon]="embedForm().value.fields?.length !== 25"
-            [label]="'Field ' + ($index + 1)"
-            (move)="swapField($index, $event)"
-            (remove)="removeField($index)"
-            (copy)="duplicateField($index)"
-          />
-        </ng-template>
-        <div class="form-group col">
-          <div class="form-group m-col-reverse">
-            <p-floatLabel>
-              <textarea
-                pInputTextarea
-                [id]="'field-name-' + $index"
-                formControlName="name"
-                #name
-              ></textarea>
-              <label [for]="'field-name-' + $index"
-                >Name ({{ name.value.length }}/256)</label
-              >
-            </p-floatLabel>
-            <p-checkbox
-              [binary]="true"
-              label="Inline"
-              formControlName="inline"
-            />
-          </div>
-          <p-floatLabel>
-            <textarea
-              pInputTextarea
-              [id]="'field-value-' + $index"
-              formControlName="value"
-              #value
-            ></textarea>
-            <label [for]="'field-value-' + $index"
-              >Value ({{ value.value.length }}/256)</label
-            >
-          </p-floatLabel>
-        </div>
-      </p-accordionTab>
-      }
-    </p-accordion>
+    <!-- Fields comp here-->
+    <hookio-embed-field-editor
+      [embedForm]="embedForm()"
+      [embedIdx]="idx()"
+      (duplicateField)="duplicateField.emit($event)"
+      (moveField)="moveField.emit($event)"
+      (removeField)="removeField.emit($event)"
+    />
     <div class="add-field-btn">
       <p-button
         label="Add Field"
         [disabled]="embedForm().value.fields?.length === 25"
-        (onClick)="addField()"
+        (onClick)="addField.emit()"
       />
     </div>
   </p-accordionTab>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
@@ -11,7 +11,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
   styleUrl: './loading-overlay.component.scss',
   host: {
     'aria-hidden': 'true'
-  }
+  },
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoadingOverlayComponent {
 

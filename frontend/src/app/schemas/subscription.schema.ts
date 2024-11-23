@@ -21,8 +21,9 @@ export enum MessageType {
 }
 
 export type Subscription = z.TypeOf<typeof subscription>;
-export type Embed = z.TypeOf<typeof embed>;
 export type Message = z.TypeOf<typeof message>;
+export type Embed = z.TypeOf<typeof embed>;
+export type EmbedField = z.TypeOf<typeof field>;
 
 export const footer = z.object({
     text: z.string().max(256),

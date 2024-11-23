@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -12,14 +12,15 @@ export type MoveDirection = 'up' | 'down';
     TooltipModule
   ],
   templateUrl: './accordion-header.component.html',
-  styleUrl: './accordion-header.component.scss'
+  styleUrl: './accordion-header.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccordionHeaderComponent {
   label = input.required<string>();
-  
+
   showMoveUp = input(false);
   showMoveDown = input(false);
-  
+
   showCopyIcon = input(true);
   showRemoveIcon = input(true);
 
@@ -31,7 +32,7 @@ export class AccordionHeaderComponent {
     ev.stopPropagation();
     this.move.emit(direction);
   }
-  
+
   emitCopy(ev: Event) {
     ev.stopPropagation();
     this.copy.emit();
