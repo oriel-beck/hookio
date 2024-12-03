@@ -1,19 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
-import { FormArray, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, input, model, output } from '@angular/core';
+import { FormArray, ReactiveFormsModule } from '@angular/forms';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
+import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
 import { DividerModule } from 'primeng/divider';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { CheckboxModule } from 'primeng/checkbox';
-import { Tab } from '../../modules/editor/editor.component';
-import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
-import { EmbedForm, getEmbedFieldForm, MessageForm } from '../../modules/editor/util';
-import { AccordionHeaderComponent, MoveDirection } from "./accordion-header/accordion-header.component";
+import { AccordionState } from '../../modules/editor/editor.component';
+import { EmbedForm, MessageForm } from '../../modules/editor/util';
+import { MoveDirection } from "./accordion-header/accordion-header.component";
 import { EmbedFieldEditorComponent } from "./embed-field-editor/embed-field-editor.component";
 
-// TODO: move all controls for the embed fields out since this component is re-rendered when there is a change above it (like embeds moving, duplicating)
 @Component({
   selector: 'hookio-embed-editor',
   standalone: true,
@@ -30,17 +28,30 @@ import { EmbedFieldEditorComponent } from "./embed-field-editor/embed-field-edit
   ],
   templateUrl: './embed-editor.component.html',
   styleUrl: './embed-editor.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmbedEditorComponent {
   messageForm = input.required<MessageForm>();
-  idx = input.required<number>();
   embedForm = computed(() => (this.messageForm().get('embeds') as FormArray<EmbedForm>).at(this.idx()));
+
+  messageIdx = input.required<number>();
+  idx = input.required<number>();
 
   addField = output();
   moveField = output<{ fieldIdx: number, direction: MoveDirection }>();
   removeField = output<number>();
   duplicateField = output<number>();
+
+  accordionState = model.required<AccordionState>();
+
+  accordionStateChanged(fields: number | number[]) {
+    console.log(this.accordionState(), this.idx(), this.messageIdx())
+    if (!Array.isArray(fields)) return;
+    this.accordionState.update((data) => {
+      const tmp = { ...data };
+      tmp[this.messageIdx()]!.embeds![this.idx()].activeIndexes = fields;
+      return tmp;
+    });
+  }
 
   colorInputChanged(ev: Event, picker: ColorPicker) {
     const input = ev.target as HTMLInputElement;
@@ -48,9 +59,4 @@ export class EmbedEditorComponent {
     if (input.value === "#") input.value = "";
     picker.writeValue(input.value);
   }
-
-  // activeIndexChanged(ev: number | number[]) {
-  //   console.log("field index", ev)
-  //   if (Array.isArray(ev)) this.activeIndexes.set(ev);
-  // }
 }

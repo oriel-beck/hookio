@@ -1,6 +1,8 @@
 <p-accordion
   [multiple]="true"
   [formGroup]="embedForm()"
+  (activeIndexChange)="accordionStateChanged($event)"
+  [activeIndex]="accordionState()[messageIdx()]?.embeds?.[idx()]?.activeIndexes"
 >
   <!-- Author -->
   <p-accordionTab header="Author">
@@ -87,6 +89,8 @@
   <p-accordionTab header="Fields">
     <!-- Fields comp here-->
     <hookio-embed-field-editor
+      [(accordionState)]="accordionState"
+      [messageIdx]="messageIdx()"
       [embedForm]="embedForm()"
       [embedIdx]="idx()"
       (duplicateField)="duplicateField.emit($event)"

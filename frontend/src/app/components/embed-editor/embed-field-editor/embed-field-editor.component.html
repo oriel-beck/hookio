@@ -1,6 +1,11 @@
 <div [formGroup]="embedForm()">
-  <p-accordion [multiple]="true" formArrayName="fields">
-    @for (field of embedForm().value.fields; track field.id) {
+  <p-accordion
+    [multiple]="true"
+    formArrayName="fields"
+    (activeIndexChange)="accordionStateChanged($event)"
+    [activeIndex]="accordionState()[messageIdx()]?.embeds?.[embedIdx()]?.fields"
+  >
+    @for (field of embedForm().value.fields; track field._id) {
     <p-accordionTab [formGroupName]="$index">
       <ng-template pTemplate="header">
         <hookio-accordion-header
@@ -8,9 +13,9 @@
           [showMoveDown]="!$last"
           [showCopyIcon]="embedForm().value.fields?.length !== 25"
           [label]="'Field ' + ($index + 1)"
-          (move)="moveField.emit({ fieldIdx: $index, direction: $event })"
-          (remove)="removeField.emit($index)"
-          (copy)="duplicateField.emit($index)"
+          (move)="moveField($index, $event)"
+          (remove)="removeField($index)"
+          (copy)="duplicateField($index)"
         />
       </ng-template>
       <div class="form-group col">

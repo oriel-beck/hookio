@@ -67,11 +67,13 @@
                     >
                   </p-floatLabel>
                   <p-accordion
+                    (activeIndexChange)="accordionStateChanged(messageIdx, $event)"
+                    [activeIndex]="accordionState()[messageIdx]?.activeIndexes"
                     [multiple]="true"
                     formArrayName="embeds"
                   >
                     @for (embed of store.messages().at($index).value.embeds;
-                    track embed.id) {
+                    track embed._id) {
                     <!-- Embed -->
                     <p-accordionTab>
                       <ng-template pTemplate="header">
@@ -86,21 +88,33 @@
                               ?.length !== 10
                           "
                           [label]="'Embed ' + ($index + 1)"
-                          (move)="store.moveEmbed(messageIdx, $index, $event)"
-                          (remove)="store.removeEmbed(messageIdx, $index)"
-                          (copy)="store.duplicateEmbed(messageIdx, $index)"
+                          (move)="moveEmbed(messageIdx, $index, $event)"
+                          (remove)="removeEmbed(messageIdx, $index)"
+                          (copy)="duplicateEmbed(messageIdx, $index)"
                         />
                       </ng-template>
                       <hookio-embed-editor
+                        [messageIdx]="messageIdx"
+                        [(accordionState)]="accordionState"
                         [messageForm]="store.messages().at(messageIdx)"
                         [idx]="$index"
                         (addField)="store.addEmbedField(messageIdx, $index)"
-                        (duplicateField)="store.duplicateEmbedField(messageIdx, $index, $event)"
-                        (moveField)="store.moveEmbedField(messageIdx, $index, $event.fieldIdx, $event.direction)"
-                        (removeField)="store.removeEmbedField(messageIdx, $index, $event)"
+                        (duplicateField)="
+                          store.duplicateEmbedField(messageIdx, $index, $event)
+                        "
+                        (moveField)="
+                          store.moveEmbedField(
+                            messageIdx,
+                            $index,
+                            $event.fieldIdx,
+                            $event.direction
+                          )
+                        "
+                        (removeField)="
+                          store.removeEmbedField(messageIdx, $index, $event)
+                        "
                       />
                     </p-accordionTab>
-
                     }
                   </p-accordion>
                   <div class="add-embed-btn">
@@ -110,7 +124,7 @@
                         store.messages().at(messageIdx).value.embeds?.length ===
                         10
                       "
-                      (onClick)="store.addEmbed(messageIdx)"
+                      (onClick)="addEmbed(messageIdx)"
                     />
                   </div>
                 </div>

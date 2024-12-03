@@ -16,7 +16,8 @@ function* getId() {
 export function getEmbedForm(embed?: Embed) {
     return new FormGroup({
         // ID for change detection
-        id: new FormControl(getId().next().value),
+        _id: new FormControl(getId().next().value),
+        _open: new FormControl<boolean>(false),
         title: new FormControl<string | undefined>(embed?.title),
         description: new FormControl<string | undefined>(embed?.description),
         url: new FormControl<string | undefined>(embed?.url, [Validators.pattern(urlRegex)]),
@@ -44,7 +45,8 @@ export function getEmbedForm(embed?: Embed) {
 export function getEmbedFieldForm(field?: Embed['fields'][0]) {
     return new FormGroup({
         // ID for change detection
-        id: new FormControl(getId().next().value),
+        _id: new FormControl(getId().next().value),
+        _open: new FormControl(false),
         name: new FormControl<string | undefined>(field?.name, [Validators.required, Validators.maxLength(256)]),
         value: new FormControl<string | undefined>(field?.value, [Validators.required, Validators.maxLength(1024)]),
         inline: new FormControl<boolean>(field?.inline || false)

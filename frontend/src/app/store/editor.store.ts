@@ -9,8 +9,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MoveDirection } from '../components/embed-editor/accordion-header/accordion-header.component';
 import { EmbedFieldForm, EmbedForm, getEmbedFieldForm, getEmbedForm, getSubscriptionForm, MessageForm, SubscriptionForm } from '../modules/editor/util';
-import { FormArray } from '@angular/forms';
-
+import { FormArray, FormGroup } from '@angular/forms';
 
 export interface EditorState {
     loading: boolean;
@@ -19,6 +18,17 @@ export interface EditorState {
     guildId: string | null;
     subscription: Subscription | null;
     form: SubscriptionForm | null;
+    accordionState: {
+        [messageIdx: number]: {
+            activeIndexes: number[];
+            embeds: {
+                [embedIdx: number]: {
+                    activeIndexes: number[]; // Tracks open embed tabs
+                    fields: number[] // tracks embedFields
+                };
+            };
+        };
+    };
 }
 
 const initialState: EditorState = {
@@ -27,7 +37,8 @@ const initialState: EditorState = {
     id: null,
     guildId: null,
     subscription: null,
-    form: null
+    form: null,
+    accordionState: {}
 }
 
 export const EditorStore = signalStore(
@@ -45,7 +56,12 @@ export const EditorStore = signalStore(
                 switchMap(() => subscriptionService.getSubscriptions(store.guildId()!, store.id()!)),
                 tapResponse({
                     next: (subscription) => {
-                        patchState(store, { subscription, loading: false, form: getSubscriptionForm(subscription) })
+                        patchState(store, {
+                            subscription,
+                            loading: false,
+                            form: getSubscriptionForm(subscription),
+                            accordionState: subscription.messages.map((_, i) => ({ [i]: { activeIndexes: [], embeds: {} } }) as EditorState['accordionState'][0])
+                        })
                     },
                     error: (error: HttpErrorResponse) => {
                         patchState(store, { error: true, loading: false });
@@ -104,7 +120,7 @@ export const EditorStore = signalStore(
             const embedForm = embedsForm.at(embedIdx);
 
             const fieldsForm = embedForm.get('fields') as FormArray<EmbedFieldForm>;
-            
+
             if (fieldsForm.value.length === 25) return;
             fieldsForm.push(getEmbedFieldForm());
         },
@@ -116,9 +132,9 @@ export const EditorStore = signalStore(
             const embedForm = embedsForm.at(embedIdx);
 
             const fieldsForm = embedForm.get('fields') as FormArray<EmbedFieldForm>;
-            
+
             if (fieldsForm.value.length === 25) return;
-            
+
             const field = fieldsForm.at(fieldIdx);
             fieldsForm.push(getEmbedFieldForm(field.value as EmbedField));
         },
@@ -140,7 +156,7 @@ export const EditorStore = signalStore(
             const embedForm = embedsForm.at(embedIdx);
 
             const fieldsForm = embedForm.get('fields') as FormArray<EmbedFieldForm>;
-            
+
             const targetIdx = direction === "up" ? embedIdx - 1 : embedIdx + 1;
 
             const field = getEmbedFieldForm(fieldsForm.at(fieldIdx).value as EmbedField);
