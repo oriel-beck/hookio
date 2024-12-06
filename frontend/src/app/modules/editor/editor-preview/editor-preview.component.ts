@@ -36,11 +36,14 @@ export class EditorPreviewComponent {
   format(text?: string | null) {
     if (!text) return "";
     const sanitized = this.sanitize(text);
+    // TODO: this supports all markdown, add some restrictions and adjust styles to fit discord's
     const parsed = toHTML(sanitized, {
-      discordOnly: true, discordCallback: {
+      discordCallback: {
         user: () => `<discord-mention type="user">user</discord-mention>`,
         role: () => `<discord-mention type="role">role</discord-mention>`,
-        channel: () => `<discord-mention type="channel">channel</discord-mention>`
+        channel: () => `<discord-mention type="channel">channel</discord-mention>`,
+        everyone: () => `<discord-mention type="role">everyone</discord-mention>`,
+        here: () => `<discord-mention type="role">here</discord-mention>`,
       }
     }).replaceAll('\n', '<br/>');
     return this.sanitizer.bypassSecurityTrustHtml(parsed)
