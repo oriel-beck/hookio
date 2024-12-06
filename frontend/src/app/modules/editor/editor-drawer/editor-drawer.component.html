@@ -1,0 +1,121 @@
+<p-tabView [(activeIndex)]="activeTabIndex">
+  @for (message of subscription()!.messages; track message.id; let messageIdx =
+  $index) {
+  <p-tabPanel
+    [header]="message.type | toMessageLabel : subscription()!.subscriptionType"
+  >
+    <!-- This forces tabView to eager load the tabs, causes an error on PrimeNG's end but its fine -->
+    <ng-template pTemplate="content">
+      <p-scrollPanel
+        styleClass="discord-scrollbar"
+        [style]="{  }"
+      >
+        <p-accordion [activeIndex]="0">
+          <p-accordionTab header="Subscription Details">
+            <div class="form-group col" [formGroup]="form()!">
+              <p-floatLabel>
+                <input
+                  id="webhookUrl"
+                  pInputText
+                  formControlName="webhookUrl"
+                  placeholder="https://discord.com/api/webhooks/..."
+                />
+                <label for="webhookUrl">Webhook URL</label>
+              </p-floatLabel>
+              <p-floatLabel>
+                <input
+                  id="source"
+                  pInputText
+                  formControlName="source"
+                  placeholder="Source"
+                />
+                <label for="source">Subscription Source</label>
+              </p-floatLabel>
+            </div>
+          </p-accordionTab>
+        </p-accordion>
+        <p-divider />
+        <p-accordion [activeIndex]="0">
+          <p-accordionTab header="Message">
+            <div class="form-wrapper" [formGroup]="messages().at($index)">
+              <p-floatLabel>
+                <textarea
+                  [maxlength]="2000"
+                  id="content"
+                  pInputTextarea
+                  formControlName="content"
+                  [rows]="5"
+                  cols="30"
+                  #textarea
+                ></textarea>
+                <label for="content"
+                  >Content ({{ textarea.value.length }}/2000)</label
+                >
+              </p-floatLabel>
+              <p-accordion
+                (activeIndexChange)="accordionStateChanged(messageIdx, $event)"
+                [activeIndex]="accordionState()[messageIdx]?.activeIndexes"
+                [multiple]="true"
+                formArrayName="embeds"
+              >
+                @for (embed of messages().at($index).value.embeds; track
+                embed._id) {
+                <!-- Embed -->
+                <p-accordionTab>
+                  <ng-template pTemplate="header">
+                    <hookio-accordion-header
+                      [showMoveUp]="$index !== 0"
+                      [showMoveDown]="
+                        $index + 1 !==
+                        messages().at(messageIdx).value.embeds?.length
+                      "
+                      [showCopyIcon]="
+                        messages().at(messageIdx).value.embeds?.length !== 10
+                      "
+                      [label]="'Embed ' + ($index + 1)"
+                      (move)="moveEmbed(messageIdx, $index, $event)"
+                      (remove)="removeEmbed(messageIdx, $index)"
+                      (copy)="duplicateEmbed(messageIdx, $index)"
+                    />
+                  </ng-template>
+                  <hookio-embed-editor
+                    [messageIdx]="messageIdx"
+                    [(accordionState)]="accordionState"
+                    [messageForm]="messages().at(messageIdx)"
+                    [idx]="$index"
+                    (addField)="addEmbedFieldOutput.emit({ messageIdx, embedIdx: $index })"
+                    (duplicateField)="
+                      duplicateEmbedFieldOutput.emit({ messageIdx, embedIdx: $index, fieldIdx: $event })
+                    "
+                    (moveField)="
+                      moveEmbedFieldOutput.emit({
+                        messageIdx,
+                        embedIdx: $index,
+                        fieldIdx: $event.fieldIdx,
+                        direction: $event.direction
+                      })
+                    "
+                    (removeField)="
+                      removeEmbedFieldOutput.emit({ messageIdx, embedIdx: $index, fieldIdx: $event })
+                    "
+                  />
+                </p-accordionTab>
+                }
+              </p-accordion>
+              <div class="add-embed-btn">
+                <p-button
+                  label="Add Embed"
+                  [disabled]="
+                    messages().at(messageIdx).value.embeds?.length === 10
+                  "
+                  (onClick)="addEmbed(messageIdx)"
+                />
+              </div>
+            </div>
+          </p-accordionTab>
+        </p-accordion>
+      </p-scrollPanel>
+    </ng-template>
+  </p-tabPanel>
+  }
+</p-tabView>

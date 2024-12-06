@@ -20,6 +20,8 @@
     "@angular/router": "^18.1.0",
     "@ngrx/operators": "^18.1.1",
     "@ngrx/signals": "^18.1.1",
+    "@odiffey/discord-markdown": "^3.3.0",
+    "@skyra/discord-components-core": "^3.6.1",
     "ngx-cookie-service": "^18.0.0",
     "ngxtension": "^4.1.0",
     "primeicons": "^7.0.0",

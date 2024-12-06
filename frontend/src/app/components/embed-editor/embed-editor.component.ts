@@ -44,7 +44,6 @@ export class EmbedEditorComponent {
   accordionState = model.required<AccordionState>();
 
   accordionStateChanged(fields: number | number[]) {
-    console.log(this.accordionState(), this.idx(), this.messageIdx())
     if (!Array.isArray(fields)) return;
     this.accordionState.update((data) => {
       const tmp = { ...data };

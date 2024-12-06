@@ -1,0 +1,42 @@
+<p-scrollPanel>
+  <discord-messages>
+    <discord-message author="Hookio">
+      <div [innerHTML]="format(message().value.content)"></div>
+      @for (embed of currentEmbeds(); track embed._id) {
+      <discord-embed
+        slot="embed"
+        [attr.author-name]="embed.author?.name"
+        [attr.author-image]="embed.author?.iconUrl"
+        [attr.author-url]="embed.author?.url"
+        [attr.embed-title]="embed.title"
+        [attr.url]="embed.url"
+        [attr.thumbnail]="embed.thumbnail?.url"
+        [attr.image]="embed.image?.url"
+        [attr.color]="embed.color"
+      >
+        <discord-embed-description slot="description">
+          <span [innerHTML]="format(embed.description)"></span>
+        </discord-embed-description>
+        <discord-embed-fields slot="fields">
+          @for (field of embed.fields; track $index) {
+          <discord-embed-field
+            [attr.field-title]="field.name"
+            [attr.inline]="field.inline"
+          >
+            <span [innerHTML]="format(field.value)"></span>
+          </discord-embed-field>
+          }
+        </discord-embed-fields>
+        @if (embed.footer?.text) {
+        <discord-embed-footer
+          slot="footer"
+          [attr.footer-image]="embed.footer?.iconUrl"
+        >
+          <span [innerHTML]="format(embed.footer?.text)"></span>
+        </discord-embed-footer>
+        }
+      </discord-embed>
+      }
+    </discord-message>
+  </discord-messages>
+</p-scrollPanel>

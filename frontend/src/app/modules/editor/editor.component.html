@@ -2,151 +2,60 @@
 <hookio-loading-overlay />
 } @else if (store.error()) { } @else {
 <div class="wrapper">
-  <div
-    class="editor-drawer"
-    [class.hidden]="!editorOpen()"
-    [class.ready]="isReady()"
-  >
-    <p-tabView>
-      @for (message of store.subscription()!.messages; track message.id; let
-      messageIdx = $index) {
-      <p-tabPanel
-        [header]="
-          message.type | toMessageLabel : store.subscription()!.subscriptionType
-        "
-      >
-        <!-- This forces tabView to eager load the tabs, causes an error on PrimeNG's end but its fine -->
-        <ng-template pTemplate="content">
-          <p-scrollPanel
-            styleClass="discord-scrollbar"
-            [style]="{ height: 'calc(100vh - 151.8px)' }"
-          >
-            <p-accordion [activeIndex]="0">
-              <p-accordionTab header="Subscription Details">
-                <div class="form-group col" [formGroup]="store.form()!">
-                  <p-floatLabel>
-                    <input
-                      id="webhookUrl"
-                      pInputText
-                      formControlName="webhookUrl"
-                      placeholder="https://discord.com/api/webhooks/..."
-                    />
-                    <label for="webhookUrl">Webhook URL</label>
-                  </p-floatLabel>
-                  <p-floatLabel>
-                    <input
-                      id="source"
-                      pInputText
-                      formControlName="source"
-                      placeholder="Source"
-                    />
-                    <label for="source">Subscription Source</label>
-                  </p-floatLabel>
-                </div>
-              </p-accordionTab>
-            </p-accordion>
-            <p-divider />
-            <p-accordion [activeIndex]="0">
-              <p-accordionTab header="Message">
-                <div
-                  class="form-wrapper"
-                  [formGroup]="store.messages().at($index)"
-                >
-                  <p-floatLabel>
-                    <textarea
-                      [maxlength]="2000"
-                      id="content"
-                      pInputTextarea
-                      formControlName="content"
-                      [rows]="5"
-                      cols="30"
-                      #textarea
-                    ></textarea>
-                    <label for="content"
-                      >Content ({{ textarea.value.length }}/2000)</label
-                    >
-                  </p-floatLabel>
-                  <p-accordion
-                    (activeIndexChange)="accordionStateChanged(messageIdx, $event)"
-                    [activeIndex]="accordionState()[messageIdx]?.activeIndexes"
-                    [multiple]="true"
-                    formArrayName="embeds"
-                  >
-                    @for (embed of store.messages().at($index).value.embeds;
-                    track embed._id) {
-                    <!-- Embed -->
-                    <p-accordionTab>
-                      <ng-template pTemplate="header">
-                        <hookio-accordion-header
-                          [showMoveUp]="$index !== 0"
-                          [showMoveDown]="
-                            $index + 1 !==
-                            store.messages().at(messageIdx).value.embeds?.length
-                          "
-                          [showCopyIcon]="
-                            store.messages().at(messageIdx).value.embeds
-                              ?.length !== 10
-                          "
-                          [label]="'Embed ' + ($index + 1)"
-                          (move)="moveEmbed(messageIdx, $index, $event)"
-                          (remove)="removeEmbed(messageIdx, $index)"
-                          (copy)="duplicateEmbed(messageIdx, $index)"
-                        />
-                      </ng-template>
-                      <hookio-embed-editor
-                        [messageIdx]="messageIdx"
-                        [(accordionState)]="accordionState"
-                        [messageForm]="store.messages().at(messageIdx)"
-                        [idx]="$index"
-                        (addField)="store.addEmbedField(messageIdx, $index)"
-                        (duplicateField)="
-                          store.duplicateEmbedField(messageIdx, $index, $event)
-                        "
-                        (moveField)="
-                          store.moveEmbedField(
-                            messageIdx,
-                            $index,
-                            $event.fieldIdx,
-                            $event.direction
-                          )
-                        "
-                        (removeField)="
-                          store.removeEmbedField(messageIdx, $index, $event)
-                        "
-                      />
-                    </p-accordionTab>
-                    }
-                  </p-accordion>
-                  <div class="add-embed-btn">
-                    <p-button
-                      label="Add Embed"
-                      [disabled]="
-                        store.messages().at(messageIdx).value.embeds?.length ===
-                        10
-                      "
-                      (onClick)="addEmbed(messageIdx)"
-                    />
-                  </div>
-                </div>
-              </p-accordionTab>
-            </p-accordion>
-          </p-scrollPanel>
-        </ng-template>
-      </p-tabPanel>
-      }
-    </p-tabView>
-  </div>
   <span class="toggle-editor-wrapper">
     <p-button
       [icon]="
-        editorOpen() ? 'pi pi-angle-double-left' : 'pi pi-angle-double-right'
+        editorHidden() ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'
       "
       [text]="true"
       [outlined]="true"
       class="toggle-editor"
-      (onClick)="editorOpen.set(!editorOpen())"
+      (onClick)="editorHidden.set(!editorHidden())"
     ></p-button>
   </span>
-  <div class="editor-preview" [class.full]="!editorOpen()"></div>
+  <hookio-editor-drawer
+    [(hidden)]="editorHidden"
+    [(accordionState)]="accordionState"
+    [(activeTabIndex)]="activeTabIndex"
+    [ready]="isReady()"
+    [form]="store.form()!"
+    [subscription]="store.subscription()!"
+    [messages]="store.messages()"
+    (addEmbed)="store.addEmbed($event.messageIdx)"
+    (moveEmbed)="
+      store.moveEmbed($event.messageIdx, $event.embedIdx, $event.direction)
+    "
+    (duplicateEmbed)="store.duplicateEmbed($event.messageIdx, $event.embedIdx)"
+    (removeEmbed)="store.removeEmbed($event.messageIdx, $event.embedIdx)"
+    (addEmbedField)="store.addEmbedField($event.messageIdx, $event.embedIdx)"
+    (moveEmbedField)="
+      store.moveEmbedField(
+        $event.messageIdx,
+        $event.embedIdx,
+        $event.fieldIdx,
+        $event.direction
+      )
+    "
+    (duplicateEmbedField)="
+      store.duplicateEmbedField(
+        $event.messageIdx,
+        $event.embedIdx,
+        $event.fieldIdx
+      )
+    "
+    (removeEmbedField)="
+      store.removeEmbedField(
+        $event.messageIdx,
+        $event.embedIdx,
+        $event.fieldIdx
+      )
+    "
+  />
+
+  <hookio-editor-preview
+    [full]="editorHidden()"
+    [subscription]="store.subscription()!"
+    [message]="currentMessage()"
+  />
 </div>
 }

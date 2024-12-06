@@ -9,14 +9,16 @@
 
   .wrapper {
     display: flex;
-    @media screen and (max-width: 800px) {
-      flex-direction: column;
-    }
     overflow: hidden;
     width: 100%;
     height: 100%;
     flex: 1;
     min-height: calc(100vh - 84.8px);
+    @media screen and (max-width: 800px) {
+      flex-direction: column;
+      overflow: auto;
+      min-height: 100%;
+    }
 
     .editor-drawer,
     .editor-preview {
@@ -25,56 +27,8 @@
       flex: 1;
     }
 
-    ::ng-deep .p-tabview .p-tabview-nav li .p-tabview-nav-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    ::ng-deep .p-tabview .p-tabview-nav li {
-      width: 100%;
-    }
-
-    .editor-drawer {
-      max-width: 40%;
-      @media screen and (max-width: 1200px) {
-        max-width: 50%;
-      }
-      @media screen and (max-width: 800px) {
-        max-width: 100%;
-      }
-      opacity: 1; /* Default visible state */
-      transition: flex 0.5s ease-in-out, max-width 0.5s ease-in-out;
-
-      // No animation on initial render
-      &:not(.ready) {
-        opacity: 1;
-      }
-
-      // Animation applied after component is ready
-      &.hidden.ready {
-        transition: flex 0.5s ease-in-out, max-width 0.5s ease-in-out,
-          opacity 0.2s ease-out;
-        opacity: 0;
-        flex: 0;
-        max-width: 0;
-      }
-
-      &.ready {
-        transition: flex 0.5s ease-in-out, max-width 0.5s ease-in-out,
-          opacity 0.7s ease-in;
-        opacity: 1;
-      }
-    }
-
-    .editor-preview {
-      transition: flex 0.5s ease-in-out, max-width 0.5s ease-in-out;
-      &.full {
-        flex: 1 1 100%;
-      }
-    }
-
     .toggle-editor-wrapper {
+      z-index: 999;
       @media screen and (max-width: 800px) {
         display: none;
       }

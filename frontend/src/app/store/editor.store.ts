@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MoveDirection } from '../components/embed-editor/accordion-header/accordion-header.component';
 import { EmbedFieldForm, EmbedForm, getEmbedFieldForm, getEmbedForm, getSubscriptionForm, MessageForm, SubscriptionForm } from '../modules/editor/util';
-import { FormArray, FormGroup } from '@angular/forms';
+import { FormArray } from '@angular/forms';
 
 export interface EditorState {
     loading: boolean;

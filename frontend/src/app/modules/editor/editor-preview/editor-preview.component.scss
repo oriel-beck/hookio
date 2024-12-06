@@ -1,0 +1,22 @@
+:host {
+  transition: flex 0.5s ease-in-out, max-width 0.5s ease-in-out;
+  &.full {
+    flex: 1 1 100%;
+  }
+
+  discord-messages {
+    height: 100%;
+    width: 100%;
+    z-index: 0;
+  }
+
+  ::ng-deep .p-scrollpanel {
+    height: calc(100vh - 151.8px);
+  }
+  
+  @media screen and (max-width: 800px) {
+    ::ng-deep .p-scrollpanel {
+      height: 100%;
+    }
+  }
+}

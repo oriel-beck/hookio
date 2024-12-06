@@ -3,6 +3,30 @@
 @import "primeng/resources/primeng.css";
 @import "primeicons/primeicons.css";
 
+@font-face {
+  font-family: "Whitney";
+  src: url("https://cdn.skyra.pw/whitney-font/v2/Book.woff") format("woff");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Whitney";
+  src: url("https://cdn.skyra.pw/whitney-font/v2/Medium.woff") format("woff");
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: "Whitney";
+  src: url("https://cdn.skyra.pw/whitney-font/v2/Semibold.woff") format("woff");
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: "Whitney";
+  src: url("https://cdn.skyra.pw/whitney-font/v2/Bold.woff") format("woff");
+  font-weight: 700;
+}
+
 * {
   font-family: "Open Sans", Arial, sans-serif;
 }
@@ -40,7 +64,8 @@ html {
   background: transparent url("/hue.png") no-repeat left top !important;
 }
 
-.form-wrapper, .form-group {
+.form-wrapper,
+.form-group {
   display: flex;
   gap: 0.5rem;
   flex-direction: column;
@@ -74,7 +99,7 @@ html {
   }
 
   &.m-col {
-    @media screen and (max-width:800px) {
+    @media screen and (max-width: 800px) {
       flex-direction: column;
     }
   }
