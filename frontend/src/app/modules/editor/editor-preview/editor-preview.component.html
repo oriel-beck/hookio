@@ -2,7 +2,7 @@
   <discord-messages>
     <discord-message author="Hookio">
       <div [innerHTML]="format(message().value.content)"></div>
-      @for (embed of currentEmbeds(); track embed._id) {
+      @for (embed of message().value.embeds; track embed._id) {
       <discord-embed
         slot="embed"
         [attr.author-name]="embed.author?.name"
@@ -22,6 +22,7 @@
           <discord-embed-field
             [attr.field-title]="field.name"
             [attr.inline]="field.inline"
+            [attr.inline-index]="computeInlineIndex(embed.fields!, $index)"
           >
             <span [innerHTML]="format(field.value)"></span>
           </discord-embed-field>

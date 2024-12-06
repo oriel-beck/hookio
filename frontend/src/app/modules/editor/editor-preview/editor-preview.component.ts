@@ -1,9 +1,9 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, HostBinding, inject, input, SecurityContext } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, HostBinding, inject, input, SecurityContext } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { toHTML } from '@odiffey/discord-markdown';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { Subscription } from '../../../schemas/subscription.schema';
 import { MessageForm } from '../util';
-import { toHTML } from '@odiffey/discord-markdown';
-import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'hookio-editor-preview',
@@ -23,7 +23,6 @@ export class EditorPreviewComponent {
   full = input.required<boolean>();
   subscription = input.required<Subscription>();
   message = input.required<MessageForm>();
-  currentEmbeds = computed(() => this.message().value.embeds);
 
   @HostBinding('class.full') get isFull() {
     return this.full();
@@ -37,11 +36,26 @@ export class EditorPreviewComponent {
   format(text?: string | null) {
     if (!text) return "";
     const sanitized = this.sanitize(text);
-    const parsed = toHTML(sanitized, { discordOnly: true, discordCallback: {
-      user: () => `<discord-mention type="user">user</discord-mention>`,
-      role: () => `<discord-mention type="role">role</discord-mention>`,
-      channel: () => `<discord-mention type="channel">channel</discord-mention>`
-    } }).replaceAll('\n', '<br/>');
+    const parsed = toHTML(sanitized, {
+      discordOnly: true, discordCallback: {
+        user: () => `<discord-mention type="user">user</discord-mention>`,
+        role: () => `<discord-mention type="role">role</discord-mention>`,
+        channel: () => `<discord-mention type="channel">channel</discord-mention>`
+      }
+    }).replaceAll('\n', '<br/>');
     return this.sanitizer.bypassSecurityTrustHtml(parsed)
+  }
+
+  computeInlineIndex(fields: { inline?: boolean | null }[], currentIndex: number): number {
+    if (!fields[currentIndex]?.inline) return 0; // Not inline, no index
+
+    let inlineIndex = 1; // Start at index 1
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (!fields[i].inline) break; // Break if previous field is not inline
+      inlineIndex++; // Increment index for each prior inline field
+      if (inlineIndex > 3) inlineIndex = 1; // Wrap around at 3
+    }
+
+    return inlineIndex;
   }
 }

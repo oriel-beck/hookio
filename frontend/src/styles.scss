@@ -105,7 +105,9 @@ html {
   }
 
   &.m-col-reverse {
-    flex-direction: column-reverse;
+    @media screen and (max-width: 800px) {
+      flex-direction: column-reverse;
+    }
   }
 }
 
