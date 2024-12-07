@@ -76,5 +76,7 @@ export const subscription = z.object({
     guildId: z.string(),
     subscriptionType: z.nativeEnum(SubscriptionType),
     source: z.string(),
-    messages: z.array(message)
+    messages: z.array(message),
+    webhookAvatar: z.optional(z.string()),
+    webhookUsername: z.string()
 });

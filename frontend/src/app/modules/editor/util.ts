@@ -57,7 +57,9 @@ export function getSubscriptionForm(subscription?: Subscription) {
     return new FormGroup({
         webhookUrl: new FormControl<string | undefined>(undefined, [Validators.pattern(webhookRegex)]),
         source: new FormControl<string | undefined>(subscription?.source, [Validators.required]),
-        messages: new FormArray<ReturnType<typeof getMessageForm>>(subscription?.messages.map(m => getMessageForm(m)) || [])
+        messages: new FormArray<ReturnType<typeof getMessageForm>>(subscription?.messages.map(m => getMessageForm(m)) || []),
+        webhookAvatar: new FormControl<string | undefined>(subscription?.webhookAvatar, [Validators.pattern(urlRegex)]),
+        webhookUsername: new FormControl<string | undefined>(subscription?.webhookUsername, [Validators.maxLength(32)])
         // maybe allow to change type with a warning that it resets the source
     })
 }

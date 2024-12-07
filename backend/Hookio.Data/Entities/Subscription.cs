@@ -17,6 +17,12 @@ namespace Hookio.Data.Entities
 
         public required string WebhookUrl { get; set; }
 
+        public string WebhookUsername = "Hookio";
+
+        // TODO: get a default avatar URL for hookio, maybe the logo?
+        // TODO2: allow avatar uploading for premium?
+        public string? WebhookAvatar {  get; set; } 
+
         public List<Message> Messages { get; set; } = [];
 
         public List<RecentAction> RecentActions { get; set; } = [];

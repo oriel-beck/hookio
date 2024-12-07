@@ -123,6 +123,27 @@ namespace Hookio.DataManagers
                 // TODO: implement
             }
 
+            if (patch.WebhookUsername != null && !patch.ClearWebhookUsername)
+            {
+                res.WebhookUsername = patch.WebhookUsername;
+            }
+
+            if (patch.WebhookAvatar != null && !patch.ClearWebhookAvatar)
+            {
+                res.WebhookAvatar = patch.WebhookAvatar;
+            }
+
+
+            if (patch.ClearWebhookUsername)
+            {
+                res.WebhookUsername = "Hookio";
+            }
+
+            if (patch.ClearWebhookAvatar)
+            {
+                res.WebhookAvatar = null;
+            }
+
             await ctx.Database.CommitTransactionAsync(cancellationToken);
             await ctx.SaveChangesAsync(cancellationToken);
 

@@ -10,5 +10,13 @@ namespace Hookio.Contracts.Subscription
 
         // url for yt, probably username for twitch
         public string? Source { get; set; }
+
+        public string? WebhookUsername { get; set; }
+
+        public string? WebhookAvatar {  get; set; }
+
+        public bool ClearWebhookAvatar { get; set; }
+
+        public bool ClearWebhookUsername { get; set; }
     }
 }

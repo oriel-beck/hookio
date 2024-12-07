@@ -6,10 +6,7 @@
   >
     <!-- This forces tabView to eager load the tabs, causes an error on PrimeNG's end but its fine -->
     <ng-template pTemplate="content">
-      <p-scrollPanel
-        styleClass="discord-scrollbar"
-        [style]="{  }"
-      >
+      <p-scrollPanel styleClass="discord-scrollbar" [style]="{}">
         <p-accordion [activeIndex]="0">
           <p-accordionTab header="Subscription Details">
             <div class="form-group col" [formGroup]="form()!">
@@ -21,6 +18,25 @@
                   placeholder="https://discord.com/api/webhooks/..."
                 />
                 <label for="webhookUrl">Webhook URL</label>
+              </p-floatLabel>
+              <p-floatLabel>
+                <input
+                  id="webhookUsername"
+                  pInputText
+                  formControlName="webhookUsername"
+                  placeholder="Hookio"
+                  [maxlength]="32"
+                />
+                <label for="webhookUsername">Webhook Username</label>
+              </p-floatLabel>
+              <p-floatLabel>
+                <input
+                  id="webhookAvatar"
+                  pInputText
+                  formControlName="webhookAvatar"
+                  placeholder="webhookAvatar"
+                />
+                <label for="webhookAvatar">Webhook Avatar</label>
               </p-floatLabel>
               <p-floatLabel>
                 <input

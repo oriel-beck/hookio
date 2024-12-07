@@ -1,6 +1,6 @@
 <p-scrollPanel>
   <discord-messages>
-    <discord-message author="Hookio">
+    <discord-message [author]="subscription().webhookUsername || 'Hookio'" [avatar]="subscription().webhookAvatar" [bot]="true">
       <div [innerHTML]="format(message().value.content)"></div>
       @for (embed of message().value.embeds; track embed._id) {
       <discord-embed
