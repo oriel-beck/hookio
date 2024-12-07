@@ -3,29 +3,39 @@ using Hookio.Data;
 using Hookio.DataManagers;
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Configuration;
-using Hookio.WebApi.Authorization;
+using Hookio.Shared.Options;
 using Hookio.WebApi.Middlewares;
+using Hookio.YouTube;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add configurations
+builder.Services.Configure<OAuth2>(builder.Configuration.GetSection(nameof(OAuth2)));
+builder.Services.Configure<YouTube>(builder.Configuration.GetSection(nameof(YouTube)));
 
+// Add services to the container.
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add databases
 builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("HookioContext")));
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 
 // Data managers
 builder.Services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
 builder.Services.AddSingleton<IUserService, UserService>();
 
+// YT Subscriptions cache
+builder.Services.AddSingleton<IYouTubeSubscriptionCache, YouTubeSubscriptionCache>();
+
 // Discord REST client for OAuth2
 builder.Services.AddSingleton<DiscordRestClient>();
-
-builder.Services.Configure<OAuth2>(builder.Configuration.GetSection(nameof(OAuth2)));
 
 // Http client to centralize requests
 builder.Services.AddHttpClient("OAuth2", client =>
@@ -34,13 +44,24 @@ builder.Services.AddHttpClient("OAuth2", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Hookio v0");
 });
 builder.Services.AddHttpClient("WebhooksCheck");
+builder.Services.AddHttpClient("PubSubHubBub", client =>
+{
+    client.BaseAddress = new Uri("https://pubsubhubbub.appspot.com");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Hookio v0");
+});
 
+// Add memory cache for YT subscription requests
+builder.Services.AddMemoryCache(options =>
+{
+    options.ExpirationScanFrequency = TimeSpan.FromHours(1);
+});
 
+// Add caching for user sessions
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = "hookio_session";
-    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions()
+    options.ConfigurationOptions = new ConfigurationOptions()
     {
         AbortOnConnectFail = true,
         EndPoints = { options.Configuration! }
@@ -79,6 +100,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             }
         };
     });
+
+// Add hosted services
+builder.Services.AddHostedService<RefreshSubs>();
 
 var app = builder.Build();
 

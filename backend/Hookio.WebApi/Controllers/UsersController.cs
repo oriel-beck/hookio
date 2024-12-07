@@ -15,7 +15,7 @@ using System.Web;
 
 namespace Hookio.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class UsersController(
         IOptions<OAuth2> oauth2Options,
@@ -24,8 +24,8 @@ namespace Hookio.Controllers
     {
         private readonly IUserService _userService = userService;
         private readonly OAuth2 _oauth2Options = oauth2Options.Value;
-        
-        private Dictionary<string, string> QueryParamsDict => new() 
+
+        private Dictionary<string, string> QueryParamsDict => new()
         {
             { "response_type", "code" },
             { "client_id", _oauth2Options.ClientId },
@@ -36,7 +36,7 @@ namespace Hookio.Controllers
             .Where(pair => !string.IsNullOrEmpty(pair.Key) && !string.IsNullOrEmpty(pair.Value))
             .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={HttpUtility.UrlEncode(pair.Value)}"));
 
-        [HttpGet("[action]")]
+        [HttpGet]
         public async Task<ActionResult> Authenticate([FromQuery] string code, [FromQuery] string state, CancellationToken cancellationToken)
         {
             if (state != HttpContext.Session.GetWithExpiry<string>("State")) return Redirect(_oauth2Options.BaseURI);
@@ -48,7 +48,7 @@ namespace Hookio.Controllers
                 var user = await _userService.GetRestUser(result.AccessToken, cancellationToken);
                 if (user == null) return Redirect(_oauth2Options.BaseURI);
 
-                List<Claim> claims = new() 
+                List<Claim> claims = new()
                 {
                     { new Claim("Id", user.Id.ToString()) },
                 };
@@ -78,7 +78,7 @@ namespace Hookio.Controllers
             }
         }
 
-        [HttpGet("[action]")] 
+        [HttpGet]
         public ActionResult Login()
         {
             using RandomNumberGenerator rng = RandomNumberGenerator.Create();
@@ -91,7 +91,7 @@ namespace Hookio.Controllers
         }
 
         [Authorize]
-        [HttpGet("[action]")]
+        [HttpGet]
         public async Task<ActionResult> LogOut()
         {
             HttpContext.Session.Clear();
@@ -106,7 +106,7 @@ namespace Hookio.Controllers
         }
 
         [Authorize]
-        [HttpGet("[action]")]
+        [HttpGet]
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser(CancellationToken cancellationToken)
         {
             await _userService.ValidateSessionData(HttpContext.Session, cancellationToken);

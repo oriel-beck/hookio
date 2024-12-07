@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Hookio.Contracts\Hookio.Contracts.csproj" />
     <ProjectReference Include="..\Hookio.DataManagers\Hookio.DataManagers.csproj" />
     <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
+    <ProjectReference Include="..\Hookio.YouTube\Hookio.YouTube.csproj" />
   </ItemGroup>
 
 </Project>
