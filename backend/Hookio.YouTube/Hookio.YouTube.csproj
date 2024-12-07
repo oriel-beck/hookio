@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Hookio.DataManagers\Hookio.DataManagers.csproj" />
     <ProjectReference Include="..\Hookio.Shared\Hookio.Shared.csproj" />
   </ItemGroup>
 
