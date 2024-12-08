@@ -84,7 +84,7 @@ namespace Hookio.DataManagers
         public async Task<Video?> GetYouTubeVideoDetails(YouTubeSubscription subscription, string videoId, CancellationToken cancellationToken)
         {
             if (subscription.LatestVideo != null && subscription.LatestVideo.Id == videoId) return subscription.LatestVideo;
-            var videoListRequest = ytService.Videos.List("snippet, contentDetails");
+            var videoListRequest = ytService.Videos.List("snippet"); // contentDetails?
             videoListRequest.Id = videoId;
 
             var videoList = await videoListRequest.ExecuteAsync(cancellationToken);
@@ -97,6 +97,33 @@ namespace Hookio.DataManagers
             _youTubeSubscriptionCache.Update(subscription);
 
             return video;
+        }
+
+        public Dictionary<string, string> GetTemplateStrings(Video video, Channel channel, YouTubeFeed feed)
+        {
+            var videoSnippet = video.Snippet;
+
+            var channelSnippet = channel.Snippet;
+            var channelStatistics = channel.Statistics;
+            Dictionary<string, string> res = new()
+            {
+                { "video.url", feed.Entry.Link.Href },
+                { "video.description", videoSnippet.Description },
+                { "video.title", videoSnippet.Title },
+                { "video.thumbnail.default", videoSnippet.Thumbnails.Standard.Url },
+                { "video.thumbnail.medium", videoSnippet.Thumbnails.Medium.Url },
+                { "video.thumbnail.high", videoSnippet.Thumbnails.High.Url },
+                
+                { "channel.title", channelSnippet.Title },
+                { "channel.name", channelSnippet.Title },
+                { "channel.url", channelSnippet.CustomUrl ?? feed.Entry.Author.Uri },
+                { "channel.thumbnail.default", channelSnippet.Thumbnails.Standard.Url },
+                { "channel.thumbnail.medium", channelSnippet.Thumbnails.Medium.Url },
+                { "channel.thumbnail.hight", channelSnippet.Thumbnails.High.Url },
+                { "channel.subscribers", channelStatistics.SubscriberCount.ToString() ?? "0" },
+                { "channel.views", channelStatistics.VideoCount.ToString() ?? "0" },
+            };
+            return res;
         }
     }
 }

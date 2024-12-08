@@ -81,28 +81,13 @@ namespace Hookio.WebApi.Controllers
             };
 
             var channel = await _youtubeManager.GetYouTubeChannelDetails(subscription, cancellationToken);
-            var video = await _youtubeManager.GetYouTubeVideoDetails(subscription, cancellationToken);
+            var video = await _youtubeManager.GetYouTubeVideoDetails(subscription, videoData.Entry.VideoId, cancellationToken);
 
             if (channel == null || video == null) return NotFound("Failed to find channel or video");
-
+            
             // TODO: implement webhook parsing and sending + template strings
 
             return Ok();
-        }
-
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateSubscription([FromQuery] string channelId, CancellationToken cancellationToken)
-        {
-            var creation = await _youtubeManager.Subscribe(channelId, cancellationToken);
-            return Ok(creation?.StatusCode);
-        }
-
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            var xml = "<feed xmlns:yt=\"http://www.youtube.com/xml/schemas/2015\" xmlns=\"http://www.w3.org/2005/Atom\">\r\n  <link rel=\"hub\" href=\"https://pubsubhubbub.appspot.com\" />\r\n  <link rel=\"self\" href=\"https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCeBMccz-PDZf6OB4aV6a3eA\" />\r\n  <title>YouTube video feed</title>\r\n  <updated>2024-12-08T16:42:48.041792159+00:00</updated>\r\n  <entry>\r\n    <id>yt:video:gBW9PEAnjqM</id>\r\n    <yt:videoId>gBW9PEAnjqM</yt:videoId>\r\n    <yt:channelId>UCeBMccz-PDZf6OB4aV6a3eA</yt:channelId>\r\n    <title>MINIONS SSF !Build | !Nord !IRL | First Day In Northern Ireland! https://youtu.be/d3V0qkMCyHI</title>\r\n    <link rel=\"alternate\" href=\"https://www.youtube.com/watch?v=gBW9PEAnjqM\" />\r\n    <author>\r\n      <name>Kripparrian</name>\r\n      <uri>https://www.youtube.com/channel/UCeBMccz-PDZf6OB4aV6a3eA</uri>\r\n    </author>\r\n    <published>2024-12-08T16:40:08+00:00</published>\r\n    <updated>2024-12-08T16:42:48.041792159+00:00</updated>\r\n  </entry>\r\n</feed>\r\n";
-            var res = _youtubeManager.ParseYouTubePayload(xml);
-            return Ok(res);
         }
     }
 }

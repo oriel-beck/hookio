@@ -8,6 +8,7 @@ namespace Hookio.DataManagers.Interfaces
         Task<HttpResponseMessage?> Subscribe(string channel_id, CancellationToken cancellationToken);
         YouTubeFeed ParseYouTubePayload(string xmlPayload);
         Task<Channel?> GetYouTubeChannelDetails(YouTubeSubscription subscription, CancellationToken cancellationToken);
-        Task<Video?> GetYouTubeVideoDetails(YouTubeSubscription subscription, CancellationToken cancellationToken);
+        Task<Video?> GetYouTubeVideoDetails(YouTubeSubscription subscription, string videoId, CancellationToken cancellationToken);
+        Dictionary<string, string> GetTemplateStrings(Video video, Channel channel, YouTubeFeed feed);
     }
 }
