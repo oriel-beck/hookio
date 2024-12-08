@@ -4,8 +4,9 @@ namespace Hookio.DataManagers.Interfaces
 {
     public interface IYouTubeSubscriptionCache
     {
-        Task AddAsync(YouTubeSubscription subscription);
-        Task<YouTubeSubscription?> GetByTopicUrlAsync(string topicUrl);
-        Task<IEnumerable<YouTubeSubscription>?> GetSubscriptionsAsync(YouTubeSubscriptionStatus? status);
+        void Add(YouTubeSubscription subscription);
+        YouTubeSubscription? Get(string topicUrl);
+        void Update(YouTubeSubscription subscription);
+        void Delete(string topicUrl);
     }
 }

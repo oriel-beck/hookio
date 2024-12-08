@@ -1,4 +1,5 @@
-﻿using Hookio.DataManagers.Interfaces;
+﻿using Google.Apis.YouTube.v3.Data;
+using Hookio.DataManagers.Interfaces;
 using Hookio.Shared.Enums;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -6,54 +7,50 @@ namespace Hookio.DataManagers
 {
     public class YouTubeSubscription
     {
-        public required string TopicUrl { get; set; }
         public YouTubeSubscriptionStatus Status { get; set; } = YouTubeSubscriptionStatus.Pending;
-        // TODO: channel data (with expiry)
+        public string? VerifyToken { get; set; }
+        public required string ChannelId { get; set; }
+        public Channel? Channel { get; set; }
+        public Video? LatestVideo { get; set; }
     }
 
     /// <summary>
-    /// This is caching for 2 things.
-    /// 1. Channel data of the YT channel (unused atm)
-    /// 2. Subscription data to only "subscribe" to pending subscriptions
+    /// Manages YouTube subscriptions with individual expiration logic.
     /// </summary>
-    /// <param name="cache"></param>
     public class YouTubeSubscriptionCache(IMemoryCache cache) : IYouTubeSubscriptionCache
     {
         private readonly IMemoryCache _cache = cache;
-        private const string CacheKey = "Subscriptions";
 
-        public Task AddAsync(YouTubeSubscription subscription)
+        private static string GetCacheKey(string channelId) => $"Subscription_{channelId}";
+
+        public void Add(YouTubeSubscription subscription)
         {
-            var subscriptions = _cache.GetOrCreate(CacheKey, entry =>
+            var cacheKey = GetCacheKey(subscription.ChannelId);
+            _cache.Set(cacheKey, subscription, new MemoryCacheEntryOptions
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                return new List<YouTubeSubscription>();
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
             });
-            subscriptions?.Add(subscription);
-            _cache.Set(CacheKey, subscriptions);
-            return Task.CompletedTask;
         }
 
-        public Task<YouTubeSubscription?> GetByTopicUrlAsync(string topicUrl)
+        public void Delete(string topicUrl)
         {
-            var subscriptions = _cache.GetOrCreate(CacheKey, entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                return new List<YouTubeSubscription>();
-            });
-            var subscription = subscriptions?.FirstOrDefault(s => s.TopicUrl == topicUrl);
-            return Task.FromResult(subscription);
+            _cache.Remove(GetCacheKey(topicUrl));
         }
 
-        public Task<IEnumerable<YouTubeSubscription>?> GetSubscriptionsAsync(YouTubeSubscriptionStatus? status)
+        public YouTubeSubscription? Get(string channelId)
         {
-            var subscriptions = _cache.GetOrCreate(CacheKey, entry =>
+            var cacheKey = GetCacheKey(channelId);
+            _cache.TryGetValue(cacheKey, out YouTubeSubscription? subscription);
+            return subscription;
+        }
+
+        public void Update(YouTubeSubscription subscription)
+        {
+            var cacheKey = GetCacheKey(subscription.ChannelId);
+            _cache.Set(cacheKey, subscription, new MemoryCacheEntryOptions
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                return new List<YouTubeSubscription>();
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
             });
-            var activeSubscriptions = subscriptions?.Where(s => status == null || s.Status == status);
-            return Task.FromResult(activeSubscriptions);
         }
     }
 }

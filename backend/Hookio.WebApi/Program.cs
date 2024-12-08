@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 // Data managers
 builder.Services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
 builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<IYouTubeManager, YouTubeManager>();
 
 // YT Subscriptions cache
 builder.Services.AddSingleton<IYouTubeSubscriptionCache, YouTubeSubscriptionCache>();

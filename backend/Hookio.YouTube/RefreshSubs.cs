@@ -8,17 +8,15 @@ namespace Hookio.YouTube
     public class RefreshSubs(
         ILogger<RefreshSubs> logger,
         IConnectionMultiplexer connectionMultiplexer,
-        IHttpClientFactory httpClientFactory,
         IYouTubeManager youTubeManager
-        ) : IHostedService
+        ) : BackgroundService
     {
-        private readonly HttpClient _httpClient = httpClientFactory.CreateClient("PubSubHubBub");
         private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromHours(1));
         private readonly ILogger<RefreshSubs> _logger = logger;
         private readonly IDatabase _redis = connectionMultiplexer.GetDatabase();
         private readonly IYouTubeManager _youTubeManager = youTubeManager;
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting YT resubbing service");
             while (
@@ -27,12 +25,15 @@ namespace Hookio.YouTube
             {
                 try
                 {
-                    // get anything that's older than (now - 1h)
-                    var list = await _redis.SortedSetRangeByScoreAsync("hookio_yt_subs", start: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - TimeSpan.FromHours(1).TotalMilliseconds);
-                    // each item is a yt channel subscription
+                    // Get anything that's older than (now - 1h)
+                    var list = await _redis.SortedSetRangeByScoreAsync(
+                        "hookio_yt_subs",
+                        start: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - TimeSpan.FromHours(1).TotalMilliseconds);
+
+                    // Each item is a YT channel subscription
                     foreach (var item in list)
                     {
-                        // TODO: if the channel has no subscriptions anymore do not resub
+                        // TODO: If the channel has no subscriptions anymore do not resub
                         var res = await _youTubeManager.Subscribe(item.ToString(), cancellationToken);
                         if (res?.StatusCode == System.Net.HttpStatusCode.Accepted)
                         {
@@ -49,14 +50,6 @@ namespace Hookio.YouTube
                     _logger.LogError("Failed to get list of subscriptions\n{exception}", ex.Message);
                 }
             }
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Stopping YT resubbing service");
-            _periodicTimer.Dispose();
-            _httpClient.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
