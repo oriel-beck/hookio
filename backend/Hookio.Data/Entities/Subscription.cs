@@ -4,6 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Data.Entities
 {
+
+    /// <summary>
+    /// Subscription is the main Entity, it holds the data for the channel subscribed to and the messages that need to be sent with each event
+    /// </summary>
     [PrimaryKey(nameof(Id))]
     [Index(nameof(GuildId))]
     public class Subscription

@@ -25,6 +25,13 @@ namespace Hookio.Data
                         c => JsonConvert.DeserializeObject<List<EmbedRequest>>(JsonConvert.SerializeObject(c))!
                     )
                 );
+
+            // Composite primary key, only 1 message type can exist for every subscription
+            modelBuilder.Entity<Message>().HasKey(e => new
+            {
+                e.SubscriptionId,
+                e.Type
+            });
         }
 
         public override int SaveChanges()

@@ -6,9 +6,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hookio.Data.Entities
 {
+    /// <summary>
+    /// Message holds the message data to send when this message gets triggered and the action that should be done<br/>
+    /// Note: messages of action "delete" can be empty, their content and embeds is ignored
+    /// </summary>
     [PrimaryKey(nameof(Id))]
-    // only 1 message type of each type can exist in a subscription
-    [Index(nameof(Type), nameof(SubscriptionId), IsUnique = true)]
     public class Message
     {
         [Key]

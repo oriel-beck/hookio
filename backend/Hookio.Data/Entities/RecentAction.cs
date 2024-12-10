@@ -4,6 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hookio.Data.Entities
 {
+    // TODO: Implement this via its own manager
+    /// <summary>
+    /// This logs the actions that the subscription did<br/>
+    /// Note: Currently unused, unimplemented
+    /// </summary>
     public class RecentAction
     {
         [Key]
