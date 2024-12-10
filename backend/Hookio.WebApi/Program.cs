@@ -16,9 +16,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<OAuth2>(builder.Configuration.GetSection(nameof(OAuth2)));
 builder.Services.Configure<YouTube>(builder.Configuration.GetSection(nameof(YouTube)));
 
-// Add services to the container.
-builder.Services.AddControllers();
-
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -27,10 +24,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddPooledDbContextFactory<HookioContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("HookioContext")));
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 
+// Caching managers
+builder.Services.AddSingleton<IVideosCacheManager, VideosCacheManager>();
+builder.Services.AddSingleton<IYouTubeSubscriptionCache, YouTubeSubscriptionCache>();
+
 // Data managers
 builder.Services.AddSingleton<ISubscriptionManager, SubscriptionManager>();
 builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IYouTubeManager, YouTubeManager>();
+
+// Actions managers
+builder.Services.AddSingleton<INotificationsManager, NotificationsManager>();
 
 // YT Subscriptions cache
 builder.Services.AddSingleton<IYouTubeSubscriptionCache, YouTubeSubscriptionCache>();
@@ -104,6 +108,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 // Add hosted services
 builder.Services.AddHostedService<RefreshSubs>();
+
+// Add controllers 
+builder.Services.AddControllers();
 
 var app = builder.Build();
 

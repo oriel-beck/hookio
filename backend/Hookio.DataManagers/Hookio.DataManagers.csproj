@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Net.Rest" Version="3.16.0" />
+    <PackageReference Include="Discord.Net.Webhook" Version="3.16.0" />
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3617" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.7.27" />

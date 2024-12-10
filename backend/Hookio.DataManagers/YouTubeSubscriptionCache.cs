@@ -15,7 +15,9 @@ namespace Hookio.DataManagers
     }
 
     /// <summary>
-    /// Manages YouTube subscriptions with individual expiration logic.
+    /// Manages YouTube subscriptions cache with individual expiration logic.<br/>
+    /// This class saves a cache of subscriptions that are being subscribed to or cache of notifications that were sent<br/>
+    /// It saves the channel data (so it can be reused without fetching it again) and latest video data (in case it gets updated)
     /// </summary>
     public class YouTubeSubscriptionCache(IMemoryCache cache) : IYouTubeSubscriptionCache
     {
@@ -23,6 +25,11 @@ namespace Hookio.DataManagers
 
         private static string GetCacheKey(string channelId) => $"Subscription_{channelId}";
 
+        /// <summary>
+        /// Adds a YouTube subscriptions to the cache<br/>
+        /// Used when subscribing to a new subscription in order to validate the callback
+        /// </summary>
+        /// <param name="subscription"></param>
         public void Add(YouTubeSubscription subscription)
         {
             var cacheKey = GetCacheKey(subscription.ChannelId);
@@ -32,11 +39,20 @@ namespace Hookio.DataManagers
             });
         }
 
+        /// <summary>
+        /// Removes a YouTube subscriptions from the cache
+        /// </summary>
+        /// <param name="topicUrl"></param>
         public void Delete(string topicUrl)
         {
             _cache.Remove(GetCacheKey(topicUrl));
         }
 
+        /// <summary>
+        /// Gets a YouTube subscription from the cache
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <returns></returns>
         public YouTubeSubscription? Get(string channelId)
         {
             var cacheKey = GetCacheKey(channelId);
@@ -44,6 +60,10 @@ namespace Hookio.DataManagers
             return subscription;
         }
 
+        /// <summary>
+        /// Replaces or creates an instance of a subscription in the cache and extends its expiration
+        /// </summary>
+        /// <param name="subscription"></param>
         public void Update(YouTubeSubscription subscription)
         {
             var cacheKey = GetCacheKey(subscription.ChannelId);

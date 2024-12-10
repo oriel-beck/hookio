@@ -19,6 +19,14 @@ namespace Hookio.WebApi.Controllers
         private readonly IYouTubeSubscriptionCache _subscriptionCache = youTubeSubscriptionCache;
         private readonly IYouTubeManager _youtubeManager = youTubeManager;
 
+        /// <summary>
+        /// PubSubHubBub hub sends a validation callback back when you create a subscription, this handles it
+        /// </summary>
+        /// <param name="hubMode"></param>
+        /// <param name="hubTopic"></param>
+        /// <param name="hubChallenge"></param>
+        /// <param name="hubVerifyToken"></param>
+        /// <returns></returns>
         [HttpGet("callback")]
         public IActionResult Subscribe(
             [BindRequired, FromQuery(Name = "hub.mode")] string hubMode,
@@ -49,6 +57,11 @@ namespace Hookio.WebApi.Controllers
             return BadRequest("Invalid hub.mode.");
         }
 
+        /// <summary>
+        /// PubSubHubBub sends a notificatio as POST, this handles and decrypts it
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPost("callback")]
         public async Task<IActionResult> Notify( CancellationToken cancellationToken)
         {
@@ -73,15 +86,18 @@ namespace Hookio.WebApi.Controllers
             }
 
             var videoData = _youtubeManager.ParseYouTubePayload(requestBody);
-            var subscription = _subscriptionCache.Get(videoData.Entry.ChannelId);
-            subscription ??= new()
+            
+            // We do not cache a video for more than 7d, so if the video is older simply ignore it
+            if (videoData.Entry.Published < DateTime.UtcNow.AddDays(-7)) return Ok();
+            var ytSubscription = _subscriptionCache.Get(videoData.Entry.ChannelId);
+            ytSubscription ??= new()
             {
                 Status = Shared.Enums.YouTubeSubscriptionStatus.Active,
                 ChannelId = videoData.Entry.ChannelId
             };
 
-            var channel = await _youtubeManager.GetYouTubeChannelDetails(subscription, cancellationToken);
-            var video = await _youtubeManager.GetYouTubeVideoDetails(subscription, videoData.Entry.VideoId, cancellationToken);
+            var channel = await _youtubeManager.GetYouTubeChannelDetails(ytSubscription, cancellationToken);
+            var video = await _youtubeManager.GetYouTubeVideoDetails(ytSubscription, videoData.Entry.VideoId, cancellationToken);
 
             if (channel == null || video == null) return NotFound("Failed to find channel or video");
             

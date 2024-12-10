@@ -1,5 +1,4 @@
-﻿using Discord.Rest;
-using Hookio.Contracts.Discord;
+﻿using Hookio.Contracts.Discord;
 using Hookio.Contracts.Message;
 using Hookio.Contracts.RecentAction;
 using Hookio.Contracts.Subscription;
@@ -8,6 +7,9 @@ using Hookio.Data.Entities;
 
 namespace Hookio.DataManagers
 {
+    /// <summary>
+    /// Converts Entities to their Contract
+    /// </summary>
     public static class Contractor
     {
         public static SubscriptionResponse? ToContract(Subscription? subscription) =>

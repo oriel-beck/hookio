@@ -12,6 +12,14 @@ using Hookio.Shared.Extensions;
 
 namespace Hookio.DataManagers
 {
+    /// <summary>
+    /// This class manages user authentication, it authenticates the user via OAuth2 and returns their data (user data and accessible guilds)
+    /// It also validates and refreshes session data every time it expires to not keep stale data
+    /// </summary>
+    /// <param name="restClient"></param>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="oauth2Options"></param>
+    /// <param name="contextFactory"></param>
     public class UserService(
         DiscordRestClient restClient,
         IHttpClientFactory httpClientFactory,

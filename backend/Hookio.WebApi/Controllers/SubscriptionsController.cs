@@ -2,11 +2,13 @@
 using Hookio.DataManagers.Interfaces;
 using Hookio.Shared;
 using Hookio.WebApi.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
 namespace Hookio.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SubscriptionsController(ISubscriptionManager subscriptionManager) : ControllerBase

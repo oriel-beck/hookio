@@ -11,6 +11,12 @@ using System.Text.RegularExpressions;
 
 namespace Hookio.DataManagers
 {
+    /// <summary>
+    /// This class manages the subscriptions in the database, it is separate than YouTube subscriptions<br/>
+    /// This class performs CRUD operations on Subscription, updating its data and its messages which are then sent to discord
+    /// </summary>
+    /// <param name="contextFactory"></param>
+    /// <param name="httpClientFactory"></param>
     public partial class SubscriptionManager(IDbContextFactory<HookioContext> contextFactory, IHttpClientFactory httpClientFactory) : ISubscriptionManager
     {
         private readonly IDbContextFactory<HookioContext> _contextFactory = contextFactory;
@@ -19,11 +25,20 @@ namespace Hookio.DataManagers
         [GeneratedRegex(@"^https:\/\/(canary\.|ptb\.|www\.)?discord\.com\/api\/webhooks\/(?<webhookId>\d+){17,19}\/(?<webhookToken>[A-Za-z0-9_-]+)$", RegexOptions.IgnoreCase)]
         private static partial Regex WebhookRegex();
 
+        /// <summary>
+        /// Creates a subscription
+        /// </summary>
+        /// <param name="guildId"></param>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ValidationException"></exception>
         public async Task<SubscriptionResponse?> Create(string guildId, SubscriptionRequest request, CancellationToken cancellationToken)
         {
             var validWebhook = TestAndParseWebhookUrl(request.WebhookUrl);
             if (!validWebhook) throw new ValidationException("Invalid webhook URL");
 
+            // Make sure the sent webhook is actually valid, if not. Reject it
             var webhook = await _httpClient.GetFromJsonAsync<DiscordWebhook>(request.WebhookUrl, cancellationToken) ?? throw new ValidationException("Invalid webhook");
 
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
@@ -40,7 +55,7 @@ namespace Hookio.DataManagers
             // generate Id for subscription
             await ctx.SaveChangesAsync(cancellationToken);
 
-            // generate initial messages
+            // generate initial messages (creates empty messages)
             res.Messages = GenerateInitialMessages(res);
 
             // save everything
@@ -77,6 +92,15 @@ namespace Hookio.DataManagers
             return Contractor.ToContract(res);
         }
 
+        /// <summary>
+        /// Partially updates a subscription
+        /// </summary>
+        /// <param name="guildId"></param>
+        /// <param name="subscriptionId"></param>
+        /// <param name="patch"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ValidationException"></exception>
         public async Task<SubscriptionResponse?> Patch(string guildId, int subscriptionId, SubscriptionPatch patch, CancellationToken cancellationToken)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync(cancellationToken);
@@ -120,7 +144,7 @@ namespace Hookio.DataManagers
 
             if (patch.Source != null)
             {
-                // TODO: implement
+                // TODO: handle the source depending on the subscription type (YT/Twitch)
             }
 
             if (patch.WebhookUsername != null && !patch.ClearWebhookUsername)

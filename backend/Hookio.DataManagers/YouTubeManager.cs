@@ -11,6 +11,16 @@ using System.Xml.Serialization;
 
 namespace Hookio.DataManagers
 {
+    /// <summary>
+    /// Manages YouTube subscriptions.<br/>
+    /// Creates YT subscriptions.<br/>
+    /// Gets YT channel and video data.<br/>
+    /// Parses incoming notifications payload.
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="youtubeOptions"></param>
+    /// <param name="youTubeSubscriptionCache"></param>
+    /// <param name="connectionMultiplexer"></param>
     public class YouTubeManager(
         IHttpClientFactory httpClientFactory,
         IOptions<YouTube> youtubeOptions,
@@ -28,6 +38,12 @@ namespace Hookio.DataManagers
             ApplicationName = "yt-announcements"
         });
 
+        /// <summary>
+        /// Sends a subscriptions request to the pubsubhubbub hub
+        /// </summary>
+        /// <param name="channel_id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<HttpResponseMessage?> Subscribe(string channel_id, CancellationToken cancellationToken)
         {
             string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
@@ -57,6 +73,11 @@ namespace Hookio.DataManagers
             }
         }
 
+        /// <summary>
+        /// Parses incoming notifications from pubsubhubbub hub from XML to YouTubeFeed
+        /// </summary>
+        /// <param name="xmlPayload"></param>
+        /// <returns></returns>
         public YouTubeFeed ParseYouTubePayload(string xmlPayload)
         {
             var serializer = new XmlSerializer(typeof(YouTubeFeed));
@@ -65,10 +86,17 @@ namespace Hookio.DataManagers
             return (YouTubeFeed)serializer.Deserialize(stringReader)!;
         }
 
+        /// <summary>
+        /// Gets YouTube channel data from cache or YouTube (uses "quota")<br/>
+        /// Resource: https://developers.google.com/youtube/v3/docs/channels#resource
+        /// </summary>
+        /// <param name="subscription"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<Channel?> GetYouTubeChannelDetails(YouTubeSubscription subscription, CancellationToken cancellationToken)
         {
             if (subscription.Channel != null) return subscription.Channel;
-            var channelRequest = ytService.Channels.List("snippet, statistics");
+            var channelRequest = ytService.Channels.List("snippet,statistics");
             channelRequest.Id = subscription.ChannelId;
             var channelList = await channelRequest.ExecuteAsync(cancellationToken);
 
@@ -81,10 +109,19 @@ namespace Hookio.DataManagers
             return channel;
         }
 
+        /// <summary>
+        /// Gets YouTube video data from cache or YouTube (uses "quota")<br/>
+        /// Resource: https://developers.google.com/youtube/v3/docs/videos#resource
+        /// </summary>
+        /// <param name="subscription"></param>
+        /// <param name="videoId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<Video?> GetYouTubeVideoDetails(YouTubeSubscription subscription, string videoId, CancellationToken cancellationToken)
         {
+            // only return cached data if the latest video saved has the same Id as the currently sending video
             if (subscription.LatestVideo != null && subscription.LatestVideo.Id == videoId) return subscription.LatestVideo;
-            var videoListRequest = ytService.Videos.List("snippet"); // contentDetails?
+            var videoListRequest = ytService.Videos.List("snippet,contentDetails,statistics");
             videoListRequest.Id = videoId;
 
             var videoList = await videoListRequest.ExecuteAsync(cancellationToken);
@@ -99,6 +136,13 @@ namespace Hookio.DataManagers
             return video;
         }
 
+        /// <summary>
+        /// Generates the template string key-value for converting {templateString} to its value
+        /// </summary>
+        /// <param name="video"></param>
+        /// <param name="channel"></param>
+        /// <param name="feed"></param>
+        /// <returns></returns>
         public Dictionary<string, string> GetTemplateStrings(Video video, Channel channel, YouTubeFeed feed)
         {
             var videoSnippet = video.Snippet;
@@ -119,9 +163,12 @@ namespace Hookio.DataManagers
                 { "channel.url", channelSnippet.CustomUrl ?? feed.Entry.Author.Uri },
                 { "channel.thumbnail.default", channelSnippet.Thumbnails.Standard.Url },
                 { "channel.thumbnail.medium", channelSnippet.Thumbnails.Medium.Url },
-                { "channel.thumbnail.hight", channelSnippet.Thumbnails.High.Url },
+                { "channel.thumbnail.high", channelSnippet.Thumbnails.High.Url },
                 { "channel.subscribers", channelStatistics.SubscriberCount.ToString() ?? "0" },
                 { "channel.views", channelStatistics.VideoCount.ToString() ?? "0" },
+
+                { "everyone", "@everyone" },
+                { "here", "@here" }
             };
             return res;
         }

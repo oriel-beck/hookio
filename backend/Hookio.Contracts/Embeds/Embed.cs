@@ -16,7 +16,7 @@ namespace Hookio.Contracts.Embed
 
         public DateTime? Timestamp { get; set; }
 
-        public decimal? Color { get; set; }
+        public uint? Color { get; set; }
 
         public Footer? Footer { get; set; }
 

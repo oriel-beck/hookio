@@ -10,5 +10,7 @@ namespace Hookio.DataManagers.Interfaces
         Task<Channel?> GetYouTubeChannelDetails(YouTubeSubscription subscription, CancellationToken cancellationToken);
         Task<Video?> GetYouTubeVideoDetails(YouTubeSubscription subscription, string videoId, CancellationToken cancellationToken);
         Dictionary<string, string> GetTemplateStrings(Video video, Channel channel, YouTubeFeed feed);
+        public static bool IsMembersOnlyVideo(Video video) =>
+            video.Statistics.ViewCount is null;
     }
 }
