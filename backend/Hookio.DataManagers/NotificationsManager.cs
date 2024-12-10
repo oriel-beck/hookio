@@ -86,7 +86,7 @@ namespace Hookio.DataManagers
             (string?, IEnumerable<Embed>) messageData;
 
             // Add task to the channel queue
-            var channelQueue = GetChannelQueue(ytchannel.Id);
+            var channelQueue = GetChannelQueue(message.Subscription!.ChannelId);
             switch (message.Action)
             {
                 case MessageAction.CreateMessage:
