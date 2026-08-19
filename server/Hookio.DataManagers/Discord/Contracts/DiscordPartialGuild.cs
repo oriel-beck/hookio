@@ -1,21 +1,31 @@
-﻿
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Hookio.Discord.Contracts
 {
-    [method: JsonConstructor]
-    public class DiscordPartialGuild(ulong id, string? name, string? icon, bool owner, ulong permissions)
+    public class DiscordPartialGuild
     {
-        public ulong Id { get; } = id;
-        public string? Name { get; } = name;
-        public string? Icon { get; } = icon;
-        public bool Owner { get; } = owner;
-        public ulong Permissions { get; } = permissions;
+        [JsonPropertyName("id")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+        public ulong Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("icon")]
+        public string? Icon { get; set; }
+
+        [JsonPropertyName("owner")]
+        public bool Owner { get; set; }
+
+        [JsonPropertyName("permissions")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+        public ulong Permissions { get; set; }
+
         public string? IconUrl
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(Icon)) return null; // Return null if no icon is set
+                if (string.IsNullOrWhiteSpace(Icon)) return null;
                 return $"https://cdn.discordapp.com/icons/{Id}/{Icon}.png";
             }
         }

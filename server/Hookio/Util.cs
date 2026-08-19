@@ -1,35 +1,29 @@
-﻿using Hookio.Contracts;
-using Newtonsoft.Json;
+﻿using Hookio.Shared;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Hookio
 {
     public static class Util
     {
+        public static CookieOptions AuthCookieOptions(HttpContext context, DateTimeOffset expires)
+        {
+            var secureEnv = string.Equals(Environment.GetEnvironmentVariable(EnvNames.CookieSecure), "true", StringComparison.OrdinalIgnoreCase);
+            return new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = expires,
+                SameSite = SameSiteMode.Strict,
+                Secure = context.Request.IsHttps || secureEnv
+            };
+        }
+
         public static bool CanAccessGuild(ClaimsPrincipal user, ulong guildId)
         {
-            var userGuildsClaim = user.Claims.First((claim) => claim.Type == "guilds");
-            var guilds = JsonConvert.DeserializeObject<List<ulong>>(userGuildsClaim.Value);
-            return guilds!.Contains(guildId);
-        }
-
-        public static int GetEmbedLength(Database.Entities.Embed embed)
-        {
-            int num = embed.Title?.Length ?? 0;
-            int valueOrDefault = (embed.Author?.Length).GetValueOrDefault();
-            int num2 = embed.Description?.Length ?? 0;
-            int valueOrDefault2 = (embed.Footer?.Length).GetValueOrDefault();
-            return num + valueOrDefault + num2 + valueOrDefault2;
-        }
-
-        public static int GetEmbedLength(EmbedRequest embed)
-        {
-            int num = embed.Title?.Length ?? 0;
-            int valueOrDefault = (embed.Author?.Length).GetValueOrDefault();
-            int num2 = embed.Description?.Length ?? 0;
-            int valueOrDefault2 = (embed.Footer?.Length).GetValueOrDefault();
-            int valueOrDefault3 = embed.Fields.Sum((EmbedFieldRequest f) => f.Name?.Length + f.Value?.ToString().Length).GetValueOrDefault();
-            return num + valueOrDefault + num2 + valueOrDefault2;
+            var userGuildsClaim = user.Claims.FirstOrDefault(claim => claim.Type == AuthConstants.GuildsClaim);
+            if (userGuildsClaim is null) return false;
+            var guilds = JsonSerializer.Deserialize<List<string>>(userGuildsClaim.Value);
+            return guilds is not null && guilds.Contains(guildId.ToString());
         }
     }
 }

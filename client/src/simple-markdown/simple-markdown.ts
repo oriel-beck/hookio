@@ -472,7 +472,6 @@ const inlineRegex = function (regex: RegExp): MatchFunction {
     const match = function (
         source: string,
         state: State,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _prevCapture: string,
     ): Capture | null | undefined {
         if (state.inline) {

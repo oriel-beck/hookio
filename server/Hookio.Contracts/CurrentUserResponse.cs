@@ -2,7 +2,7 @@
 {
     public class CurrentUserResponse
     {
-        public required ulong Id { get; set; }
+        public required string Id { get; set; }
         public string? Username { get; set; }
         public string Discriminator { get; set; } = "0";
         public int Premium { get; set; } = 0;

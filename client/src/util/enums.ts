@@ -1,20 +1,20 @@
 export enum Provider {
-    "youtube",
-    "twitch"
+    youtube = 1,
+    twitch = 2
 }
 
 export enum EventType {
-    'Video Uploaded',
-    'Video Edited',
-    'Stream Started',
-    'Stream Updated',
-    'Stream Ended'
+    'Video Uploaded' = 1,
+    'Video Edited' = 2,
+    'Stream Started' = 3,
+    'Stream Updated' = 4,
+    'Stream Ended' = 5
 }
 
 export enum APIEvents {
-    YoutubeVideoUploaded,
-    YoutubeVideoEdited,
-    TwitchStreamStarted,
-    TwitchStreamUpdated,
-    TwitchStreamEnded
+    YoutubeVideoUploaded = 1,
+    YoutubeVideoEdited = 2,
+    TwitchStreamStarted = 3,
+    TwitchStreamUpdated = 4,
+    TwitchStreamEnded = 5
 }

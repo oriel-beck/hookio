@@ -9,7 +9,7 @@ namespace Hookio.Discord.Interfaces
         Task<DiscordSelfUser?> GetDiscordUser(string accessToken);
         Task<IEnumerable<DiscordPartialGuild>?> GetDiscordUserGuilds(string accessToken);
         Task<OAuth2ExchangeResponse?> RefreshOAuth2(ulong userId);
-        Task<DiscordPartialMessage?> SendWebhookMessage(DiscordMessageCreatePayload payload, string webhookUrl);
-        Task<DiscordPartialMessage?> UpdateWebhookMessage(DiscordMessageCreatePayload payload, ulong messageId, string webhookUrl);
+        Task<DiscordWebhookResult> SendWebhookMessage(DiscordMessageCreatePayload payload, string webhookUrl);
+        Task<DiscordWebhookResult> UpdateWebhookMessage(DiscordMessageCreatePayload payload, ulong messageId, string webhookUrl);
     }
 }

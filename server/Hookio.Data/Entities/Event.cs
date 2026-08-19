@@ -1,4 +1,4 @@
-﻿using Hookio.Enunms;
+﻿using Hookio.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

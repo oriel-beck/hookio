@@ -7,8 +7,13 @@ export default function LoginGuard({ children }: { children: JSX.Element }) {
     const navigate = useNavigate();
     const params = useParams();
     useEffect(() => {
-        if (!user) return navigate("/", { replace: true });
-        if (params.serverId && user.guilds.findIndex((g) => g.id === params.serverId) === -1) return navigate("/servers", { replace: true })
+        if (!user) {
+            void navigate("/", { replace: true });
+            return;
+        }
+        if (params.serverId && user.guilds.findIndex((g) => g.id === params.serverId) === -1) {
+            void navigate("/servers", { replace: true });
+        }
     })
     return children;
 }

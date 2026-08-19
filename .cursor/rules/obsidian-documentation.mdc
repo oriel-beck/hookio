@@ -1,0 +1,26 @@
+---
+description: Document every meaningful Hookio change in the Obsidian vault
+alwaysApply: true
+---
+
+# Document changes in Obsidian
+
+After any meaningful change (feature, refactor, upgrade, bugfix, config, infra, decision), update `hookio-vault/` before ending the session. Do not invent another vault.
+
+| Kind | Path |
+| --- | --- |
+| Index / MOC | `Hookio.md` |
+| Changelog | `Hookio/Changelog.md` (newest first) |
+| Infrastructure | `Hookio/Infrastructure.md` |
+| Service | `Hookio/Services/<name>.md` |
+| Feature | `Hookio/Features/<name>.md` |
+| Decision | `Hookio/Decisions/<short-name>.md` |
+| Convention | `Hookio/How we document.md` |
+
+Update the existing service/feature note plus the changelog. Do not create a `Plans/` folder or “do this next” sequences. Do not duplicate notes.
+
+Changelog and decisions: Date (`YYYY-MM-DD`), What, Why, Files / packages, Follow-ups, PR if any.
+
+Example: changing EventSub HMAC → update `Hookio/Services/Twitch.md` and `Hookio/Features/Twitch EventSub.md`, then add a newest-first changelog entry.
+
+Skip typos and formatting-only edits unless they encode a decision.

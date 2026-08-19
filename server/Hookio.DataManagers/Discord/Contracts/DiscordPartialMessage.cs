@@ -2,9 +2,10 @@
 
 namespace Hookio.Discord.Contracts
 {
-    [method: JsonConstructor]
-    public class DiscordPartialMessage(ulong id)
+    public class DiscordPartialMessage
     {
-        public ulong Id { get; } = id;
+        [JsonPropertyName("id")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+        public ulong Id { get; set; }
     }
 }

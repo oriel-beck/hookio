@@ -95,7 +95,11 @@ export async function submitSubscription(values: FormikInitialValue, type: Provi
     return await fetch(`/api/subscriptions/${guildId}`, { method: 'POST', body, headers });
 }
 
-const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message, id }]) => ({ ...acc, [eventType]: { id: typeof id === 'string' ? null : id, message: convertMessageToSendableData(message), eventType: +eventType } }), {} as Record<string, EventResponse & { eventType: number }>)
+export async function deleteSubscription(guildId: string, id: number) {
+    return await fetch(`/api/subscriptions/${guildId}/${id}`, { method: 'DELETE' });
+}
+
+export const convertEventsToSendableData = (events: FormikInitialValue['events']) => Object.entries(events).reduce((acc, [eventType, { message, id }]) => ({ ...acc, [eventType]: { id: typeof id === 'string' ? null : id, message: convertMessageToSendableData(message), eventType: +eventType } }), {} as Record<string, EventResponse & { eventType: number }>)
 
 function convertMessageToSendableData(message: MessageFormikInitialValue) {
     const embeds: Embed[] = [];

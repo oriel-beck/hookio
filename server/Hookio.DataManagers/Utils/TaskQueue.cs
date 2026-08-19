@@ -1,152 +1,235 @@
 ﻿using Hookio.DataManagers.Utils.Interfaces;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Hookio.Utils
 {
-    public class TaskQueue : ITaskQueue
+    public class DiscordTask(int priority, Func<HttpClient, Task<HttpResponseMessage>> task)
+    {
+        public readonly TaskCompletionSource<HttpResponseMessage> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public readonly Func<HttpClient, Task<HttpResponseMessage>> _httpTask = task;
+        public readonly int _priority = priority;
+    }
+
+    /// <summary>
+    /// Priority Discord HTTP queue. Uses X-RateLimit-Reset-After / retry_after per
+    /// https://discord.com/developers/docs/topics/rate-limits
+    /// </summary>
+    public class TaskQueue : BackgroundService, ITaskQueue
     {
         private readonly ConcurrentDictionary<int, ConcurrentQueue<DiscordTask>> _queue = new(new Dictionary<int, ConcurrentQueue<DiscordTask>>
         {
-            {0, new ConcurrentQueue<DiscordTask>() },
-            {1, new ConcurrentQueue<DiscordTask>() },
-            {2, new ConcurrentQueue<DiscordTask>() }
+            { 0, new ConcurrentQueue<DiscordTask>() },
+            { 1, new ConcurrentQueue<DiscordTask>() },
+            { 2, new ConcurrentQueue<DiscordTask>() }
         });
 
-        private readonly Dictionary<int, TimeSpan> _ratelimits = [];
-        private DateTime _lastTaskExecution = DateTime.MinValue;
-        private int _tasksExecutedThisSecond = 0;
-        private TimeSpan _globalRatelimitReset = TimeSpan.Zero;
+        private readonly ConcurrentDictionary<string, DateTimeOffset> _bucketAvailableAt = new();
+        private readonly SemaphoreSlim _signal = new(0);
+        private readonly Queue<DateTimeOffset> _recentRequests = new();
+        private DateTimeOffset _globalAvailableAt = DateTimeOffset.MinValue;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<TaskQueue> _logger;
 
-        public TaskQueue(IHttpClientFactory httpClientFactory)
+        public TaskQueue(IHttpClientFactory httpClientFactory, ILogger<TaskQueue> logger)
         {
             _httpClientFactory = httpClientFactory;
-            ProcessQueueAsync();
-            ResetTasksAsync();
+            _logger = logger;
         }
 
-        private void ResetTasksAsync()
+        public Task<HttpResponseMessage> Enqueue(int priority, Func<HttpClient, Task<HttpResponseMessage>> func)
         {
-            Task.Run(async () =>
+            if (!_queue.ContainsKey(priority))
             {
-                while (true)
-                {
-                    await Task.Delay(1000); // Wait for 1 second
-                     ResetTasksExecutedThisSecond();
-                }
-            });
+                throw new ArgumentException("Invalid priority level.");
+            }
+
+            var task = new DiscordTask(priority, func);
+            _queue[priority].Enqueue(task);
+            _signal.Release();
+            return task._tcs.Task;
         }
 
-        private void ProcessQueueAsync()
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Task.Run(async () =>
+            while (!stoppingToken.IsCancellationRequested)
             {
-                while (true)
+                var work = PeekHighestPriorityTask();
+                if (work is null)
                 {
-                    var task = GetHighestPriorityTask();
-                    if (task == null) continue;
-                    var (priority, taskToExecute) = task.Value;
                     try
                     {
-                        var client = _httpClientFactory.CreateClient();
-                        client.BaseAddress = new Uri("https://discord.com");
-                        var response = await taskToExecute._httpTask(client);
-                        if ((int)response.StatusCode >= 400 && (int)response.StatusCode != 429)
-                        {
-                            Console.WriteLine("failed to complete task, dequeuing {0}", priority);
-                            _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
-                            var data = await response.Content.ReadAsStringAsync();
-                            Console.WriteLine(data);
-                            taskToExecute._tcs.SetException(new HttpRequestException(message: "Encountered a non 429 or success status code", new Exception(), statusCode: response.StatusCode));
-                        }
-
-                        if (response.IsSuccessStatusCode && (int)response.StatusCode != 429)
-                        {
-                            Console.WriteLine("completed task, dequeuing {0}", priority);
-                            // if it succeeded, dequeue
-                            taskToExecute._tcs.SetResult(response);
-                            _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
-                        }
-                        UpdateRatelimit(response, priority);
+                        await _signal.WaitAsync(TimeSpan.FromMilliseconds(100), stoppingToken);
                     }
-                    catch (Exception ex)
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                     {
-                        _queue.GetValueOrDefault(priority)?.TryDequeue(out var _);
-                        taskToExecute._tcs.SetException(ex);
-                        Console.WriteLine("Caught exception, dequeued task {0}\nexception: {1}\nstack: {2}", priority, ex.Message, ex.StackTrace);
-                        // TODO: logging
+                        break;
                     }
+                    continue;
                 }
-            });
+
+                var (priority, task, bucketKey) = work.Value;
+                if (!CanExecuteGlobally())
+                {
+                    await Task.Delay(50, stoppingToken);
+                    continue;
+                }
+
+                try
+                {
+                    var client = _httpClientFactory.CreateClient();
+                    client.BaseAddress = new Uri("https://discord.com");
+                    HttpResponseMessage response;
+                    while (true)
+                    {
+                        stoppingToken.ThrowIfCancellationRequested();
+                        response = await task._httpTask(client);
+                        if ((int)response.StatusCode != 429) break;
+
+                        var bodyJson = await response.Content.ReadAsStringAsync(stoppingToken);
+                        var retryAfter = GetRetryAfter(response, bodyJson);
+                        var scope = GetHeader(response, "X-RateLimit-Scope");
+                        var globalBody = false;
+                        try
+                        {
+                            globalBody = JsonSerializer.Deserialize<DiscordRateLimitBody>(bodyJson)?.Global == true;
+                        }
+                        catch { /* ignore malformed 429 bodies */ }
+
+                        if (scope == "global" || globalBody)
+                        {
+                            _globalAvailableAt = DateTimeOffset.UtcNow + retryAfter;
+                        }
+                        else
+                        {
+                            var bucket = GetHeader(response, "X-RateLimit-Bucket") ?? bucketKey;
+                            _bucketAvailableAt[bucket] = DateTimeOffset.UtcNow + retryAfter;
+                        }
+                        _logger.LogInformation("Discord 429, waiting {RetryAfter}s", retryAfter.TotalSeconds);
+                        await Task.Delay(retryAfter, stoppingToken);
+                    }
+
+                    UpdateBucketFromHeaders(response, bucketKey);
+                    RecordGlobalRequest();
+                    Dequeue(priority);
+                    if ((int)response.StatusCode >= 400)
+                    {
+                        _logger.LogWarning("Discord request failed with {Status}", response.StatusCode);
+                    }
+                    task._tcs.TrySetResult(response);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Dequeue(priority);
+                    task._tcs.TrySetException(ex);
+                    _logger.LogError(ex, "Discord queue task failed");
+                }
+            }
         }
 
-        private void ResetTasksExecutedThisSecond() =>
-            _tasksExecutedThisSecond = DateTime.UtcNow - _lastTaskExecution > TimeSpan.FromSeconds(1) ? 0 : _tasksExecutedThisSecond;
-
-        private bool CanExecuteTask() =>
-            _tasksExecutedThisSecond < 50 || DateTime.UtcNow - _lastTaskExecution > TimeSpan.FromSeconds(1);
-
-        private (int, DiscordTask)? GetHighestPriorityTask()
+        private (int Priority, DiscordTask Task, string BucketKey)? PeekHighestPriorityTask()
         {
-            // stop all executions in case of a global ratelimit hit (should never happen, but can't be too careful)
-            if (_globalRatelimitReset.TotalMilliseconds >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return null;
-            foreach (var kvp in _queue)
+            if (DateTimeOffset.UtcNow < _globalAvailableAt) return null;
+
+            foreach (var kvp in _queue.OrderBy(k => k.Key))
             {
-                if (_ratelimits.TryGetValue(kvp.Key, out var priorityValue) && priorityValue.TotalMilliseconds >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                if (kvp.Value.IsEmpty) continue;
+                if (!kvp.Value.TryPeek(out var task) || task is null) continue;
+
+                var bucketKey = $"priority:{kvp.Key}";
+                if (_bucketAvailableAt.TryGetValue(bucketKey, out var availableAt) && DateTimeOffset.UtcNow < availableAt)
                 {
-                    continue; // Ratelimited, move to the next priority
+                    continue;
                 }
 
-                if (!kvp.Value.IsEmpty && CanExecuteTask())
-                {
-                    _tasksExecutedThisSecond++;
-                    _lastTaskExecution = DateTime.UtcNow;
-                    kvp.Value.TryPeek(out var result);
-                    if (result == null) continue;
-                    return (kvp.Key, result);
-                }
+                return (kvp.Key, task, bucketKey);
             }
 
             return null;
         }
 
-        private void UpdateRatelimit(HttpResponseMessage response, int priority)
-        {
-            var headers = response.Headers;
+        private void Dequeue(int priority) => _queue.GetValueOrDefault(priority)?.TryDequeue(out _);
 
-            if (headers.TryGetValues("x-ratelimit-remaining", out var ratelimitRemainingValues) &&
-                ratelimitRemainingValues.FirstOrDefault() is string ratelimitRemainingString &&
-                int.TryParse(ratelimitRemainingString, out var ratelimitRemaining) &&
-                ratelimitRemaining == 0 &&
-                headers.TryGetValues("x-ratelimit-reset", out var resetAfterValues) &&
-                resetAfterValues.FirstOrDefault() is string resetAfterString &&
-                double.TryParse(resetAfterString, out var resetAfter))
+        private bool CanExecuteGlobally()
+        {
+            if (DateTimeOffset.UtcNow < _globalAvailableAt) return false;
+            var cutoff = DateTimeOffset.UtcNow.AddSeconds(-1);
+            while (_recentRequests.Count > 0 && _recentRequests.Peek() < cutoff)
             {
-                // add +1 to handle the floating limit
-                if ((int)response.StatusCode == 429 && headers.TryGetValues("x-ratelimit-scope", out var scopeValues))
-                {
-                    if (scopeValues.FirstOrDefault() == "global")
-                    {
-                        _globalRatelimitReset = TimeSpan.FromSeconds(resetAfter);
-                    }
-                }
-                else
-                {
-                    _ratelimits[priority] = TimeSpan.FromSeconds(resetAfter);
-                }
+                _recentRequests.Dequeue();
             }
+            return _recentRequests.Count < 50;
         }
 
-        public Task<HttpResponseMessage> Enqueue(int priority, Func<HttpClient, Task<HttpResponseMessage>> func)
+        private void RecordGlobalRequest() => _recentRequests.Enqueue(DateTimeOffset.UtcNow);
+
+        private void UpdateBucketFromHeaders(HttpResponseMessage response, string fallbackKey)
         {
-            DiscordTask task = new(priority, func);
-            if (!_queue.ContainsKey(task._priority))
+            var remaining = GetHeader(response, "X-RateLimit-Remaining");
+            if (!int.TryParse(remaining, out var remainingCount) || remainingCount > 0) return;
+
+            var resetAfter = ParseResetAfter(response);
+            if (resetAfter is null) return;
+
+            var bucket = GetHeader(response, "X-RateLimit-Bucket") ?? fallbackKey;
+            _bucketAvailableAt[bucket] = DateTimeOffset.UtcNow + resetAfter.Value;
+        }
+
+        private static TimeSpan GetRetryAfter(HttpResponseMessage response, string bodyJson)
+        {
+            var resetAfter = ParseResetAfter(response);
+            if (resetAfter is not null) return resetAfter.Value;
+
+            var retryAfterHeader = GetHeader(response, "Retry-After");
+            if (double.TryParse(retryAfterHeader, NumberStyles.Float, CultureInfo.InvariantCulture, out var retryAfterSeconds))
             {
-                throw new ArgumentException("Invalid priority level.");
+                return TimeSpan.FromSeconds(retryAfterSeconds);
             }
 
-            _queue[task._priority].Enqueue(task);
-            return task._tcs.Task;
+            try
+            {
+                var body = JsonSerializer.Deserialize<DiscordRateLimitBody>(bodyJson);
+                if (body is not null && body.RetryAfter > 0)
+                {
+                    return TimeSpan.FromSeconds(body.RetryAfter);
+                }
+            }
+            catch
+            {
+                // fall through
+            }
+
+            return TimeSpan.FromSeconds(1);
+        }
+
+        private static TimeSpan? ParseResetAfter(HttpResponseMessage response)
+        {
+            var value = GetHeader(response, "X-RateLimit-Reset-After");
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) && seconds > 0)
+            {
+                return TimeSpan.FromSeconds(seconds);
+            }
+            return null;
+        }
+
+        private static string? GetHeader(HttpResponseMessage response, string name) =>
+            response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
+
+        private sealed class DiscordRateLimitBody
+        {
+            [JsonPropertyName("retry_after")]
+            public double RetryAfter { get; set; }
+
+            [JsonPropertyName("global")]
+            public bool Global { get; set; }
         }
     }
 }

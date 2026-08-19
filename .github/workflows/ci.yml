@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore and test
+        working-directory: server
+        run: |
+          dotnet restore server.sln
+          dotnet build server.sln --no-restore --configuration Release
+          dotnet test server.sln --no-build --configuration Release --verbosity minimal
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Lint, test, and build
+        working-directory: client
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run build

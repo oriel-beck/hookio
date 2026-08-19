@@ -4,10 +4,12 @@ namespace Hookio.Feeds.Interfaces
 {
     public interface IFeedsCacheService
     {
-        public Task<RedisValue[]> GetExpiredFeeds();
-        public Task InsertNewFeed(int feedId);
-        public Task InsertNewMessage(int feedId, ulong messageId);
-        public Task<bool> DeleteFeed(int feedId);
-        public Task<RedisValue[]> GetAllMessages(int feedId);
+        Task<RedisValue[]> GetExpiredFeeds();
+        Task InsertNewFeed(int feedId);
+        Task ResetMessages(int feedId);
+        Task InsertNewMessage(int feedId, int subscriptionId, ulong messageId);
+        Task<ulong?> GetMessageId(int feedId, int subscriptionId);
+        Task<bool> DeleteFeed(int feedId);
+        Task<RedisValue[]> GetAllMessages(int feedId);
     }
 }

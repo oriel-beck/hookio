@@ -1,0 +1,18 @@
+# Optional TLS server for EventSub (Twitch requires HTTPS :443).
+# Mount certs at /etc/nginx/certs/fullchain.pem and privkey.pem, then include this
+# from nginx.conf or replace the listen 80 server. Do not publish 443:443 without certs.
+#
+# Local EventSub without certs: use a tunnel (cloudflared / ngrok) to the host :80
+# and set TWITCH_EVENTSUB_CALLBACK_URL to the public https URL.
+
+# server {
+#     listen 443 ssl;
+#     server_name your.public.hostname;
+#     ssl_certificate     /etc/nginx/certs/fullchain.pem;
+#     ssl_certificate_key /etc/nginx/certs/privkey.pem;
+#     root /usr/share/nginx/html;
+#     include /etc/nginx/mime.types;
+#     location /api { proxy_pass http://server:8080/api; }
+#     location /healthz { proxy_pass http://server:8080/healthz; }
+#     location / { try_files $uri $uri/ /index.html; }
+# }

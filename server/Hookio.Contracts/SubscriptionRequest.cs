@@ -1,4 +1,4 @@
-﻿using Hookio.Enunms;
+﻿using Hookio.Enums;
 
 namespace Hookio.Contracts
 {

@@ -27,6 +27,6 @@ namespace Hookio.Database.Entities
         [ForeignKey("Message")]
         public int MessageId { get; set; }
         public Message Message { get; set; } = default!;
-        public List<EmbedField> Fields { get; set; } = default!;
+        public List<EmbedField> Fields { get; set; } = [];
     }
 }

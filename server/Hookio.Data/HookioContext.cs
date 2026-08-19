@@ -15,6 +15,11 @@ namespace Hookio.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder
+                .Entity<Feed>()
+                .HasIndex(f => f.Url)
+                .IsUnique();
+
             // when field is deleted, set all subscription fields to null
             // fields are deleted when there are 0 enabled subscriptions attached to them
             modelBuilder

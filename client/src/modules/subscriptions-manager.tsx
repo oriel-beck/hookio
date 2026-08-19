@@ -25,8 +25,13 @@ function InternalSubscriptionManager() {
 
     useEffect(() => {
         // TODO: handle 429 from the API, just in case, generally it should not happen
-        if ('message' in data) return navigate(`/servers/${params['serverId']}`, { replace: true });
-        if ('status' in data && (data as { status: number }).status === 401) return navigate(`/servers/${params['serverId']}`, { replace: true });
+        if ('message' in data) {
+            void navigate(`/servers/${params['serverId']}`, { replace: true });
+            return;
+        }
+        if ('status' in data && (data as { status: number }).status === 401) {
+            void navigate(`/servers/${params['serverId']}`, { replace: true });
+        }
     })
 
     return (
@@ -45,8 +50,8 @@ function InternalSubscriptionManager() {
                 <div className="flex space-x-4 justify-start w-full">
                     {Array.isArray(data.subscriptions) && data.subscriptions.map((sub) => (
                         <div key={sub.id} className="flex flex-col">
-                            <button onClick={() => onClick(sub.id)} className={`${sub.subscriptionType === 0 ? 'bg-red-500 text-white' : sub.subscriptionType === 1 ? 'bg-purple-900 text-white' : ''} py-2 px-4 rounded border border-white hover:bg-opacity-60`}>
-                                Edit {sub.subscriptionType === 0 ? 'Youtube' : sub.subscriptionType === 1 ? 'Twitch' : ''} Subscription {sub.id}
+                            <button onClick={() => onClick(sub.id)} className={`${sub.subscriptionType === 1 ? 'bg-red-500 text-white' : sub.subscriptionType === 2 ? 'bg-purple-900 text-white' : ''} py-2 px-4 rounded border border-white hover:bg-opacity-60`}>
+                                Edit {sub.subscriptionType === 1 ? 'Youtube' : sub.subscriptionType === 2 ? 'Twitch' : ''} Subscription {sub.id}
                             </button>
                         </div>
                     ))}

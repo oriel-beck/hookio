@@ -9,7 +9,7 @@ namespace Hookio.Database.Entities
         public int Id { get; set; }
         [Column(TypeName = "varchar(2000)")]
         public string? Content { get; set; }
-        public List<Embed> Embeds { get; set; } = default!;
+        public List<Embed> Embeds { get; set; } = [];
         [Column(TypeName = "varchar(80)")]
         public string? WebhookUsername { get; set; }
         public string? WebhookAvatar { get; set; }

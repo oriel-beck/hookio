@@ -155,6 +155,9 @@ namespace Hookio.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Url")
+                        .IsUnique();
+
                     b.ToTable("Feeds", (string)null);
                 });
 
@@ -210,6 +213,18 @@ namespace Hookio.Migrations
                     b.Property<int>("SubscriptionType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TwitchBroadcasterId")
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("TwitchEventSubIds")
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("TwitchLogin")
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<decimal>("WebhookChannel")
+                        .HasColumnType("numeric(20,0)");
+
                     b.Property<string>("WebhookUrl")
                         .IsRequired()
                         .HasColumnType("varchar(200)");
@@ -221,6 +236,8 @@ namespace Hookio.Migrations
                     b.HasIndex("GuildId");
 
                     b.HasIndex("SubscriptionType");
+
+                    b.HasIndex("TwitchBroadcasterId");
 
                     b.ToTable("Subscriptions", (string)null);
                 });

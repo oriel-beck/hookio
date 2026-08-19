@@ -1,51 +1,37 @@
 ﻿using Hookio.Contracts;
 using Hookio.Database.Interfaces;
+using Hookio.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hookio.Controllers
 {
-    [Route("/api/[controller]")]
+    [Route("api/users")]
     [ApiController]
-    public class UsersController(IDataManager dataManager) : ControllerBase
+    public class UsersController(IUserAuthService authService) : ControllerBase
     {
-        /// <summary>
-        /// Returns the current user based on the Authorization token
-        /// </summary>
-        /// <returns code="200">The current user</returns>
-        /// <returns code="401">You are not authorized</returns>
         [Authorize]
-        [HttpGet("[action]")]
+        [HttpGet("current")]
         public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser()
         {
-            var idClaim = HttpContext.User.Claims.First(claim => claim.Type == "id");
-            _ = ulong.TryParse(idClaim.Value, out var userId);
-            return Ok(await dataManager.GetUser(userId));
+            var idClaim = HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == AuthConstants.IdClaim);
+            if (idClaim is null || !ulong.TryParse(idClaim.Value, out var userId)) return Unauthorized();
+            var user = await authService.GetUser(userId);
+            return user is null ? Unauthorized() : Ok(user);
         }
 
-        /// <summary>
-        /// Logs out the current user
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost("[action]")]
-        public IActionResult LogOut()
+        [HttpPost("logout")]
+        public IActionResult Logout()
         {
-            HttpContext.Response.Cookies.Append("Authorization", "", new()
-            {
-                HttpOnly = true,
-                Expires = DateTime.UtcNow,
-                SameSite = SameSiteMode.Strict
-            });
+            HttpContext.Response.Cookies.Append(AuthConstants.CookieName, "", Util.AuthCookieOptions(HttpContext, DateTimeOffset.UtcNow));
             return NoContent();
         }
 
-        /// <summary>
-        /// Authenticates a user based on the auth code returned from discord
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns>Current user</returns>
-        [HttpPost("[action]")]
-        public async Task<ActionResult<CurrentUserResponse?>> Authenticate([FromQuery] string code) =>
-            Ok(await dataManager.Authenticate(HttpContext, code));
+        [HttpPost("authenticate")]
+        public async Task<ActionResult<CurrentUserResponse>> Authenticate([FromQuery] string code)
+        {
+            var user = await authService.Authenticate(HttpContext, code);
+            return user is null ? Unauthorized() : Ok(user);
+        }
     }
 }

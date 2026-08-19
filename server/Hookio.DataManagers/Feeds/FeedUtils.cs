@@ -1,5 +1,5 @@
 ﻿using Hookio.Contracts;
-using Hookio.Enunms;
+using Hookio.Enums;
 using System.Xml.Linq;
 
 namespace Hookio.Feeds
@@ -7,132 +7,80 @@ namespace Hookio.Feeds
     public static class FeedUtils
     {
         private static bool IsUrl(string str) =>
-str.StartsWith("http") && Uri.TryCreate(str, UriKind.Absolute, out _);
+            str.StartsWith("http") && Uri.TryCreate(str, UriKind.Absolute, out _);
 
         private static string GetName(XElement element)
         {
-            // If the element is in the default namespace, just return the local name.
             if (element.Name.Namespace == element.GetDefaultNamespace())
                 return element.Name.LocalName;
 
-            // If the element has a namespace prefix, return the prefixed name.
             var prefix = element.GetPrefixOfNamespace(element.Name.Namespace);
             return string.IsNullOrEmpty(prefix) ? element.Name.LocalName : $"{prefix}:{element.Name.LocalName}";
         }
 
-        public async static Task<(List<TemplateStringResponse>, XMLDetails)> Parse(string url, HttpClient httpClient)
+        public static async Task<(List<TemplateStringResponse>, XMLDetails)> Parse(string url, HttpClient httpClient)
         {
-            var xmlDetails = new XMLDetails();
-            var templateStrings = new Dictionary<string, TemplateStringResponse>();
-            try
-            {
-                var message = new HttpRequestMessage(HttpMethod.Get, url);
-                message.Headers.Add("Accept", "*/*");
-                message.Headers.Add("User-Agent", "Hookio 1.0.0");
-                var res = await httpClient.SendAsync(message);
-                XDocument xmlDoc = await XDocument.LoadAsync(res.Content.ReadAsStream(), LoadOptions.None, CancellationToken.None);
-                var root = xmlDoc.Root;
-                if (root != null)
-                {
-                    ParseChild(root);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred while reading the RSS feed: {ex.Message}");
-            }
-
-            void ParseChild(XElement child, string prefix = "")
-            {
-                var name = string.IsNullOrEmpty(prefix) ? GetName(child) : $"{prefix}.{GetName(child)}";
-
-                if (child == null || templateStrings.ContainsKey(name)) return;
-
-                if (!string.IsNullOrEmpty(child.Value.Trim()) && child.HasElements == false)
-                {
-                    if (child.Name.LocalName == "id" || child.Name.LocalName == "guid")
-                    {
-                        xmlDetails.Id = child.Value;
-                    }
-
-                    if (child.Name.LocalName == "updated" && DateTime.TryParse(child.Value, out var updated))
-                    {
-                        xmlDetails.Updated = updated;
-                    }
-
-                    if ((child.Name.LocalName == "published" || child.Name.LocalName == "pubDate") && DateTime.TryParse(child.Value, out var published))
-                    {
-                        xmlDetails.Published = published;
-                    }
-
-                    templateStrings.TryAdd(name, new TemplateStringResponse
-                    {
-                        Key = name,
-                        Value = child.Value.Trim(),
-                        Type = IsUrl(child.Value.Trim()) ? TemplateStringType.Url : TemplateStringType.String
-                    });
-                }
-
-                foreach (var attr in child.Attributes())
-                {
-                    var attrName = $"{name}#{attr.Name.LocalName}";
-                    templateStrings.TryAdd(attrName, new TemplateStringResponse
-                    {
-                        Key = attrName,
-                        Value = attr.Value,
-                        Type = IsUrl(attr.Value) ? TemplateStringType.Url : TemplateStringType.String
-                    });
-                }
-
-                foreach (var childNode in child.Elements())
-                {
-                    if (templateStrings.ContainsKey(name)) continue;
-                    ParseChild(childNode, name);
-                }
-            }
-
-            return (templateStrings.Select(t => t.Value).ToList(), xmlDetails);
+            var message = new HttpRequestMessage(HttpMethod.Get, url);
+            message.Headers.Add("Accept", "*/*");
+            message.Headers.Add("User-Agent", "Hookio 1.0.0");
+            var res = await httpClient.SendAsync(message);
+            return await Parse(res);
         }
 
-        public async static Task<(List<TemplateStringResponse>, XMLDetails)> Parse(HttpResponseMessage res)
+        public static async Task<(List<TemplateStringResponse>, XMLDetails)> Parse(HttpResponseMessage res)
         {
-            var xmlDetails = new XMLDetails();
-            var templateStrings = new Dictionary<string, TemplateStringResponse>();
             try
             {
                 XDocument xmlDoc = await XDocument.LoadAsync(res.Content.ReadAsStream(), LoadOptions.None, CancellationToken.None);
-                var root = xmlDoc.Root;
-                if (root != null)
-                {
-                    ParseChild(root);
-                }
+                return Parse(xmlDoc);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while reading the RSS feed: {ex.Message}");
+                return ([], new XMLDetails());
+            }
+        }
+
+        public static (List<TemplateStringResponse>, XMLDetails) Parse(XDocument xmlDoc)
+        {
+            var xmlDetails = new XMLDetails();
+            var templateStrings = new Dictionary<string, TemplateStringResponse>();
+            var root = xmlDoc.Root;
+            if (root != null)
+            {
+                ParseChild(root);
             }
 
-            void ParseChild(XElement child, string prefix = "")
+            void ParseChild(XElement child, string prefix = "", bool insideLatestItem = false, bool skippedSiblingItems = false)
             {
                 var name = string.IsNullOrEmpty(prefix) ? GetName(child) : $"{prefix}.{GetName(child)}";
+                if (child == null) return;
 
-                if (child == null || templateStrings.ContainsKey(name)) return;
+                var isItem = child.Name.LocalName is "entry" or "item";
+                if (isItem)
+                {
+                    if (skippedSiblingItems) return;
+                    insideLatestItem = true;
+                }
 
                 if (!string.IsNullOrEmpty(child.Value.Trim()) && child.HasElements == false)
                 {
-                    if (child.Name.LocalName == "id" || child.Name.LocalName == "guid")
+                    if (insideLatestItem)
                     {
-                        xmlDetails.Id = child.Value;
-                    }
+                        if (child.Name.LocalName is "id" or "guid")
+                        {
+                            xmlDetails.Id = child.Value;
+                        }
 
-                    if (child.Name.LocalName == "updated" && DateTime.TryParse(child.Value, out var updated))
-                    {
-                        xmlDetails.Updated = updated;
-                    }
+                        if (child.Name.LocalName == "updated" && DateTime.TryParse(child.Value, out var updated))
+                        {
+                            xmlDetails.Updated = updated.ToUniversalTime();
+                        }
 
-                    if ((child.Name.LocalName == "published" || child.Name.LocalName == "pubDate") && DateTime.TryParse(child.Value, out var published))
-                    {
-                        xmlDetails.Published = published;
+                        if ((child.Name.LocalName is "published" or "pubDate") && DateTime.TryParse(child.Value, out var published))
+                        {
+                            xmlDetails.Published = published.ToUniversalTime();
+                        }
                     }
 
                     templateStrings.TryAdd(name, new TemplateStringResponse
@@ -154,15 +102,25 @@ str.StartsWith("http") && Uri.TryCreate(str, UriKind.Absolute, out _);
                     });
                 }
 
+                var tookItem = false;
                 foreach (var childNode in child.Elements())
                 {
-                    if (templateStrings.ContainsKey(name)) continue;
-                    ParseChild(childNode, name);
+                    var childIsItem = childNode.Name.LocalName is "entry" or "item";
+                    if (childIsItem)
+                    {
+                        if (tookItem) continue;
+                        tookItem = true;
+                        ParseChild(childNode, name, true, false);
+                        continue;
+                    }
+                    ParseChild(childNode, name, insideLatestItem, skippedSiblingItems);
                 }
             }
+
             return (templateStrings.Select(t => t.Value).ToList(), xmlDetails);
         }
     }
+
     public class XMLDetails
     {
         public DateTime? Updated { get; set; }

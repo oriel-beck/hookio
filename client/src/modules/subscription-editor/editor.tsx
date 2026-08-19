@@ -5,8 +5,8 @@ import { MdOutlineContentCopy } from "react-icons/md";
 import EmbedPreview from "./preview";
 import EmbedForm from "./embed-form";
 import CopyModal from "./copy-modal";
-import { convertEmbedToFormikData, generateDefaultEvent, generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
-import { APIEvents, EventType, Provider } from "../../util/enums";
+import { convertEmbedToFormikData, deleteSubscription, generateDefaultEvent, generateDefaultEvents, getEventTypes, submitSubscription } from "../../util/util";
+import { EventType, Provider } from "../../util/enums";
 import PageHeader from "../../components/page-heading";
 import ExpansionPanel from "../../components/expansion-panel";
 import Loader from "../../components/loader";
@@ -222,7 +222,9 @@ function FormikForm() {
     useEffect(() => {
         // TODO: handle erorrs properly (popup? error screen? message in the corner?)
         // if ('message' in subscription) return navigate(`/servers`); // this line gets into an infinite loop for some reason
-        if (params['subscriptionId'] && 'status' in subscription) return navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true })
+        if (params['subscriptionId'] && 'status' in subscription) {
+            void navigate(`/servers/${params['serverId']}/${params['provider']}`, { replace: true });
+        }
     });
 
     return (
@@ -351,9 +353,18 @@ function FormikForm() {
                                     )}
                                 </FieldArray>
                                 <div className="w-full flex mt-2 space-x-2">
-                                    <button className="w-full text-lg font-semibold py-2 px-4 rounded-md border border-red-500 text-red-500 hover:opacity-90" onClick={() => setFieldValue(`events.${eventType}`, generateDefaultEvent())}>
-                                        Clear
-                                    </button>
+                                    {subscription?.id ?
+                                        <button type="button" className="w-full text-lg font-semibold py-2 px-4 rounded-md border border-red-500 text-red-500 hover:opacity-90" onClick={async () => {
+                                            const res = await deleteSubscription(params['serverId']!, subscription.id);
+                                            if (res.ok) navigate(`/servers/${params.serverId}/${params.provider}`);
+                                        }}>
+                                            Delete
+                                        </button>
+                                        :
+                                        <button type="button" className="w-full text-lg font-semibold py-2 px-4 rounded-md border border-red-500 text-red-500 hover:opacity-90" onClick={() => setFieldValue(`events.${eventType}`, generateDefaultEvent())}>
+                                            Clear
+                                        </button>
+                                    }
                                     <button className="w-full text-lg py-2 px-4 rounded-md bg-[#5865F2] border border-white text-white font-semibold disabled:bg-opacity-50 disabled:cursor-default hover:shadow-md hover:shadow-purple-900 disabled:shadow-none" type="submit" disabled={isSubmitting || !!Object.keys(errors).length}>
                                         Save
                                     </button>
@@ -431,5 +442,11 @@ function getPlaceholderByPath(path: string) {
 }
 
 function convertAPIEventsToFront(events: Subscription['events']): { [eventType: string]: EventFormikInitialValue } {
-    return Object.entries(events).reduce((acc, [eventKey, { message, id }]) => ({ ...acc, [APIEvents[eventKey as keyof typeof APIEvents]]: { message: { ...message, embeds: message.embeds.map((e) => convertEmbedToFormikData(e)) }, id } }), {})
+    return Object.values(events).reduce((acc, event) => ({
+        ...acc,
+        [event.eventType.toString()]: {
+            message: { ...event.message, embeds: event.message.embeds.map((e) => convertEmbedToFormikData(e)) },
+            id: event.id
+        }
+    }), {});
 }
