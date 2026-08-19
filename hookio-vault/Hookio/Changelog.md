@@ -11,6 +11,14 @@ project: Hookio
 
 Newest first. One entry per meaningful change. See [[Hookio/How we document]].
 
+## 2026-08-20 — CI actions on Node 24
+
+- **What:** Bumped `actions/setup-node` to v7 and `actions/setup-dotnet` to v6 so both jobs run on Node 24 instead of deprecated Node 20.
+- **Why:** GitHub runners force Node 24 for JS actions; v4 still declared Node 20 and annotated every job.
+- **Files / packages:** `.github/workflows/ci.yml`; [[Hookio/Services/GitHub Actions]].
+- **Follow-ups:** none
+- **PR:** none
+
 ## 2026-08-20 — Stop parsing `.env` in the API
 
 - **What:** Removed `DotEnv.Load`. Secrets reach the API as process environment variables. Compose already does that with `env_file: server/Hookio/.env.production`.

@@ -15,14 +15,14 @@ CI workflow `.github/workflows/ci.yml`. Two jobs on `ubuntu-latest`, triggered o
 ### `server`
 
 - `actions/checkout@v5`
-- `actions/setup-dotnet@v4` with `dotnet-version: "10.0.x"`
+- `actions/setup-dotnet@v6` with `dotnet-version: "10.0.x"`
 - `dotnet restore` / `build` / `test` on `server/server.sln` (Release)
 
 Covers `Hookio.Tests`: enum contracts, EventSub callback/HMAC, JWT guild claims, guild-access API, Redis score units, FeedUtils, Discord JSON.
 
 ### `client`
 
-- `actions/setup-node@v4` with **Node 24**, npm cache on `client/package-lock.json`
+- `actions/setup-node@v7` with **Node 24**, npm cache on `client/package-lock.json`
 - `npm ci`, `npm run lint` (ESLint max-warnings 0), `npm test` (Vitest), `npm run build` (`tsc && vite build`)
 
 No Docker compose job. No deploy.
