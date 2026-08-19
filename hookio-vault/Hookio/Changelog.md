@@ -11,6 +11,14 @@ project: Hookio
 
 Newest first. One entry per meaningful change. See [[Hookio/How we document]].
 
+## 2026-08-20 — Stop parsing `.env` in the API
+
+- **What:** Removed `DotEnv.Load`. Secrets reach the API as process environment variables. Compose already does that with `env_file: server/Hookio/.env.production`.
+- **Why:** The custom text parser was unused in the container (no `.env` in `/app`) and a worse local loader than the host. See [[Hookio/Decisions/Process environment not dotenv]].
+- **Files / packages:** deleted `server/Hookio.Shared/DotEnv.cs`; `Program.cs`; `.env.example`; README; [[Hookio/Infrastructure]]; [[Hookio/Services/Hookio API]].
+- **Follow-ups:** `dotnet run` outside Compose needs process env set for `EnvNames`.
+- **PR:** none
+
 ## 2026-08-20 — Production overhaul landed in git
 
 - **What:** Committed the remaining overhaul: .NET 10, Twitch EventSub HTTP, health checks, DataManagers split, unique feeds + EventSub migration, client Vite 6 / Node 24 / ESLint 9, compose health + env files, CI, tests, env examples, vault notes. Root `.gitignore` also skips Obsidian workspace and downloaded plugins.

@@ -18,6 +18,7 @@ This vault documents **what exists in the repo today**. Start at [[Hookio/Infras
 - [[Hookio/How we document]]
 - [[Hookio/Changelog]]
 - [[Hookio/Decisions/Document changes in Obsidian]]
+- [[Hookio/Decisions/Process environment not dotenv]] — Compose `env_file`, not an in-app `.env` parser
 - [[Hookio/Decisions/Overhaul locked answers]] — product constraints that still hold
 
 ## Infrastructure

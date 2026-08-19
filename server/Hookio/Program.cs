@@ -26,11 +26,6 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 var isTesting = builder.Environment.IsEnvironment("Testing");
 
-if (!isTesting)
-{
-    DotEnv.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
-}
-
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole(options =>
 {

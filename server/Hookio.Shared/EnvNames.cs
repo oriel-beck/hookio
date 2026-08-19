@@ -1,6 +1,6 @@
 namespace Hookio.Shared;
 
-/// <summary>Documented environment variable names. Values come from host env / compose env_file — never bake secrets.</summary>
+/// <summary>Documented environment variable names. Values come from the process environment (compose env_file / host). Never bake secrets into the image.</summary>
 public static class EnvNames
 {
     public const string JwtSecret = "JWT_SECRET";

@@ -71,10 +71,11 @@ Cookie `Secure` is set when the request is HTTPS, or when `HOOKIO_COOKIE_SECURE=
 
 | File | Used by |
 | --- | --- |
-| `.env.postgres` (from `.env.postgres.example`) | postgres container |
-| `server/Hookio/.env.production` (from `server/Hookio/.env.example`) | API in compose |
-| `server/Hookio/.env` | `dotnet run` via `DotEnv.Load` |
+| `.env.postgres` (from `.env.postgres.example`) | postgres container (`env_file` → process env) |
+| `server/Hookio/.env.production` (from `server/Hookio/.env.example`) | API container (`env_file` → process env). The API reads `Environment.GetEnvironmentVariable`; it does not parse the file. |
 | `client/.env.production` (from `client/.env.example`) | SPA **build-time** Vite vars |
+
+Local `dotnet run` (outside Compose) needs the same `EnvNames` keys set in the process environment. Do not restore a `.env` parser in the API.
 
 Never commit real values. Placeholders live in the `*.example` files.
 

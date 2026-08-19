@@ -14,7 +14,7 @@ ASP.NET Core 10 web app (`Hookio.dll`) running Kestrel inside the `server` Compo
 
 - Listens on **8080** (`ASPNETCORE_HTTP_PORTS=8080`). nginx proxies `/api`, `/health`, `/healthz` here.
 - JSON console logs with UTC timestamps and an `X-Request-Id` header (`TraceIdentifier`).
-- On startup (non-`Testing`): `DotEnv.Load(".env")`, connect Npgsql + Redis, **`Database.Migrate()`**, start hosted services.
+- On startup (non-`Testing`): connect Npgsql + Redis from process env, **`Database.Migrate()`**, start hosted services. Compose `env_file` injects `server/Hookio/.env.production`; the API does not parse `.env` files.
 - Swagger UI only when `ASPNETCORE_ENVIRONMENT=Development` (`/swagger`). Local `dotnet run` profile `http` binds `http://localhost:5093`.
 - `UseHttpsRedirection` is on except in `Testing`. Compose serves HTTP on 8080 behind nginx.
 
